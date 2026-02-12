@@ -9,6 +9,7 @@
 ## Project
 
 - .NET library for local embedding generation using `Microsoft.Extensions.AI` and ONNX Runtime.
+- **Repository:** https://github.com/elbruno/elbruno.localembeddings
 - Main project: `src/LocalEmbeddings/LocalEmbeddings.csproj`
 - Tests: `tests/LocalEmbeddings.Tests/`
 - Samples: `samples/ConsoleApp/` and `samples/RagChat/`

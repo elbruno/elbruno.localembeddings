@@ -70,7 +70,7 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
         // Create metadata
         _metadata = new EmbeddingGeneratorMetadata(
             providerName: "LocalEmbeddings",
-            providerUri: new Uri("https://github.com/elbruno/localembeddings"),
+            providerUri: new Uri("https://github.com/elbruno/elbruno.localembeddings"),
             defaultModelId: options.ModelName,
             defaultModelDimensions: _model.EmbeddingDimension);
     }

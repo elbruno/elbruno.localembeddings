@@ -1,6 +1,6 @@
 # LocalEmbeddings
 
-[![NuGet](https://img.shields.io/nuget/v/LocalEmbeddings.svg)](https://www.nuget.org/packages/LocalEmbeddings)
+[![NuGet](https://img.shields.io/nuget/v/elbruno.LocalEmbeddings.svg)](https://www.nuget.org/packages/elbruno.LocalEmbeddings)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A .NET library for generating text embeddings locally using ONNX Runtime and Microsoft.Extensions.AI abstractions—no external API calls required.
@@ -18,13 +18,13 @@ A .NET library for generating text embeddings locally using ONNX Runtime and Mic
 ## Installation
 
 ```bash
-dotnet add package LocalEmbeddings
+dotnet add package elbruno.LocalEmbeddings
 ```
 
 Or via the NuGet Package Manager:
 
 ```powershell
-Install-Package LocalEmbeddings
+Install-Package elbruno.LocalEmbeddings
 ```
 
 ## Quick Start
@@ -191,6 +191,7 @@ var options = new LocalEmbeddingsOptions
 ```
 
 The model directory must contain:
+
 - `model.onnx` - The ONNX model file
 - `tokenizer.json` or `vocab.txt` - Tokenizer files
 
@@ -290,8 +291,8 @@ public static class ServiceCollectionExtensions
 ### Build
 
 ```bash
-git clone https://github.com/elbruno/localembeddings.git
-cd localembeddings
+git clone https://github.com/elbruno/elbruno.localembeddings.git
+cd elbruno.localembeddings
 dotnet build
 ```
 

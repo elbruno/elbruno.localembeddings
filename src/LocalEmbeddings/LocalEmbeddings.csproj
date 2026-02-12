@@ -8,6 +8,10 @@
     <PackageId>elbruno.LocalEmbeddings</PackageId>
     <Description>Local embedding generation using Microsoft.Extensions.AI and ONNX Runtime</Description>
     <Authors>Bruno Capuano</Authors>
+    <RepositoryUrl>https://github.com/elbruno/elbruno.localembeddings</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/elbruno/elbruno.localembeddings</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +22,10 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.24.1" />
     <PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
