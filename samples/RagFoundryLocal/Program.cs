@@ -8,6 +8,7 @@ using System.ClientModel;
 
 var modelIdChat = "phi4-mini";
 var question = "What is the default model in LocalEmbeddings?";
+const int topK = 3;
 
 Console.WriteLine($"Question: {question}");
 
@@ -40,8 +41,16 @@ string[] facts =
 using var embeddingGenerator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());
 var factEmbeddings = await embeddingGenerator.GenerateAsync(facts);
 var indexedFacts = facts.Zip(factEmbeddings, (fact, embedding) => (Item: fact, Embedding: embedding));
-var queryEmbedding = (await embeddingGenerator.GenerateAsync([question]))[0];
-var contextDocs = indexedFacts.FindClosest(queryEmbedding, topK: 3).Select(match => match.Item);
+var queryEmbeddings = await embeddingGenerator.GenerateAsync([question]);
+if (queryEmbeddings.Count == 0)
+{
+    Console.WriteLine("Error: Failed to generate query embedding. Verify the local embedding model is available.");
+    return;
+}
+
+var contextDocs = indexedFacts
+    .FindClosest(queryEmbeddings[0], topK: topK)
+    .Select(match => match.Item);
 
 Console.WriteLine($"\n--- Asking with memory: {question} ---");
 await foreach (var update in chatClient.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, BuildPrompt(question, contextDocs))]))
