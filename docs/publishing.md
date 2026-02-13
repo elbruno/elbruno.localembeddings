@@ -42,19 +42,24 @@ This is the standard workflow — the version is derived from the release tag.
 1. **Update the version** in both csproj files:
 
    - `src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj`
-   - `src/LocalEmbeddings.KernelMemory/LocalEmbeddings.KernelMemory.csproj`
+   - `src/ElBruno.LocalEmbeddings.KernelMemory/ElBruno.LocalEmbeddings.KernelMemory.csproj`
 
    ```xml
    <Version>1.2.0</Version>
    ```
 
-2. **Commit and push** the version change to `main`
-3. **Create a GitHub Release:**
+2. **NuGet icon source** (already configured):
+
+   - `nuget_images/icon_02.png`
+   - Packed into each `.nupkg` as `icon_02.png` via `<PackageIcon>icon_02.png</PackageIcon>`
+
+3. **Commit and push** the version change to `main`
+4. **Create a GitHub Release:**
    - Go to the repo → **Releases** → **Draft a new release**
    - Create a new tag: `v1.2.0` (must match the version in the csproj)
    - Fill in the release title and notes
    - Click **Publish release**
-4. The **Publish to NuGet** workflow runs automatically:
+5. The **Publish to NuGet** workflow runs automatically:
    - Strips the `v` prefix from the tag → uses `1.2.0` as the package version
    - Builds, tests, packs, and pushes to NuGet.org
 

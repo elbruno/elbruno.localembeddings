@@ -11,6 +11,7 @@
     <RepositoryUrl>https://github.com/elbruno/elbruno.localembeddings</RepositoryUrl>
     <PackageProjectUrl>https://github.com/elbruno/elbruno.localembeddings</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon_02.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>embeddings;onnx;ai;local;kernel-memory;semantic-memory;microsoft-extensions-ai;sentence-transformers</PackageTags>
     <Version>1.0.1</Version>
@@ -28,6 +29,7 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\nuget_images\icon_02.png" Pack="true" PackagePath="\" Link="icon_02.png" />
   </ItemGroup>
 
 </Project>

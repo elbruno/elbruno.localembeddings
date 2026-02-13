@@ -14,10 +14,9 @@ dotnet add package ElBruno.LocalEmbeddings
 
 ```csharp
 using ElBruno.LocalEmbeddings;
-using ElBruno.LocalEmbeddings.Options;
 
 // Create the generator (downloads model automatically on first run)
-using var generator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());
+using var generator = new LocalEmbeddingGenerator();
 
 // Generate an embedding — single-string convenience method
 var embedding = await generator.GenerateEmbeddingAsync("Hello, world!");

@@ -32,10 +32,9 @@ dotnet add package ElBruno.LocalEmbeddings.KernelMemory
 
 ```csharp
 using ElBruno.LocalEmbeddings;
-using ElBruno.LocalEmbeddings.Options;
 
 // Create the generator (downloads model automatically on first run)
-using var generator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());
+using var generator = new LocalEmbeddingGenerator();
 
 // Generate a single embedding — no array wrapping needed
 var embedding = await generator.GenerateEmbeddingAsync("Hello, world!");
@@ -45,6 +44,9 @@ Console.WriteLine($"Dimensions: {embedding.Vector.Length}"); // 384
 var result = await generator.GenerateAsync("Hello, world!");
 Console.WriteLine($"Embedding: [{string.Join(", ", result[0].Vector.ToArray().Take(3))}...]");
 ```
+
+For custom models and runtime behavior, use the options-based constructor:
+`new LocalEmbeddingGenerator(new LocalEmbeddingsOptions { ... })`.
 
 Want to go further? See the [Getting Started guide](docs/getting-started.md) for a step-by-step walkthrough — from cosine similarity to semantic search, dependency injection, and full RAG with a local LLM.
 

@@ -37,6 +37,43 @@ public class LocalEmbeddingGeneratorTests
 
     [SkippableFact]
     [Trait("Category", "Integration")]
+    public void Constructor_Parameterless_Succeeds()
+    {
+        var modelPath = GetModelPath();
+        Skip.If(modelPath == null, "Model not available for testing");
+
+        using var generator = new LocalEmbeddingGenerator();
+        Assert.NotNull(generator);
+        Assert.Equal("sentence-transformers/all-MiniLM-L6-v2", generator.Metadata.DefaultModelId);
+    }
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    public async Task CreateAsync_Parameterless_Succeeds()
+    {
+        var modelPath = GetModelPath();
+        Skip.If(modelPath == null, "Model not available for testing");
+
+        using var generator = await LocalEmbeddingGenerator.CreateAsync();
+        Assert.NotNull(generator);
+        Assert.Equal(384, generator.Metadata.DefaultModelDimensions);
+    }
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    public async Task Constructor_Parameterless_GeneratesEmbeddings()
+    {
+        var modelPath = GetModelPath();
+        Skip.If(modelPath == null, "Model not available for testing");
+
+        using var generator = new LocalEmbeddingGenerator();
+        var embedding = await generator.GenerateEmbeddingAsync("Hello world");
+
+        Assert.Equal(384, embedding.Vector.Length);
+    }
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
     public void Constructor_WithValidModelPath_Succeeds()
     {
         var modelPath = GetModelPath();
