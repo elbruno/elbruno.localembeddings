@@ -10,7 +10,8 @@ permissions:
 
 jobs:
   triage:
-    if: github.event.label.name == 'squad'
+    if: false # Disabled — see docs/squad-workflows.md to re-enable
+    # Original condition: github.event.label.name == 'squad'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

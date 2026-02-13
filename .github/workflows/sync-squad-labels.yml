@@ -3,7 +3,7 @@ name: Sync Squad Labels
 on:
   push:
     paths:
-      - '.ai-team/team.md'
+      - ".ai-team/team.md"
   workflow_dispatch:
 
 permissions:
@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   sync-labels:
+    if: false # Disabled — see docs/squad-workflows.md to re-enable
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

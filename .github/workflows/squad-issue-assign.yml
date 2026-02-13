@@ -10,8 +10,8 @@ permissions:
 
 jobs:
   assign-work:
-    # Only trigger on squad:{member} labels (not the base "squad" label)
-    if: startsWith(github.event.label.name, 'squad:')
+    if: false # Disabled — see docs/squad-workflows.md to re-enable
+    # Original condition: startsWith(github.event.label.name, 'squad:')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
