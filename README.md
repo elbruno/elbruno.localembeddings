@@ -14,6 +14,7 @@ A .NET library for generating text embeddings locally using ONNX Runtime and Mic
 - **Automatic Model Caching** — Models are downloaded once and cached locally
 - **Dependency Injection Support** — First-class `IServiceCollection` integration
 - **Single-String Convenience API** — `GenerateAsync("text")` and `GenerateEmbeddingAsync("text")` — no array wrapping needed
+- **Similarity Helpers** — Cosine similarity, all-pairs `Similarity(...)` matrix, and `FindClosest(...)` for semantic search
 - **Thread-Safe & Batched** — Concurrent generation and efficient multi-text processing
 
 ## Installation

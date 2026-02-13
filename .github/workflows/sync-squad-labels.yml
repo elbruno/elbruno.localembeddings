@@ -1,9 +1,11 @@
 name: Sync Squad Labels
 
 on:
-  push:
-    paths:
-      - ".ai-team/team.md"
+  # push:
+  #   paths:
+  #     - ".ai-team/team.md"
+  # workflow_dispatch:
+  # Manual trigger
   workflow_dispatch:
 
 permissions:

@@ -52,6 +52,22 @@ float similarity = embeddings[0].CosineSimilarity(embeddings[1]);
 Console.WriteLine($"Similarity: {similarity:P1}"); // much lower
 ```
 
+Need a full all-pairs matrix (like `model.similarity(...)` in SentenceTransformers)? Use `Similarity`:
+
+```csharp
+using ElBruno.LocalEmbeddings.Extensions;
+
+var embeddings = await generator.GenerateAsync(new[]
+{
+    "The weather is lovely today.",
+    "It's so sunny outside!",
+    "He drove to the stadium."
+});
+
+float[,] matrix = embeddings.Similarity();
+Console.WriteLine(matrix[0, 1]); // similarity between sentence 0 and 1
+```
+
 ## Step 3: Batch Processing — Embed Multiple Documents
 
 Process many texts in a single call for better throughput:

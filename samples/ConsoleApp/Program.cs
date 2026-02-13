@@ -117,7 +117,7 @@ Console.WriteLine();
 foreach (var (sentence1, sentence2) in sentencePairs)
 {
     var embeddings = await generator.GenerateAsync([sentence1, sentence2]);
-    var similarity = CosineSimilarity(embeddings[0].Vector, embeddings[1].Vector);
+    var similarity = embeddings[0].CosineSimilarity(embeddings[1]);
 
     var similarityBar = new string('█', (int)(similarity * 20));
     var emptyBar = new string('░', 20 - (int)(similarity * 20));
@@ -127,6 +127,29 @@ foreach (var (sentence1, sentence2) in sentencePairs)
     Console.WriteLine($"  Similarity: [{similarityBar}{emptyBar}] {similarity:P1}");
     Console.WriteLine();
 }
+
+Console.WriteLine("All-pairs similarity matrix (SentenceTransformers-style):");
+var matrixSentences = new[]
+{
+    "The weather is lovely today.",
+    "It's so sunny outside!",
+    "He drove to the stadium."
+};
+
+var matrixEmbeddings = await generator.GenerateAsync(matrixSentences);
+var similarityMatrix = matrixEmbeddings.Similarity();
+
+for (var i = 0; i < matrixSentences.Length; i++)
+{
+    Console.Write("  ");
+    for (var j = 0; j < matrixSentences.Length; j++)
+    {
+        Console.Write($"{similarityMatrix[i, j],8:F4}");
+    }
+
+    Console.WriteLine();
+}
+Console.WriteLine();
 
 // =============================================================================
 // EXAMPLE 5: Practical Use Case - Semantic Search
@@ -183,7 +206,7 @@ foreach (var query in queries)
         .Select((doc, idx) => new
         {
             Document = doc,
-            Similarity = CosineSimilarity(queryEmbedding.Vector, kbEmbeddings[idx].Vector)
+            Similarity = queryEmbedding.CosineSimilarity(kbEmbeddings[idx])
         })
         .OrderByDescending(r => r.Similarity)
         .Take(3)
@@ -260,27 +283,3 @@ Console.WriteLine("║  • Easy DI integration with AddLocalEmbeddings()       
 Console.WriteLine("╚═══════════════════════════════════════════════════════════════╝");
 
 return;
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-static float CosineSimilarity(ReadOnlyMemory<float> a, ReadOnlyMemory<float> b)
-{
-    var spanA = a.Span;
-    var spanB = b.Span;
-
-    float dotProduct = 0;
-    float normA = 0;
-    float normB = 0;
-
-    for (var i = 0; i < spanA.Length; i++)
-    {
-        dotProduct += spanA[i] * spanB[i];
-        normA += spanA[i] * spanA[i];
-        normB += spanB[i] * spanB[i];
-    }
-
-    var denominator = MathF.Sqrt(normA) * MathF.Sqrt(normB);
-    return denominator == 0 ? 0 : dotProduct / denominator;
-}
