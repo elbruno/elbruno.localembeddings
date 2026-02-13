@@ -185,6 +185,7 @@ await foreach (var chunk in chatClient.GetStreamingResponseAsync(prompt))
 
 - **[API Reference](api-reference.md)** — Full class and method documentation
 - **[Configuration](configuration.md)** — All options, supported models, cache locations
+- **[Alternative Models](alternative-models.md)** — Step-by-step local model download + non-default model hello world
 - **[Dependency Injection](dependency-injection.md)** — All DI overloads and `IConfiguration` binding
 - **[Kernel Memory Integration](kernel-memory-integration.md)** — Use local embeddings with Microsoft Kernel Memory for semantic memory / RAG
 - **[Samples README](../samples/README.md)** — All sample projects with prerequisites and run instructions

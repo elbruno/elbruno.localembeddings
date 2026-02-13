@@ -32,6 +32,8 @@ var options = new LocalEmbeddingsOptions
 };
 ```
 
+For non-default model walkthroughs (including local download + license notes), see [Alternative Models](alternative-models.md).
+
 ### Local Model Path
 
 For offline scenarios, specify a local directory containing `model.onnx` and tokenizer files:
