@@ -54,3 +54,9 @@ All other documentation goes in the `docs/` folder:
 - **README.md** stays in the root — it is packed into the NuGet package via `<PackageReadmeFile>`.
 - Any doc that is **not** the README or LICENSE must go in `docs/`.
 - When adding new documentation, create it under `docs/`, not in the root.
+
+## Plans
+
+- All plans are saved in `docs/plans/`.
+- Plan files **must** use the naming format: `plan_YYMMDD_HHmm.md` where `YYMMDD` is the 2-digit year, month, day and `HHmm` is the 24-hour time.
+- Example: `plan_260212_1933.md` → 2026-02-12 at 19:33.
