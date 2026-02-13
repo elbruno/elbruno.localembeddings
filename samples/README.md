@@ -92,11 +92,11 @@ dotnet run --project samples/RagOllama
 
 ## RagFoundryLocal
 
-Same RAG pattern as RagOllama but using **Microsoft Foundry Local** instead of Ollama.
+Same minimal flow as RagOllama, but using **Microsoft Foundry Local** instead of Ollama.
 
 - **Embeddings:** `LocalEmbeddingGenerator` (all-MiniLM-L6-v2, runs locally via ONNX)
 - **Chat LLM:** phi4-mini via `FoundryLocalManager` → OpenAI-compatible endpoint → `IChatClient`
-- **Flow:** Same as RagOllama — embed, search, prompt, stream
+- **Flow:** Ask once without memory, then ask again with embedding-based retrieved context
 
 ### Prerequisites
 
