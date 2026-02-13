@@ -1,7 +1,7 @@
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 
-namespace elbruno.LocalEmbeddings;
+namespace ElBruno.LocalEmbeddings;
 
 /// <summary>
 /// Manages an ONNX embedding model for inference.

@@ -1,4 +1,4 @@
-namespace elbruno.LocalEmbeddings;
+namespace ElBruno.LocalEmbeddings;
 
 /// <summary>
 /// Interface for downloading and caching ONNX models.

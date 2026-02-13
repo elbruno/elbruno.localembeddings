@@ -1,12 +1,12 @@
-using elbruno.LocalEmbeddings;
-using elbruno.LocalEmbeddings.Options;
+using ElBruno.LocalEmbeddings;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.AI.Foundry.Local;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using RagFoundryLocal;
 using System.ClientModel;
 
-Console.WriteLine("RAG sample with elbruno.LocalEmbeddings + Foundry Local phi-3.5-mini");
+Console.WriteLine("RAG sample with ElBruno.LocalEmbeddings + Foundry Local phi-3.5-mini");
 Console.WriteLine("Type 'exit' to quit.");
 
 using var embeddingGenerator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());

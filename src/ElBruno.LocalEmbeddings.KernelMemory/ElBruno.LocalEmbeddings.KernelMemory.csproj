@@ -5,8 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>elbruno.LocalEmbeddings.KernelMemory</PackageId>
-    <Description>Kernel Memory integration for elbruno.LocalEmbeddings — provides ITextEmbeddingGenerator adapter and KernelMemoryBuilder extensions</Description>
+    <PackageId>ElBruno.LocalEmbeddings.KernelMemory</PackageId>
+    <Description>Kernel Memory integration for ElBruno.LocalEmbeddings — provides ITextEmbeddingGenerator adapter and KernelMemoryBuilder extensions</Description>
     <Authors>Bruno Capuano</Authors>
     <RepositoryUrl>https://github.com/elbruno/elbruno.localembeddings</RepositoryUrl>
     <PackageProjectUrl>https://github.com/elbruno/elbruno.localembeddings</PackageProjectUrl>
@@ -18,7 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\elbruno.LocalEmbeddings\elbruno.LocalEmbeddings.csproj" />
+    <ProjectReference Include="..\ElBruno.LocalEmbeddings\ElBruno.LocalEmbeddings.csproj" />
   </ItemGroup>
 
   <ItemGroup>

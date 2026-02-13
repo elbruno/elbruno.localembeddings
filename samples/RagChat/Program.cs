@@ -1,4 +1,4 @@
-using elbruno.LocalEmbeddings.Extensions;
+using ElBruno.LocalEmbeddings.Extensions;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using RagChat.Data;
@@ -57,7 +57,7 @@ var loadTime = DateTime.Now - startTime;
 Console.WriteLine($"  ✓ Embedding generator ready ({loadTime.TotalSeconds:F2}s)");
 
 // Display metadata
-if (embeddingGenerator is elbruno.LocalEmbeddings.LocalEmbeddingGenerator localGen)
+if (embeddingGenerator is ElBruno.LocalEmbeddings.LocalEmbeddingGenerator localGen)
 {
     Console.WriteLine($"    • Provider: {localGen.Metadata.ProviderName}");
     Console.WriteLine($"    • Model: {localGen.Metadata.DefaultModelId}");

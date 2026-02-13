@@ -1,11 +1,11 @@
-using elbruno.LocalEmbeddings.Options;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
-namespace elbruno.LocalEmbeddings.Extensions;
+namespace ElBruno.LocalEmbeddings.Extensions;
 
 /// <summary>
 /// Extension methods for registering LocalEmbeddings services with dependency injection.

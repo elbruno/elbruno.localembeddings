@@ -1,7 +1,7 @@
-using elbruno.LocalEmbeddings.Options;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 
-namespace elbruno.LocalEmbeddings;
+namespace ElBruno.LocalEmbeddings;
 
 /// <summary>
 /// Generates embeddings locally using ONNX Runtime models.

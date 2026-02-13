@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\elbruno.LocalEmbeddings\elbruno.LocalEmbeddings.csproj" />
+    <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings\ElBruno.LocalEmbeddings.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

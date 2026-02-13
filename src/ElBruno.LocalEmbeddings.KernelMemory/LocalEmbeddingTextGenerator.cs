@@ -1,9 +1,9 @@
-using elbruno.LocalEmbeddings.Options;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.AI;
 
-namespace elbruno.LocalEmbeddings.KernelMemory;
+namespace ElBruno.LocalEmbeddings.KernelMemory;
 
 /// <summary>
 /// Adapts an <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/> (Microsoft.Extensions.AI)
@@ -12,7 +12,7 @@ namespace elbruno.LocalEmbeddings.KernelMemory;
 /// <remarks>
 /// <para>
 /// This adapter bridges the gap between the M.E.AI embedding abstraction used by
-/// <c>elbruno.LocalEmbeddings</c> and the Kernel Memory embedding interface, enabling
+/// <c>ElBruno.LocalEmbeddings</c> and the Kernel Memory embedding interface, enabling
 /// local ONNX-based embeddings to be used directly with Kernel Memory pipelines.
 /// </para>
 /// <para>

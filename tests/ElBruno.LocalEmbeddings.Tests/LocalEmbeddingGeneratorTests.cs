@@ -1,7 +1,7 @@
-using elbruno.LocalEmbeddings.Options;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 
-namespace elbruno.LocalEmbeddings.Tests;
+namespace ElBruno.LocalEmbeddings.Tests;
 
 public class LocalEmbeddingGeneratorTests
 {

@@ -1,4 +1,4 @@
-# Getting Started — elbruno.LocalEmbeddings
+# Getting Started — ElBruno.LocalEmbeddings
 
 A step-by-step guide from your first embedding to full RAG with a local LLM.
 
@@ -9,12 +9,12 @@ Install the package and generate an embedding in a few lines:
 ```bash
 dotnet new console -n EmbeddingDemo
 cd EmbeddingDemo
-dotnet add package elbruno.LocalEmbeddings
+dotnet add package ElBruno.LocalEmbeddings
 ```
 
 ```csharp
-using elbruno.LocalEmbeddings;
-using elbruno.LocalEmbeddings.Options;
+using ElBruno.LocalEmbeddings;
+using ElBruno.LocalEmbeddings.Options;
 
 // Create the generator (downloads model automatically on first run)
 using var generator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());
@@ -34,7 +34,7 @@ The first run downloads the default model (`sentence-transformers/all-MiniLM-L6-
 Embeddings turn text into vectors. Similar texts produce vectors that point in similar directions. Cosine similarity measures this — 1.0 means identical, 0.0 means unrelated.
 
 ```csharp
-using elbruno.LocalEmbeddings.Extensions; // for CosineSimilarity
+using ElBruno.LocalEmbeddings.Extensions; // for CosineSimilarity
 
 var embeddings = await generator.GenerateAsync(["I love programming", "I enjoy coding"]);
 float similarity = embeddings[0].CosineSimilarity(embeddings[1]);
@@ -74,7 +74,7 @@ Batching is more efficient than calling `GenerateAsync` once per string because 
 Use `FindClosest` to search a collection by meaning instead of keywords:
 
 ```csharp
-using elbruno.LocalEmbeddings.Extensions;
+using ElBruno.LocalEmbeddings.Extensions;
 
 // Build a searchable collection
 var docs = new[]
@@ -106,7 +106,7 @@ foreach (var (text, score) in results)
 Register LocalEmbeddings with `IServiceCollection` for production apps:
 
 ```csharp
-using elbruno.LocalEmbeddings.Extensions;
+using ElBruno.LocalEmbeddings.Extensions;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -154,7 +154,7 @@ Two complete RAG samples are included:
 
 Both use `LocalEmbeddingGenerator` for embeddings and `IChatClient` (from `Microsoft.Extensions.AI`) for chat completions, so the RAG logic is identical — only the LLM provider changes.
 
-> **Tip:** The [RagOllama](../samples/RagOllama) sample uses the companion package `elbruno.LocalEmbeddings.KernelMemory` which integrates directly with [Microsoft Kernel Memory](https://github.com/microsoft/kernel-memory). Instead of building the RAG pipeline manually, the single call `.WithLocalEmbeddings()` on `KernelMemoryBuilder` handles embedding registration. See [Kernel Memory Integration](kernel-memory-integration.md) for details.
+> **Tip:** The [RagOllama](../samples/RagOllama) sample uses the companion package `ElBruno.LocalEmbeddings.KernelMemory` which integrates directly with [Microsoft Kernel Memory](https://github.com/microsoft/kernel-memory). Instead of building the RAG pipeline manually, the single call `.WithLocalEmbeddings()` on `KernelMemoryBuilder` handles embedding registration. See [Kernel Memory Integration](kernel-memory-integration.md) for details.
 
 ### Key code pattern (from both samples)
 

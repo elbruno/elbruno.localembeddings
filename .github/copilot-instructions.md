@@ -1,30 +1,30 @@
-# Copilot Instructions — elbruno.LocalEmbeddings
+# Copilot Instructions — ElBruno.LocalEmbeddings
 
 ## Naming Conventions
 
-- **All** core projects, folders, csproj files, and root namespaces **must** start with `elbruno.` followed by the project name.
+- **All** core projects, folders, csproj files, and root namespaces **must** start with `ElBruno.` followed by the project name.
 - Examples:
-    - Folder: `src/elbruno.LocalEmbeddings/`
-    - Project file: `elbruno.LocalEmbeddings.csproj`
-    - Root namespace: `elbruno.LocalEmbeddings`
-    - Sub-namespaces: `elbruno.LocalEmbeddings.Extensions`, `elbruno.LocalEmbeddings.Options`
-- Companion packages follow the same rule: `elbruno.LocalEmbeddings.KernelMemory` (folder, csproj, and namespace).
-- Test projects: `elbruno.LocalEmbeddings.Tests`, `elbruno.LocalEmbeddings.KernelMemory.Tests`.
+    - Folder: `src/ElBruno.LocalEmbeddings/`
+    - Project file: `ElBruno.LocalEmbeddings.csproj`
+    - Root namespace: `ElBruno.LocalEmbeddings`
+    - Sub-namespaces: `ElBruno.LocalEmbeddings.Extensions`, `ElBruno.LocalEmbeddings.Options`
+- Companion packages follow the same rule: `ElBruno.LocalEmbeddings.KernelMemory` (folder, csproj, and namespace).
+- Test projects: `ElBruno.LocalEmbeddings.Tests`, `ElBruno.LocalEmbeddings.KernelMemory.Tests`.
 - **Never** use `LocalEmbeddings` alone as a folder name, project name, namespace, or PackageId.
 
 ## NuGet Package
 
-- **Package ID:** `elbruno.LocalEmbeddings` (always prefixed with `elbruno.`)
+- **Package ID:** `ElBruno.LocalEmbeddings` (always prefixed with `ElBruno.`)
 - **Source:** https://api.nuget.org/v3/index.json
-- **Never** use `LocalEmbeddings` alone as the PackageId — it must be `elbruno.LocalEmbeddings`.
+- **Never** use `LocalEmbeddings` alone as the PackageId — it must be `ElBruno.LocalEmbeddings`.
 
 ## Project
 
 - .NET library for local embedding generation using `Microsoft.Extensions.AI` and ONNX Runtime.
 - **Repository:** https://github.com/elbruno/elbruno.localembeddings
-- Main project: `src/elbruno.LocalEmbeddings/elbruno.LocalEmbeddings.csproj`
-- Kernel Memory companion: `src/elbruno.LocalEmbeddings.KernelMemory/elbruno.LocalEmbeddings.KernelMemory.csproj`
-- Tests: `tests/elbruno.LocalEmbeddings.Tests/` and `tests/elbruno.LocalEmbeddings.KernelMemory.Tests/`
+- Main project: `src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj`
+- Kernel Memory companion: `src/ElBruno.LocalEmbeddings.KernelMemory/ElBruno.LocalEmbeddings.KernelMemory.csproj`
+- Tests: `tests/ElBruno.LocalEmbeddings.Tests/` and `tests/ElBruno.LocalEmbeddings.KernelMemory.Tests/`
 - Samples: `samples/ConsoleApp/`, `samples/RagChat/`, `samples/RagOllama/`, `samples/RagFoundryLocal/`
 
 ## Repository Structure
@@ -56,11 +56,11 @@ All other documentation goes in the `docs/` folder:
 │   ├── kernel-memory-integration.md
 │   └── ...
 ├── src/                        # Source code
-│   ├── elbruno.LocalEmbeddings/
-│   └── elbruno.LocalEmbeddings.KernelMemory/
+│   ├── ElBruno.LocalEmbeddings/
+│   └── ElBruno.LocalEmbeddings.KernelMemory/
 ├── tests/                      # Test projects
-│   ├── elbruno.LocalEmbeddings.Tests/
-│   └── elbruno.LocalEmbeddings.KernelMemory.Tests/
+│   ├── ElBruno.LocalEmbeddings.Tests/
+│   └── ElBruno.LocalEmbeddings.KernelMemory.Tests/
 └── samples/                    # Sample applications
     ├── ConsoleApp/
     ├── RagChat/

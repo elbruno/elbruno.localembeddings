@@ -1,11 +1,11 @@
-# API Reference — elbruno.LocalEmbeddings
+# API Reference — ElBruno.LocalEmbeddings
 
 ## Packages
 
 | Package | Description |
 |---------|-------------|
-| `elbruno.LocalEmbeddings` | Core library — local ONNX embedding generation with M.E.AI |
-| `elbruno.LocalEmbeddings.KernelMemory` | Companion package — Kernel Memory `ITextEmbeddingGenerator` adapter + builder/DI extensions |
+| `ElBruno.LocalEmbeddings` | Core library — local ONNX embedding generation with M.E.AI |
+| `ElBruno.LocalEmbeddings.KernelMemory` | Companion package — Kernel Memory `ITextEmbeddingGenerator` adapter + builder/DI extensions |
 
 ## LocalEmbeddingGenerator
 
@@ -83,7 +83,7 @@ public static class EmbeddingExtensions
 
 ## ServiceCollectionExtensions
 
-Extension methods for DI registration in `elbruno.LocalEmbeddings.Extensions` namespace.
+Extension methods for DI registration in `ElBruno.LocalEmbeddings.Extensions` namespace.
 
 ```csharp
 public static class ServiceCollectionExtensions
@@ -108,17 +108,17 @@ public static class ServiceCollectionExtensions
 
 ---
 
-## elbruno.LocalEmbeddings.KernelMemory
+## ElBruno.LocalEmbeddings.KernelMemory
 
 Companion package providing Kernel Memory integration. Install separately:
 
 ```bash
-dotnet add package elbruno.LocalEmbeddings.KernelMemory
+dotnet add package ElBruno.LocalEmbeddings.KernelMemory
 ```
 
 ### LocalEmbeddingTextGenerator
 
-Adapter that bridges `IEmbeddingGenerator<string, Embedding<float>>` (M.E.AI) to Kernel Memory's `ITextEmbeddingGenerator`. Namespace: `elbruno.LocalEmbeddings.KernelMemory`.
+Adapter that bridges `IEmbeddingGenerator<string, Embedding<float>>` (M.E.AI) to Kernel Memory's `ITextEmbeddingGenerator`. Namespace: `ElBruno.LocalEmbeddings.KernelMemory`.
 
 ```csharp
 public sealed class LocalEmbeddingTextGenerator : ITextEmbeddingGenerator, IDisposable
@@ -154,7 +154,7 @@ public sealed class LocalEmbeddingTextGenerator : ITextEmbeddingGenerator, IDisp
 
 ### KernelMemoryBuilderExtensions
 
-Extension methods for `IKernelMemoryBuilder`. Namespace: `elbruno.LocalEmbeddings.KernelMemory.Extensions`.
+Extension methods for `IKernelMemoryBuilder`. Namespace: `ElBruno.LocalEmbeddings.KernelMemory.Extensions`.
 
 ```csharp
 public static class KernelMemoryBuilderExtensions
@@ -183,7 +183,7 @@ public static class KernelMemoryBuilderExtensions
 
 ### ServiceCollectionExtensions (Kernel Memory)
 
-Extension methods for `IServiceCollection` that register both M.E.AI and Kernel Memory interfaces. Namespace: `elbruno.LocalEmbeddings.KernelMemory.Extensions`.
+Extension methods for `IServiceCollection` that register both M.E.AI and Kernel Memory interfaces. Namespace: `ElBruno.LocalEmbeddings.KernelMemory.Extensions`.
 
 ```csharp
 public static class ServiceCollectionExtensions

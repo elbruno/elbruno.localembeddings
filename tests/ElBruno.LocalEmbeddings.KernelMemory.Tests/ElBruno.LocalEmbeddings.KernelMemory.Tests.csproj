@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\elbruno.LocalEmbeddings.KernelMemory\elbruno.LocalEmbeddings.KernelMemory.csproj" />
+    <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings.KernelMemory\ElBruno.LocalEmbeddings.KernelMemory.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 # LocalEmbeddings
 
-[![NuGet](https://img.shields.io/nuget/v/elbruno.LocalEmbeddings.svg)](https://www.nuget.org/packages/elbruno.LocalEmbeddings)
+[![NuGet](https://img.shields.io/nuget/v/ElBruno.LocalEmbeddings.svg)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A .NET library for generating text embeddings locally using ONNX Runtime and Microsoft.Extensions.AI abstractions — no external API calls required.
@@ -9,7 +9,7 @@ A .NET library for generating text embeddings locally using ONNX Runtime and Mic
 
 - **Local Embedding Generation** — Run inference entirely on your machine using ONNX Runtime
 - **Microsoft.Extensions.AI Integration** — Implements `IEmbeddingGenerator<string, Embedding<float>>`
-- **Kernel Memory Integration** — Companion package `elbruno.LocalEmbeddings.KernelMemory` provides a native `ITextEmbeddingGenerator` adapter for [Microsoft Kernel Memory](https://github.com/microsoft/kernel-memory)
+- **Kernel Memory Integration** — Companion package `ElBruno.LocalEmbeddings.KernelMemory` provides a native `ITextEmbeddingGenerator` adapter for [Microsoft Kernel Memory](https://github.com/microsoft/kernel-memory)
 - **HuggingFace Model Support** — Use popular sentence transformer models from HuggingFace Hub
 - **Automatic Model Caching** — Models are downloaded once and cached locally
 - **Dependency Injection Support** — First-class `IServiceCollection` integration
@@ -18,20 +18,20 @@ A .NET library for generating text embeddings locally using ONNX Runtime and Mic
 ## Installation
 
 ```bash
-dotnet add package elbruno.LocalEmbeddings
+dotnet add package ElBruno.LocalEmbeddings
 ```
 
 For **Kernel Memory** integration, also install the companion package:
 
 ```bash
-dotnet add package elbruno.LocalEmbeddings.KernelMemory
+dotnet add package ElBruno.LocalEmbeddings.KernelMemory
 ```
 
 ## Quick Start
 
 ```csharp
-using elbruno.LocalEmbeddings;
-using elbruno.LocalEmbeddings.Options;
+using ElBruno.LocalEmbeddings;
+using ElBruno.LocalEmbeddings.Options;
 
 // Create the generator (downloads model automatically on first run)
 using var generator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());

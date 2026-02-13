@@ -1,4 +1,4 @@
-namespace elbruno.LocalEmbeddings.Options;
+namespace ElBruno.LocalEmbeddings.Options;
 
 /// <summary>
 /// Configuration options for <see cref="LocalEmbeddingGenerator"/>.

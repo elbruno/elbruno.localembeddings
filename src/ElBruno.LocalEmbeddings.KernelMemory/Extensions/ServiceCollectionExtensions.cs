@@ -1,16 +1,16 @@
-using elbruno.LocalEmbeddings.Extensions;
-using elbruno.LocalEmbeddings.Options;
+using ElBruno.LocalEmbeddings.Extensions;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.KernelMemory.AI;
 
-namespace elbruno.LocalEmbeddings.KernelMemory.Extensions;
+namespace ElBruno.LocalEmbeddings.KernelMemory.Extensions;
 
 /// <summary>
 /// Extension methods for <see cref="IServiceCollection"/> to register both M.E.AI
-/// and Kernel Memory embedding services from <c>elbruno.LocalEmbeddings</c>.
+/// and Kernel Memory embedding services from <c>ElBruno.LocalEmbeddings</c>.
 /// </summary>
 public static class ServiceCollectionExtensions
 {

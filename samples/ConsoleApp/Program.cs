@@ -1,6 +1,6 @@
-﻿using elbruno.LocalEmbeddings;
-using elbruno.LocalEmbeddings.Extensions;
-using elbruno.LocalEmbeddings.Options;
+﻿using ElBruno.LocalEmbeddings;
+using ElBruno.LocalEmbeddings.Extensions;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 

@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>elbruno.LocalEmbeddings</PackageId>
+    <PackageId>ElBruno.LocalEmbeddings</PackageId>
     <Description>Local embedding generation using Microsoft.Extensions.AI and ONNX Runtime</Description>
     <Authors>Bruno Capuano</Authors>
     <RepositoryUrl>https://github.com/elbruno/elbruno.localembeddings</RepositoryUrl>

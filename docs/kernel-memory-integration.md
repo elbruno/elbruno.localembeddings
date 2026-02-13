@@ -1,16 +1,16 @@
-# Kernel Memory Integration — elbruno.LocalEmbeddings
+# Kernel Memory Integration — ElBruno.LocalEmbeddings
 
 Use local ONNX-based embeddings with [Microsoft Kernel Memory](https://github.com/microsoft/kernel-memory) for semantic memory, RAG pipelines, and document ingestion — all running locally, no external API calls required.
 
 ## Installation
 
 ```bash
-dotnet add package elbruno.LocalEmbeddings.KernelMemory
+dotnet add package ElBruno.LocalEmbeddings.KernelMemory
 ```
 
 This installs the companion package which transitively brings in:
 
-- `elbruno.LocalEmbeddings` (core library)
+- `ElBruno.LocalEmbeddings` (core library)
 - `Microsoft.KernelMemory.Abstractions`
 - `Microsoft.KernelMemory.Core`
 
@@ -19,7 +19,7 @@ This installs the companion package which transitively brings in:
 The simplest way to use local embeddings with Kernel Memory:
 
 ```csharp
-using elbruno.LocalEmbeddings.KernelMemory.Extensions;
+using ElBruno.LocalEmbeddings.KernelMemory.Extensions;
 using Microsoft.KernelMemory;
 
 var memory = new KernelMemoryBuilder()
@@ -81,7 +81,7 @@ The adapter does **not** take ownership — the caller manages the generator's l
 For host-based applications, register both M.E.AI and Kernel Memory interfaces in one call:
 
 ```csharp
-using elbruno.LocalEmbeddings.KernelMemory.Extensions;
+using ElBruno.LocalEmbeddings.KernelMemory.Extensions;
 
 services.AddLocalEmbeddingsWithKernelMemory(options =>
 {
@@ -149,7 +149,7 @@ The companion package provides a thin adapter layer:
 
 ### Why a Separate Package?
 
-The core `elbruno.LocalEmbeddings` has **zero** Kernel Memory dependencies — it only depends on `Microsoft.Extensions.AI.Abstractions`. This keeps it lightweight for consumers who use M.E.AI directly or integrate with other frameworks. The companion package adds the KM bridge without bloating the core.
+The core `ElBruno.LocalEmbeddings` has **zero** Kernel Memory dependencies — it only depends on `Microsoft.Extensions.AI.Abstractions`. This keeps it lightweight for consumers who use M.E.AI directly or integrate with other frameworks. The companion package adds the KM bridge without bloating the core.
 
 ## Migrating from the Manual Bridge
 
@@ -158,8 +158,8 @@ If you previously used `WithCustomEmbeddingGenerator<T>()` directly:
 **Before** (manual bridge):
 
 ```csharp
-using elbruno.LocalEmbeddings;
-using elbruno.LocalEmbeddings.Options;
+using ElBruno.LocalEmbeddings;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.KernelMemory;
 
@@ -174,7 +174,7 @@ var memory = new KernelMemoryBuilder()
 **After** (companion package):
 
 ```csharp
-using elbruno.LocalEmbeddings.KernelMemory.Extensions;
+using ElBruno.LocalEmbeddings.KernelMemory.Extensions;
 using Microsoft.KernelMemory;
 
 var memory = new KernelMemoryBuilder()
@@ -190,7 +190,7 @@ The companion package handles generator construction, adapter wrapping, and life
 See [samples/RagOllama](../samples/RagOllama) for a full working example:
 
 ```csharp
-using elbruno.LocalEmbeddings.KernelMemory.Extensions;
+using ElBruno.LocalEmbeddings.KernelMemory.Extensions;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.AI.Ollama;
 

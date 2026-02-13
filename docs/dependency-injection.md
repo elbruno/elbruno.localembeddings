@@ -1,11 +1,11 @@
-# Dependency Injection — elbruno.LocalEmbeddings
+# Dependency Injection — ElBruno.LocalEmbeddings
 
 `AddLocalEmbeddings()` provides four overloads for flexible registration of `IEmbeddingGenerator<string, Embedding<float>>`.
 
 ## 1) Basic registration
 
 ```csharp
-using elbruno.LocalEmbeddings.Extensions;
+using ElBruno.LocalEmbeddings.Extensions;
 
 services.AddLocalEmbeddings();
 ```
@@ -74,16 +74,16 @@ public sealed class MyService(
 
 ## Kernel Memory Integration
 
-The companion package `elbruno.LocalEmbeddings.KernelMemory` adds DI extensions that register both the M.E.AI `IEmbeddingGenerator` and Kernel Memory's `ITextEmbeddingGenerator` from a single call.
+The companion package `ElBruno.LocalEmbeddings.KernelMemory` adds DI extensions that register both the M.E.AI `IEmbeddingGenerator` and Kernel Memory's `ITextEmbeddingGenerator` from a single call.
 
 ```bash
-dotnet add package elbruno.LocalEmbeddings.KernelMemory
+dotnet add package ElBruno.LocalEmbeddings.KernelMemory
 ```
 
 ### 1) Basic registration
 
 ```csharp
-using elbruno.LocalEmbeddings.KernelMemory.Extensions;
+using ElBruno.LocalEmbeddings.KernelMemory.Extensions;
 
 services.AddLocalEmbeddingsWithKernelMemory();
 ```

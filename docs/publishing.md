@@ -1,13 +1,13 @@
 # Publishing a New Version to NuGet
 
-This guide covers how to publish new versions of **elbruno.LocalEmbeddings** and **elbruno.LocalEmbeddings.KernelMemory** to NuGet.org using GitHub Actions and NuGet Trusted Publishing (keyless, OIDC-based).
+This guide covers how to publish new versions of **ElBruno.LocalEmbeddings** and **ElBruno.LocalEmbeddings.KernelMemory** to NuGet.org using GitHub Actions and NuGet Trusted Publishing (keyless, OIDC-based).
 
 ## Packages
 
 | Package | Project | Description |
 |---------|---------|-------------|
-| `elbruno.LocalEmbeddings` | `src/elbruno.LocalEmbeddings/` | Core library — local ONNX embedding generation |
-| `elbruno.LocalEmbeddings.KernelMemory` | `src/elbruno.LocalEmbeddings.KernelMemory/` | Companion — Kernel Memory adapter + extensions |
+| `ElBruno.LocalEmbeddings` | `src/ElBruno.LocalEmbeddings/` | Core library — local ONNX embedding generation |
+| `ElBruno.LocalEmbeddings.KernelMemory` | `src/ElBruno.LocalEmbeddings.KernelMemory/` | Companion — Kernel Memory adapter + extensions |
 
 ## Prerequisites (One-Time Setup)
 
@@ -41,7 +41,7 @@ This is the standard workflow — the version is derived from the release tag.
 
 1. **Update the version** in both csproj files:
 
-   - `src/elbruno.LocalEmbeddings/elbruno.LocalEmbeddings.csproj`
+   - `src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj`
    - `src/LocalEmbeddings.KernelMemory/LocalEmbeddings.KernelMemory.csproj`
 
    ```xml
@@ -87,7 +87,7 @@ The workflow determines the package version in this order:
 
 1. **Release tag** — if triggered by a GitHub Release (strips leading `v`)
 2. **Manual input** — if triggered via workflow dispatch with a version specified
-3. **csproj fallback** — reads `<Version>` from `src/elbruno.LocalEmbeddings/elbruno.LocalEmbeddings.csproj`
+3. **csproj fallback** — reads `<Version>` from `src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj`
 
 ## Troubleshooting
 
@@ -105,4 +105,4 @@ The workflow determines the package version in this order:
 - [OpenID Connect (OIDC) in GitHub Actions](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect) — How GitHub Actions OIDC tokens work
 - [GitHub Actions: Creating and Using Environments](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment) — How to configure the `release` environment with approval gates
 - [NuGet Package Versioning](https://learn.microsoft.com/en-us/nuget/concepts/package-versioning) — Best practices for SemVer versioning
-- [elbruno.LocalEmbeddings on NuGet.org](https://www.nuget.org/packages/elbruno.LocalEmbeddings) — The published package page
+- [ElBruno.LocalEmbeddings on NuGet.org](https://www.nuget.org/packages/ElBruno.LocalEmbeddings) — The published package page

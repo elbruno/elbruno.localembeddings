@@ -1,4 +1,4 @@
-namespace elbruno.LocalEmbeddings.Tests;
+namespace ElBruno.LocalEmbeddings.Tests;
 
 public class TokenizerTests
 {
