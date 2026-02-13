@@ -1,6 +1,6 @@
 using Microsoft.ML.Tokenizers;
 
-namespace LocalEmbeddings;
+namespace ElBruno.LocalEmbeddings;
 
 /// <summary>
 /// Tokenizer for text-to-embedding conversion using HuggingFace tokenizer files.

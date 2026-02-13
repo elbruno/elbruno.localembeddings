@@ -1,7 +1,7 @@
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 
-namespace LocalEmbeddings;
+namespace ElBruno.LocalEmbeddings;
 
 /// <summary>
 /// Manages an ONNX embedding model for inference.
@@ -181,7 +181,7 @@ public sealed class OnnxEmbeddingModel : IDisposable
 
         // Create tensors
         var shape = new long[] { batchSize, sequenceLength };
-        
+
         var inputIdsTensor = new DenseTensor<long>(flatInputIds, [batchSize, sequenceLength]);
         var attentionMaskTensor = new DenseTensor<long>(flatAttentionMask, [batchSize, sequenceLength]);
         var tokenTypeIdsTensor = new DenseTensor<long>(flatTokenTypeIds, [batchSize, sequenceLength]);
@@ -201,10 +201,10 @@ public sealed class OnnxEmbeddingModel : IDisposable
 
         // Run inference
         using var results = _session.Run(inputs, _outputNames);
-        
+
         // Get output tensor - typically "last_hidden_state" with shape [batch, seq, hidden]
         var outputTensor = results.First().AsTensor<float>();
-        
+
         // Apply mean pooling over the sequence dimension
         var embeddings = ApplyMeanPooling(outputTensor, attentionMasks, batchSize, sequenceLength);
 
@@ -243,7 +243,7 @@ public sealed class OnnxEmbeddingModel : IDisposable
     {
         var dimensions = outputTensor.Dimensions.ToArray();
         var hiddenSize = dimensions[^1];
-        
+
         var embeddings = new float[batchSize][];
 
         for (int batch = 0; batch < batchSize; batch++)
@@ -283,7 +283,7 @@ public sealed class OnnxEmbeddingModel : IDisposable
     public void Dispose()
     {
         if (_disposed) return;
-        
+
         _session?.Dispose();
         _session = null;
         _disposed = true;

@@ -1,123 +1,73 @@
-using System.Runtime.CompilerServices;
-using LocalEmbeddings;
-using LocalEmbeddings.Options;
-using Microsoft.Extensions.AI;
-using RagOllama;
+#pragma warning disable CS8602
+
+using ElBruno.LocalEmbeddings.KernelMemory.Extensions;
+using Microsoft.KernelMemory;
+using Microsoft.KernelMemory.AI.Ollama;
+using Microsoft.KernelMemory.Configuration;
 using OllamaSharp;
-using OllamaChatRole = OllamaSharp.Models.Chat.ChatRole;
-using OllamaChatRequest = OllamaSharp.Models.Chat.ChatRequest;
-using OllamaMessage = OllamaSharp.Models.Chat.Message;
 
-Console.WriteLine("RAG sample with elbruno.LocalEmbeddings + Ollama phi3.5");
-Console.WriteLine("Type 'exit' to quit.");
+var ollamaEndpoint = "http://localhost:11434";
+var modelIdChat = "phi4-mini";
+var question = "What is Bruno's favourite super hero?";
 
-using var embeddingGenerator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());
-var vectorStore = new SimpleVectorStore(embeddingGenerator);
-await vectorStore.AddAsync(KnowledgeBase.Documents);
+// --- Ask without memory ---
+Console.WriteLine($"Question: {question}");
+Console.WriteLine($"\n--- {modelIdChat} response (no memory) ---");
 
-using var ollama = new OllamaApiClient(new Uri("http://localhost:11434"), "phi3.5");
-IChatClient chatClient = new OllamaChatClient(ollama);
+var ollama = new OllamaApiClient(ollamaEndpoint) { SelectedModel = modelIdChat };
+await foreach (var token in ollama.GenerateAsync(question))
+    Console.Write(token.Response);
 
-while (true)
+// --- Build Kernel Memory with local embeddings ---
+Console.WriteLine("\n\n--- Importing facts into Kernel Memory ---");
+
+var config = new OllamaConfig
 {
-    Console.Write("\nYou> ");
-    var query = Console.ReadLine()?.Trim();
-    if (string.IsNullOrWhiteSpace(query))
+    Endpoint = ollamaEndpoint,
+    TextModel = new OllamaModelConfig(modelIdChat)
+};
+
+var memory = new KernelMemoryBuilder()
+    .WithOllamaTextGeneration(config)
+    .WithLocalEmbeddings()
+    .WithCustomTextPartitioningOptions(new TextPartitioningOptions
     {
-        continue;
-    }
+        MaxTokensPerParagraph = 256,
+        OverlappingTokens = 50
+    })
+    .Build();
 
-    if (query.Equals("exit", StringComparison.OrdinalIgnoreCase))
-    {
-        break;
-    }
+var facts = new[]
+{
+    "Gisela's favourite super hero is Batman",
+    "Gisela watched Venom 3 2 weeks ago",
+    "Bruno's favourite super hero is Invincible",
+    "Bruno went to the cinema to watch Venom 3",
+    "Bruno doesn't like the super hero movie: Eternals",
+    "ACE and Goku watched the movies Venom 3 and Eternals",
+};
 
-    var contextDocs = await vectorStore.SearchAsync(query, topK: 3);
-    var prompt = BuildPrompt(query, contextDocs.Select(d => d.Content));
-
-    Console.Write("Assistant> ");
-    await foreach (var update in chatClient.GetStreamingResponseAsync([new ChatMessage(Microsoft.Extensions.AI.ChatRole.User, prompt)]))
-    {
-        if (!string.IsNullOrEmpty(update.Text))
-        {
-            Console.Write(update.Text);
-        }
-    }
-
-    Console.WriteLine();
+for (var i = 0; i < facts.Length; i++)
+{
+    Console.WriteLine($"  [{i + 1}] {facts[i]}");
+    await memory.ImportTextAsync(facts[i], (i + 1).ToString());
 }
 
-static string BuildPrompt(string question, IEnumerable<string> contextDocs)
+// --- Ask with memory ---
+Console.WriteLine($"\n--- Asking with memory: {question} ---");
+await foreach (var result in memory.AskStreamingAsync(question))
 {
-    var context = string.Join("\n- ", contextDocs);
-    return $"""
-You are a helpful assistant. Use the provided context to answer briefly and accurately.
+    Console.Write(result.Result);
 
-Context:
-- {context}
+    if (result.RelevantSources.Count > 0)
+    {
+        Console.WriteLine("\n\n--- Relevant Sources ---");
+        foreach (var source in result.RelevantSources)
+        {
+            Console.WriteLine($"  [source Url: #{source.Index}] Relevance: {source.SourceUrl}");
+        }
+    }
 
-Question: {question}
-""";
 }
 
-internal sealed class OllamaChatClient(IOllamaApiClient client) : IChatClient
-{
-    public async Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
-    {
-        var text = string.Empty;
-        await foreach (var update in GetStreamingResponseAsync(messages, options, cancellationToken))
-        {
-            if (!string.IsNullOrEmpty(update.Text))
-            {
-                text += update.Text;
-            }
-        }
-
-        return new ChatResponse(new ChatMessage(ChatRole.Assistant, text));
-    }
-
-    public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
-        IEnumerable<ChatMessage> messages,
-        ChatOptions? options = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var request = new OllamaChatRequest
-        {
-            Model = client.SelectedModel,
-            Stream = true,
-            Messages = messages.Select(m => new OllamaMessage(MapRole(m.Role), m.Text ?? string.Empty))
-        };
-
-        await foreach (var update in client.ChatAsync(request, cancellationToken))
-        {
-            if (update?.Message is { Content: { Length: > 0 } text })
-            {
-                yield return new ChatResponseUpdate(Microsoft.Extensions.AI.ChatRole.Assistant, text);
-            }
-        }
-    }
-
-    public object? GetService(Type serviceType, object? serviceKey = null)
-    {
-        return serviceType.IsInstanceOfType(client) ? client : null;
-    }
-
-    public void Dispose()
-    {
-    }
-
-    private static OllamaChatRole MapRole(Microsoft.Extensions.AI.ChatRole role)
-    {
-        if (role == Microsoft.Extensions.AI.ChatRole.System)
-        {
-            return OllamaChatRole.System;
-        }
-
-        if (role == Microsoft.Extensions.AI.ChatRole.Assistant)
-        {
-            return OllamaChatRole.Assistant;
-        }
-
-        return OllamaChatRole.User;
-    }
-}
+Console.WriteLine();

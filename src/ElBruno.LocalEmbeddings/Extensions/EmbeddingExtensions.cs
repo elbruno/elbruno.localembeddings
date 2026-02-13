@@ -1,6 +1,6 @@
 using Microsoft.Extensions.AI;
 
-namespace LocalEmbeddings.Extensions;
+namespace ElBruno.LocalEmbeddings.Extensions;
 
 /// <summary>
 /// Extension methods for working with embeddings, including similarity calculations and search operations.

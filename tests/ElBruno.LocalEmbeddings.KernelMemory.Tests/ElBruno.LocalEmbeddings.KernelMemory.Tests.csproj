@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\LocalEmbeddings\LocalEmbeddings.csproj" />
+    <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings.KernelMemory\ElBruno.LocalEmbeddings.KernelMemory.csproj" />
   </ItemGroup>
 
 </Project>

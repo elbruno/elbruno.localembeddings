@@ -1,4 +1,4 @@
-using LocalEmbeddings.Extensions;
+using ElBruno.LocalEmbeddings.Extensions;
 using Microsoft.Extensions.AI;
 
 namespace RagFoundryLocal;

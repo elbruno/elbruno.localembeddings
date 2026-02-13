@@ -1,11 +1,11 @@
-using LocalEmbeddings.Options;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
-namespace LocalEmbeddings.Extensions;
+namespace ElBruno.LocalEmbeddings.Extensions;
 
 /// <summary>
 /// Extension methods for registering LocalEmbeddings services with dependency injection.
@@ -48,7 +48,7 @@ public static class ServiceCollectionExtensions
     {
         // Register options with the Options pattern
         var optionsBuilder = services.AddOptions<LocalEmbeddingsOptions>();
-        
+
         if (configure is not null)
         {
             optionsBuilder.Configure(configure);

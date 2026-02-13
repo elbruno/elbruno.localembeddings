@@ -1,10 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\LocalEmbeddings\LocalEmbeddings.csproj" />
+    <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings.KernelMemory\ElBruno.LocalEmbeddings.KernelMemory.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.KernelMemory.AI.Ollama" Version="0.98.250508.3" />
     <PackageReference Include="OllamaSharp" Version="5.4.16" />
   </ItemGroup>
 

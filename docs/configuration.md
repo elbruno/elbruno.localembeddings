@@ -1,4 +1,4 @@
-# Configuration — elbruno.LocalEmbeddings
+# Configuration — ElBruno.LocalEmbeddings
 
 ## Options
 

@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/ConsoleApp/ConsoleApp.csproj" />
+    <Project Path="samples/RagChat/RagChat.csproj" />
+    <Project Path="samples/RagFoundryLocal/RagFoundryLocal.csproj" />
+    <Project Path="samples/RagOllama/RagOllama.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.KernelMemory/ElBruno.LocalEmbeddings.KernelMemory.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.KernelMemory.Tests/ElBruno.LocalEmbeddings.KernelMemory.Tests.csproj" />
+  </Folder>
+</Solution>

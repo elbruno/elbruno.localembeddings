@@ -1,6 +1,6 @@
-﻿using LocalEmbeddings;
-using LocalEmbeddings.Extensions;
-using LocalEmbeddings.Options;
+﻿using ElBruno.LocalEmbeddings;
+using ElBruno.LocalEmbeddings.Extensions;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -117,10 +117,10 @@ foreach (var (sentence1, sentence2) in sentencePairs)
 {
     var embeddings = await generator.GenerateAsync([sentence1, sentence2]);
     var similarity = CosineSimilarity(embeddings[0].Vector, embeddings[1].Vector);
-    
+
     var similarityBar = new string('█', (int)(similarity * 20));
     var emptyBar = new string('░', 20 - (int)(similarity * 20));
-    
+
     Console.WriteLine($"  \"{sentence1}\"");
     Console.WriteLine($"  \"{sentence2}\"");
     Console.WriteLine($"  Similarity: [{similarityBar}{emptyBar}] {similarity:P1}");
@@ -173,9 +173,9 @@ foreach (var query in queries)
 {
     Console.WriteLine($"Query: \"{query}\"");
     Console.WriteLine();
-    
+
     var queryEmbedding = await generator.GenerateAsync([query]);
-    
+
     // Calculate similarity with all documents
     var results = knowledgeBase
         .Select((doc, idx) => new
@@ -186,7 +186,7 @@ foreach (var query in queries)
         .OrderByDescending(r => r.Similarity)
         .Take(3)
         .ToList();
-    
+
     Console.WriteLine("  Top 3 Results:");
     for (var i = 0; i < results.Count; i++)
     {
@@ -266,18 +266,18 @@ static float CosineSimilarity(ReadOnlyMemory<float> a, ReadOnlyMemory<float> b)
 {
     var spanA = a.Span;
     var spanB = b.Span;
-    
+
     float dotProduct = 0;
     float normA = 0;
     float normB = 0;
-    
+
     for (var i = 0; i < spanA.Length; i++)
     {
         dotProduct += spanA[i] * spanB[i];
         normA += spanA[i] * spanA[i];
         normB += spanB[i] * spanB[i];
     }
-    
+
     var denominator = MathF.Sqrt(normA) * MathF.Sqrt(normB);
     return denominator == 0 ? 0 : dotProduct / denominator;
 }

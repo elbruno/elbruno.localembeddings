@@ -1,4 +1,4 @@
-namespace LocalEmbeddings;
+namespace ElBruno.LocalEmbeddings;
 
 /// <summary>
 /// Interface for downloading and caching ONNX models.
@@ -28,9 +28,9 @@ public sealed class ModelDownloader : IModelDownloader
 {
     private const string DefaultModel = "sentence-transformers/all-MiniLM-L6-v2";
     private const string HuggingFaceBaseUrl = "https://huggingface.co";
-    
+
     private static readonly string[] TokenizerFiles = ["tokenizer.json", "tokenizer_config.json", "vocab.txt"];
-    
+
     private readonly HttpClient _httpClient;
     private readonly string _cacheDirectory;
 
@@ -132,7 +132,7 @@ public sealed class ModelDownloader : IModelDownloader
     {
         // Windows: %LOCALAPPDATA%\LocalEmbeddings\models
         // Linux/macOS: ~/.local/share/LocalEmbeddings/models
-        
+
         if (OperatingSystem.IsWindows())
         {
             var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -184,7 +184,7 @@ public sealed class ModelDownloader : IModelDownloader
     private async Task DownloadFileAsync(string url, string destinationPath, IProgress<double>? progress, CancellationToken cancellationToken)
     {
         using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-        
+
         if (!response.IsSuccessStatusCode)
         {
             throw new HttpRequestException($"Failed to download file. Status: {response.StatusCode}, URL: {url}");
@@ -195,12 +195,12 @@ public sealed class ModelDownloader : IModelDownloader
 
         // Use a temp file to avoid partial downloads
         var tempPath = destinationPath + ".tmp";
-        
+
         try
         {
             await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             await using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 81920, useAsync: true);
-            
+
             var buffer = new byte[81920];
             int bytesRead;
 

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>ElBruno.LocalEmbeddings.KernelMemory</PackageId>
+    <Description>Kernel Memory integration for ElBruno.LocalEmbeddings — provides ITextEmbeddingGenerator adapter and KernelMemoryBuilder extensions</Description>
+    <Authors>Bruno Capuano</Authors>
+    <RepositoryUrl>https://github.com/elbruno/elbruno.localembeddings</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/elbruno/elbruno.localembeddings</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>embeddings;onnx;ai;local;kernel-memory;semantic-memory;microsoft-extensions-ai;sentence-transformers</PackageTags>
+    <Version>1.0.1</Version>
+    <NoWarn>$(NoWarn);KMEXP00</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ElBruno.LocalEmbeddings\ElBruno.LocalEmbeddings.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.KernelMemory.Abstractions" Version="0.98.250508.3" />
+    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.98.250508.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

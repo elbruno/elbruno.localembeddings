@@ -1,18 +1,31 @@
-# Copilot Instructions — elbruno.LocalEmbeddings
+# Copilot Instructions — ElBruno.LocalEmbeddings
+
+## Naming Conventions
+
+- **All** core projects, folders, csproj files, and root namespaces **must** start with `ElBruno.` followed by the project name.
+- Examples:
+    - Folder: `src/ElBruno.LocalEmbeddings/`
+    - Project file: `ElBruno.LocalEmbeddings.csproj`
+    - Root namespace: `ElBruno.LocalEmbeddings`
+    - Sub-namespaces: `ElBruno.LocalEmbeddings.Extensions`, `ElBruno.LocalEmbeddings.Options`
+- Companion packages follow the same rule: `ElBruno.LocalEmbeddings.KernelMemory` (folder, csproj, and namespace).
+- Test projects: `ElBruno.LocalEmbeddings.Tests`, `ElBruno.LocalEmbeddings.KernelMemory.Tests`.
+- **Never** use `LocalEmbeddings` alone as a folder name, project name, namespace, or PackageId.
 
 ## NuGet Package
 
-- **Package ID:** `elbruno.LocalEmbeddings` (always prefixed with `elbruno.`)
+- **Package ID:** `ElBruno.LocalEmbeddings` (always prefixed with `ElBruno.`)
 - **Source:** https://api.nuget.org/v3/index.json
-- **Never** use `LocalEmbeddings` alone as the PackageId — it must be `elbruno.LocalEmbeddings`.
+- **Never** use `LocalEmbeddings` alone as the PackageId — it must be `ElBruno.LocalEmbeddings`.
 
 ## Project
 
 - .NET library for local embedding generation using `Microsoft.Extensions.AI` and ONNX Runtime.
 - **Repository:** https://github.com/elbruno/elbruno.localembeddings
-- Main project: `src/LocalEmbeddings/LocalEmbeddings.csproj`
-- Tests: `tests/LocalEmbeddings.Tests/`
-- Samples: `samples/ConsoleApp/` and `samples/RagChat/`
+- Main project: `src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj`
+- Kernel Memory companion: `src/ElBruno.LocalEmbeddings.KernelMemory/ElBruno.LocalEmbeddings.KernelMemory.csproj`
+- Tests: `tests/ElBruno.LocalEmbeddings.Tests/` and `tests/ElBruno.LocalEmbeddings.KernelMemory.Tests/`
+- Samples: `samples/ConsoleApp/`, `samples/RagChat/`, `samples/RagOllama/`, `samples/RagFoundryLocal/`
 
 ## Repository Structure
 
@@ -39,14 +52,20 @@ All other documentation goes in the `docs/` folder:
 ├── docs/                       # All extended documentation lives here
 │   ├── api-reference.md
 │   ├── configuration.md
-│   └── contributing.md
+│   ├── contributing.md
+│   ├── kernel-memory-integration.md
+│   └── ...
 ├── src/                        # Source code
-│   └── LocalEmbeddings/
+│   ├── ElBruno.LocalEmbeddings/
+│   └── ElBruno.LocalEmbeddings.KernelMemory/
 ├── tests/                      # Test projects
-│   └── LocalEmbeddings.Tests/
+│   ├── ElBruno.LocalEmbeddings.Tests/
+│   └── ElBruno.LocalEmbeddings.KernelMemory.Tests/
 └── samples/                    # Sample applications
     ├── ConsoleApp/
-    └── RagChat/
+    ├── RagChat/
+    ├── RagOllama/
+    └── RagFoundryLocal/
 ```
 
 ## Documentation Rules

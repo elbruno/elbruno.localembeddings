@@ -1,23 +1,23 @@
-using LocalEmbeddings;
-using LocalEmbeddings.Options;
+using ElBruno.LocalEmbeddings;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.AI.Foundry.Local;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using RagFoundryLocal;
 using System.ClientModel;
 
-Console.WriteLine("RAG sample with elbruno.LocalEmbeddings + Foundry Local phi-3.5-mini");
+Console.WriteLine("RAG sample with ElBruno.LocalEmbeddings + Foundry Local phi4-mini");
 Console.WriteLine("Type 'exit' to quit.");
 
 using var embeddingGenerator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());
 var vectorStore = new SimpleVectorStore(embeddingGenerator);
 await vectorStore.AddAsync(KnowledgeBase.Documents);
 
-await using var manager = await FoundryLocalManager.StartModelAsync("phi-3.5-mini");
+await using var manager = await FoundryLocalManager.StartModelAsync("phi4-mini");
 var openAiClient = new OpenAIClient(
     new ApiKeyCredential(manager.ApiKey),
     new OpenAIClientOptions { Endpoint = manager.Endpoint });
-IChatClient chatClient = openAiClient.GetChatClient("phi-3.5-mini").AsIChatClient();
+IChatClient chatClient = openAiClient.GetChatClient("phi4-mini").AsIChatClient();
 
 while (true)
 {

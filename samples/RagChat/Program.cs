@@ -1,4 +1,4 @@
-using LocalEmbeddings.Extensions;
+using ElBruno.LocalEmbeddings.Extensions;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using RagChat.Data;
@@ -57,7 +57,7 @@ var loadTime = DateTime.Now - startTime;
 Console.WriteLine($"  ✓ Embedding generator ready ({loadTime.TotalSeconds:F2}s)");
 
 // Display metadata
-if (embeddingGenerator is LocalEmbeddings.LocalEmbeddingGenerator localGen)
+if (embeddingGenerator is ElBruno.LocalEmbeddings.LocalEmbeddingGenerator localGen)
 {
     Console.WriteLine($"    • Provider: {localGen.Metadata.ProviderName}");
     Console.WriteLine($"    • Model: {localGen.Metadata.DefaultModelId}");
@@ -133,14 +133,14 @@ while (true)
     Console.ForegroundColor = ConsoleColor.Cyan;
     Console.Write("You: ");
     Console.ResetColor();
-    
+
     var input = Console.ReadLine()?.Trim();
-    
+
     if (string.IsNullOrWhiteSpace(input))
         continue;
 
     // Handle commands
-    if (input.Equals("quit", StringComparison.OrdinalIgnoreCase) || 
+    if (input.Equals("quit", StringComparison.OrdinalIgnoreCase) ||
         input.Equals("exit", StringComparison.OrdinalIgnoreCase))
     {
         Console.WriteLine();
@@ -161,7 +161,7 @@ while (true)
     }
 
     Console.WriteLine();
-    
+
     // Perform semantic search
     startTime = DateTime.Now;
     var results = await vectorStore.SearchAsync(input, topK: 3, minScore: 0.2f);
@@ -188,7 +188,7 @@ while (true)
             var bar = new string('█', barLength) + new string('░', 20 - barLength);
 
             // Color based on similarity score
-            Console.ForegroundColor = result.Score >= 0.5f ? ConsoleColor.Green : 
+            Console.ForegroundColor = result.Score >= 0.5f ? ConsoleColor.Green :
                                        result.Score >= 0.35f ? ConsoleColor.Yellow : ConsoleColor.DarkYellow;
             Console.Write($"  [{bar}] ");
             Console.ResetColor();
@@ -197,11 +197,11 @@ while (true)
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine($"  📄 {result.Document.Title}");
             Console.ResetColor();
-            
+
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine($"     Category: {result.Document.Category}");
             Console.ResetColor();
-            
+
             // Wrap content for better display
             var content = result.Document.Content;
             var maxWidth = 70;
@@ -210,7 +210,7 @@ while (true)
             {
                 Console.WriteLine($"     {line}");
             }
-            
+
             Console.WriteLine();
         }
     }
@@ -268,7 +268,7 @@ static void PrintDocumentList(List<Document> documents)
     Console.WriteLine("  Knowledge Base Documents:");
     Console.ResetColor();
     Console.WriteLine();
-    
+
     var grouped = documents.GroupBy(d => d.Category);
     foreach (var group in grouped)
     {
