@@ -3,6 +3,7 @@
 using ElBruno.LocalEmbeddings.KernelMemory.Extensions;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.AI.Ollama;
+using Microsoft.KernelMemory.Configuration;
 using OllamaSharp;
 
 var ollamaEndpoint = "http://localhost:11434";
@@ -29,6 +30,11 @@ var config = new OllamaConfig
 var memory = new KernelMemoryBuilder()
     .WithOllamaTextGeneration(config)
     .WithLocalEmbeddings()
+    .WithCustomTextPartitioningOptions(new TextPartitioningOptions
+    {
+        MaxTokensPerParagraph = 256,
+        OverlappingTokens = 50
+    })
     .Build();
 
 var facts = new[]
@@ -50,6 +56,18 @@ for (var i = 0; i < facts.Length; i++)
 // --- Ask with memory ---
 Console.WriteLine($"\n--- Asking with memory: {question} ---");
 await foreach (var result in memory.AskStreamingAsync(question))
+{
     Console.Write(result.Result);
+
+    if (result.RelevantSources.Count > 0)
+    {
+        Console.WriteLine("\n\n--- Relevant Sources ---");
+        foreach (var source in result.RelevantSources)
+        {
+            Console.WriteLine($"  [source Url: #{source.Index}] Relevance: {source.SourceUrl}");
+        }
+    }
+
+}
 
 Console.WriteLine();
