@@ -159,11 +159,10 @@ If you previously used `WithCustomEmbeddingGenerator<T>()` directly:
 
 ```csharp
 using ElBruno.LocalEmbeddings;
-using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.KernelMemory;
 
-using var generator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());
+using var generator = new LocalEmbeddingGenerator();
 
 var memory = new KernelMemoryBuilder()
     .WithOllamaTextGeneration(config)

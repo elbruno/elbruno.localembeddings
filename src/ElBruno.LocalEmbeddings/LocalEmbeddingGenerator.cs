@@ -26,6 +26,17 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
     private bool _disposed;
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="LocalEmbeddingGenerator"/> class with default options.
+    /// </summary>
+    /// <remarks>
+    /// This is equivalent to <c>new LocalEmbeddingGenerator(new LocalEmbeddingsOptions())</c>.
+    /// </remarks>
+    public LocalEmbeddingGenerator()
+        : this(new LocalEmbeddingsOptions())
+    {
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="LocalEmbeddingGenerator"/> class.
     /// </summary>
     /// <param name="options">The configuration options for embedding generation.</param>
@@ -82,6 +93,31 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
 
     /// <inheritdoc />
     public EmbeddingGeneratorMetadata Metadata => _metadata;
+
+    /// <summary>
+    /// Creates a new instance of <see cref="LocalEmbeddingGenerator"/> asynchronously.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous creation operation.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when model download or loading fails.</exception>
+    /// <remarks>
+    /// <para>
+    /// This factory method performs model download and ONNX session creation on a background thread,
+    /// avoiding blocking the caller's thread. Use this in async contexts instead of the constructor.
+    /// </para>
+    /// <para>
+    /// This is equivalent to calling the constructor but wrapped in <see cref="Task.Run{TResult}(Func{TResult})"/>
+    /// for non-blocking initialization.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var generator = await LocalEmbeddingGenerator.CreateAsync();
+    /// </code>
+    /// </example>
+    public static Task<LocalEmbeddingGenerator> CreateAsync(
+        CancellationToken cancellationToken = default) =>
+        CreateAsync(new LocalEmbeddingsOptions(), cancellationToken);
 
     /// <summary>
     /// Creates a new instance of <see cref="LocalEmbeddingGenerator"/> asynchronously.

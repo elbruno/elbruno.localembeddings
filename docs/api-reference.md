@@ -14,10 +14,14 @@ The main class for generating embeddings. Implements `IEmbeddingGenerator<string
 ```csharp
 public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
 {
-    // Constructor
+    // Constructors
+    public LocalEmbeddingGenerator();
     public LocalEmbeddingGenerator(LocalEmbeddingsOptions options);
 
-    // Async factory method
+    // Async factory methods
+    public static Task<LocalEmbeddingGenerator> CreateAsync(
+        CancellationToken cancellationToken = default);
+
     public static Task<LocalEmbeddingGenerator> CreateAsync(
         LocalEmbeddingsOptions options,
         CancellationToken cancellationToken = default);
@@ -35,6 +39,22 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
 
     public void Dispose();
 }
+```
+
+### Usage examples
+
+```csharp
+// Default model + default options
+using var generator = new LocalEmbeddingGenerator();
+
+// Custom options
+using var customGenerator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions
+{
+    ModelName = "sentence-transformers/all-MiniLM-L12-v2"
+});
+
+// Async factory with defaults
+using var asyncGenerator = await LocalEmbeddingGenerator.CreateAsync();
 ```
 
 ## LocalEmbeddingsOptions

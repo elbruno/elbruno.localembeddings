@@ -1,6 +1,5 @@
 using ElBruno.LocalEmbeddings;
 using ElBruno.LocalEmbeddings.Extensions;
-using ElBruno.LocalEmbeddings.Options;
 using Microsoft.AI.Foundry.Local;
 using Microsoft.Extensions.AI;
 using OpenAI;
@@ -46,7 +45,7 @@ string[] facts =
     "ACE and Goku watched the movies Venom 3 and Eternals",
 ];
 
-using var embeddingGenerator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());
+using var embeddingGenerator = new LocalEmbeddingGenerator();
 var factEmbeddings = await embeddingGenerator.GenerateAsync(facts);
 var indexedFacts = facts.Zip(factEmbeddings, (fact, embedding) => (Item: fact, Embedding: embedding));
 
