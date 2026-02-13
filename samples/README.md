@@ -1,15 +1,36 @@
 # Samples — ElBruno.LocalEmbeddings
 
-Four sample projects demonstrating LocalEmbeddings from basic usage to full RAG with a local LLM.
+Five sample projects demonstrating LocalEmbeddings from basic usage to full RAG with a local LLM.
 
 ## Overview
 
 | Sample | What It Shows | LLM Required? |
 |--------|--------------|---------------|
+| [HelloWorldAltModel](#helloworldaltmodel) | Minimal hello world with a non-default free model | No |
 | [ConsoleApp](#consoleapp) | Embedding basics: generation, similarity, search, DI | No |
 | [RagChat](#ragchat) | Semantic search Q&A over an in-memory FAQ dataset | No |
 | [RagOllama](#ragollama) | Full RAG chat using Ollama with phi4-mini + Kernel Memory | Yes (Ollama) |
 | [RagFoundryLocal](#ragfoundrylocal) | Full RAG chat using Foundry Local with phi4-mini | Yes (Foundry Local) |
+
+---
+
+## HelloWorldAltModel
+
+Simple hello world sample using a free non-default model:
+
+- **Embedding model:** `sentence-transformers/all-MiniLM-L12-v2` (Apache-2.0)
+- **What it does:** generates one embedding and prints dimensions
+
+### Prerequisites
+
+- .NET 10 SDK
+- Internet access on first run to download model files
+
+### Run
+
+```bash
+dotnet run --project samples/HelloWorldAltModel
+```
 
 ---
 

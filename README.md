@@ -50,6 +50,7 @@ See the [samples README](samples/README.md) for prerequisites and run instructio
 
 | Sample | What It Shows |
 |--------|--------------|
+| [HelloWorldAltModel](samples/HelloWorldAltModel) | Minimal hello world with `sentence-transformers/all-MiniLM-L12-v2` |
 | [ConsoleApp](samples/ConsoleApp) | All the basics: single/batch embeddings, similarity, semantic search, DI |
 | [RagChat](samples/RagChat) | Embedding-only semantic search Q&A (no LLM needed) |
 | [RagOllama](samples/RagOllama) | Full RAG with Ollama + phi4-mini + Kernel Memory |
@@ -77,6 +78,7 @@ See [Configuration docs](docs/configuration.md) for supported models, local mode
 | [Getting Started](docs/getting-started.md) | Step-by-step guide from hello world to RAG |
 | [API Reference](docs/api-reference.md) | Classes, methods, and extension methods |
 | [Configuration](docs/configuration.md) | Options, supported models, cache locations |
+| [Alternative Models](docs/alternative-models.md) | Non-default free models, local download workflow, and license notes |
 | [Dependency Injection](docs/dependency-injection.md) | All DI overloads and `IConfiguration` binding |
 | [Kernel Memory Integration](docs/kernel-memory-integration.md) | Using local embeddings with Microsoft Kernel Memory |
 | [Contributing](docs/contributing.md) | Build from source, repo structure, guidelines |
