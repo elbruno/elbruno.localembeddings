@@ -1,8 +1,11 @@
 name: Squad Issue Assign
 
 on:
-  issues:
-    types: [labeled]
+  # issues:
+  #   types: [labeled]
+
+  # Manual trigger
+  workflow_dispatch:
 
 permissions:
   issues: write

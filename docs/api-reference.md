@@ -133,12 +133,36 @@ public static class EmbeddingExtensions
 
     public static float CosineSimilarity(this Embedding<float> a, Embedding<float> b);
 
+    // All-pairs similarity matrix (single collection)
+    public static float[,] Similarity(this IEnumerable<Embedding<float>> embeddings);
+
+    // All-pairs similarity matrix (cross-collection)
+    public static float[,] Similarity(
+        this IEnumerable<Embedding<float>> embeddings1,
+        IEnumerable<Embedding<float>> embeddings2);
+
     public static List<(T Item, float Score)> FindClosest<T>(
         this IEnumerable<(T Item, Embedding<float> Embedding)> items,
         Embedding<float> query,
         int topK = 5,
         float minScore = 0.0f);
 }
+```
+
+### Similarity matrix example
+
+```csharp
+using ElBruno.LocalEmbeddings.Extensions;
+
+var embeddings = await generator.GenerateAsync(new[]
+{
+    "The weather is lovely today.",
+    "It's so sunny outside!",
+    "He drove to the stadium."
+});
+
+var matrix = embeddings.Similarity();
+Console.WriteLine(matrix[0, 1]); // sentence 0 vs sentence 1
 ```
 
 ## ServiceCollectionExtensions

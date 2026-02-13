@@ -67,6 +67,57 @@ public static class EmbeddingExtensions
     }
 
     /// <summary>
+    /// Calculates a full all-pairs cosine similarity matrix between two embedding collections.
+    /// </summary>
+    /// <param name="embeddings1">The first embedding collection (rows).</param>
+    /// <param name="embeddings2">The second embedding collection (columns).</param>
+    /// <returns>
+    /// A matrix with shape [embeddings1.Count, embeddings2.Count], where each cell [i, j]
+    /// contains the cosine similarity between embeddings1[i] and embeddings2[j].
+    /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when either collection is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when embedding dimensions do not match.</exception>
+    /// <remarks>
+    /// This is similar to Sentence Transformers <c>model.similarity(a, b)</c> behavior,
+    /// returning scores for all combinations of vectors from both collections.
+    /// </remarks>
+    public static float[,] Similarity(
+        this IEnumerable<Embedding<float>> embeddings1,
+        IEnumerable<Embedding<float>> embeddings2)
+    {
+        ArgumentNullException.ThrowIfNull(embeddings1);
+        ArgumentNullException.ThrowIfNull(embeddings2);
+
+        var left = embeddings1.ToList();
+        var right = embeddings2.ToList();
+        var similarities = new float[left.Count, right.Count];
+
+        for (int i = 0; i < left.Count; i++)
+        {
+            for (int j = 0; j < right.Count; j++)
+            {
+                similarities[i, j] = left[i].CosineSimilarity(right[j]);
+            }
+        }
+
+        return similarities;
+    }
+
+    /// <summary>
+    /// Calculates an all-pairs cosine similarity matrix within a single embedding collection.
+    /// </summary>
+    /// <param name="embeddings">The embedding collection.</param>
+    /// <returns>
+    /// A square matrix with shape [count, count] containing all-pairs cosine similarity scores.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when the collection is null.</exception>
+    public static float[,] Similarity(this IEnumerable<Embedding<float>> embeddings)
+    {
+        ArgumentNullException.ThrowIfNull(embeddings);
+        return embeddings.Similarity(embeddings);
+    }
+
+    /// <summary>
     /// Finds the closest matching items to a query embedding based on cosine similarity.
     /// </summary>
     /// <typeparam name="T">The type of item associated with each embedding.</typeparam>

@@ -50,8 +50,8 @@ This is the standard workflow — the version is derived from the release tag.
 
 2. **NuGet icon source** (already configured):
 
-   - `nuget_images/icon_02.png`
-   - Packed into each `.nupkg` as `icon_02.png` via `<PackageIcon>icon_02.png</PackageIcon>`
+   - `nuget_images/icon_03.png`
+   - Packed into each `.nupkg` as `icon_03.png` via `<PackageIcon>icon_03.png</PackageIcon>`
 
 3. **Commit and push** the version change to `main`
 4. **Create a GitHub Release:**
