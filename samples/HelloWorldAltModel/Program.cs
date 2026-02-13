@@ -9,7 +9,8 @@ var options = new LocalEmbeddingsOptions
 
 using var generator = new LocalEmbeddingGenerator(options);
 
-var result = await generator.GenerateAsync(["Hello world from a non-default embeddings model!"]);
+// Single-string overload — no array wrapping needed
+var embedding = await generator.GenerateEmbeddingAsync("Hello world from a non-default embeddings model!");
 
 Console.WriteLine($"Model: {options.ModelName}");
-Console.WriteLine($"Dimensions: {result[0].Vector.Length}");
+Console.WriteLine($"Dimensions: {embedding.Vector.Length}");

@@ -53,7 +53,8 @@ var singleText = "The quick brown fox jumps over the lazy dog.";
 Console.WriteLine($"Input text: \"{singleText}\"");
 Console.WriteLine();
 
-var singleEmbedding = await generator.GenerateAsync([singleText]);
+// Single-string overload — no array wrapping needed!
+var singleEmbedding = await generator.GenerateAsync(singleText);
 var vector = singleEmbedding[0].Vector;
 
 Console.WriteLine($"✓ Generated embedding with {vector.Length} dimensions");
@@ -174,14 +175,15 @@ foreach (var query in queries)
     Console.WriteLine($"Query: \"{query}\"");
     Console.WriteLine();
 
-    var queryEmbedding = await generator.GenerateAsync([query]);
+    // Single-string GenerateEmbeddingAsync — returns the embedding directly
+    var queryEmbedding = await generator.GenerateEmbeddingAsync(query);
 
     // Calculate similarity with all documents
     var results = knowledgeBase
         .Select((doc, idx) => new
         {
             Document = doc,
-            Similarity = CosineSimilarity(queryEmbedding[0].Vector, kbEmbeddings[idx].Vector)
+            Similarity = CosineSimilarity(queryEmbedding.Vector, kbEmbeddings[idx].Vector)
         })
         .OrderByDescending(r => r.Similarity)
         .Take(3)
@@ -236,10 +238,11 @@ Console.WriteLine();
 
 // Use the DI-injected generator
 var diTestText = "Testing dependency injection with LocalEmbeddings!";
-var diEmbedding = await diGenerator.GenerateAsync([diTestText]);
+// Works through DI — the extension method is on IEmbeddingGenerator<string, Embedding<float>>
+var diEmbedding = await diGenerator.GenerateEmbeddingAsync(diTestText);
 
 Console.WriteLine($"Generated embedding for: \"{diTestText}\"");
-Console.WriteLine($"  Dimensions: {diEmbedding[0].Vector.Length}");
+Console.WriteLine($"  Dimensions: {diEmbedding.Vector.Length}");
 Console.WriteLine();
 
 // =============================================================================

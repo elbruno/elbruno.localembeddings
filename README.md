@@ -13,6 +13,7 @@ A .NET library for generating text embeddings locally using ONNX Runtime and Mic
 - **HuggingFace Model Support** — Use popular sentence transformer models from HuggingFace Hub
 - **Automatic Model Caching** — Models are downloaded once and cached locally
 - **Dependency Injection Support** — First-class `IServiceCollection` integration
+- **Single-String Convenience API** — `GenerateAsync("text")` and `GenerateEmbeddingAsync("text")` — no array wrapping needed
 - **Thread-Safe & Batched** — Concurrent generation and efficient multi-text processing
 
 ## Installation
@@ -36,10 +37,13 @@ using ElBruno.LocalEmbeddings.Options;
 // Create the generator (downloads model automatically on first run)
 using var generator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());
 
-// Generate an embedding
-var result = await generator.GenerateAsync(["Hello, world!"]);
+// Generate a single embedding — no array wrapping needed
+var embedding = await generator.GenerateEmbeddingAsync("Hello, world!");
+Console.WriteLine($"Dimensions: {embedding.Vector.Length}"); // 384
 
-Console.WriteLine($"Dimensions: {result[0].Vector.Length}"); // 384
+// Or get the full result collection
+var result = await generator.GenerateAsync("Hello, world!");
+Console.WriteLine($"Embedding: [{string.Join(", ", result[0].Vector.ToArray().Take(3))}...]");
 ```
 
 Want to go further? See the [Getting Started guide](docs/getting-started.md) for a step-by-step walkthrough — from cosine similarity to semantic search, dependency injection, and full RAG with a local LLM.

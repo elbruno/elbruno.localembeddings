@@ -39,10 +39,10 @@ dotnet run --project samples/HelloWorldAltModel
 **The best place to start.** Walks through 6 progressive examples in a single file:
 
 1. Load the embedding model
-2. Generate an embedding for a single string
+2. Generate an embedding for a single string (using `GenerateAsync("text")` convenience overload)
 3. Batch-embed multiple documents
 4. Compare sentences with cosine similarity
-5. Semantic search over a mini knowledge base
+5. Semantic search over a mini knowledge base (using `GenerateEmbeddingAsync(query)`)
 6. Dependency injection with `AddLocalEmbeddings()`
 
 ### Prerequisites

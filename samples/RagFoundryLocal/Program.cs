@@ -55,15 +55,11 @@ for (var i = 0; i < facts.Length; i++)
     Console.WriteLine($"  [{i + 1}] {facts[i]}");
 }
 
-var queryEmbeddings = await embeddingGenerator.GenerateAsync([question]);
-if (queryEmbeddings.Count == 0)
-{
-    Console.WriteLine("Error: Failed to generate query embedding. Verify the local embedding model is available.");
-    return;
-}
+// Single-string convenience method — returns the embedding directly
+var queryEmbedding = await embeddingGenerator.GenerateEmbeddingAsync(question);
 
 var contextDocs = indexedFacts
-    .FindClosest(queryEmbeddings[0], topK: topK)
+    .FindClosest(queryEmbedding, topK: topK)
     .Select(match => match.Item);
 
 // --- Ask with memory ---

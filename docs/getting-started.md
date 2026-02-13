@@ -19,15 +19,17 @@ using ElBruno.LocalEmbeddings.Options;
 // Create the generator (downloads model automatically on first run)
 using var generator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());
 
-// Generate an embedding
-var result = await generator.GenerateAsync(["Hello, world!"]);
-float[] vector = result[0].Vector.ToArray();
+// Generate an embedding — single-string convenience method
+var embedding = await generator.GenerateEmbeddingAsync("Hello, world!");
+float[] vector = embedding.Vector.ToArray();
 
 Console.WriteLine($"Dimensions: {vector.Length}");           // 384
 Console.WriteLine($"First 3 values: {vector[0]:F4}, {vector[1]:F4}, {vector[2]:F4}");
 ```
 
 The first run downloads the default model (`sentence-transformers/all-MiniLM-L6-v2`) and caches it locally. Subsequent runs load instantly.
+
+> **Tip:** `GenerateEmbeddingAsync(string)` returns a single `Embedding<float>` directly. If you need the full `GeneratedEmbeddings` collection, use `GenerateAsync(string)` instead. For multiple texts, use the batch overload `GenerateAsync(IEnumerable<string>)`.
 
 ## Step 2: Compare Two Sentences — Cosine Similarity
 
@@ -91,8 +93,8 @@ var docEmbeddings = await generator.GenerateAsync(docs);
 var indexed = docs.Zip(docEmbeddings, (text, emb) => (text, emb)).ToList();
 
 // Search by meaning
-var query = await generator.GenerateAsync(["What language for building websites?"]);
-var results = indexed.FindClosest(query[0], topK: 2, minScore: 0.3f);
+var queryEmbedding = await generator.GenerateEmbeddingAsync("What language for building websites?");
+var results = indexed.FindClosest(queryEmbedding, topK: 2, minScore: 0.3f);
 
 foreach (var (text, score) in results)
     Console.WriteLine($"  {score:P0} — {text}");
@@ -123,6 +125,8 @@ var generator = provider.GetRequiredService<IEmbeddingGenerator<string, Embeddin
 var result = await generator.GenerateAsync(["DI works!"]);
 Console.WriteLine($"Dimensions: {result[0].Vector.Length}");
 ```
+
+> **Note:** The single-string extension methods (`GenerateAsync(string)` and `GenerateEmbeddingAsync(string)`) work on `IEmbeddingGenerator<string, Embedding<float>>` too — they're auto-discovered from the `ElBruno.LocalEmbeddings` namespace.
 
 The `AddLocalEmbeddings()` method registers:
 
@@ -159,11 +163,11 @@ Both use `LocalEmbeddingGenerator` for embeddings and `IChatClient` (from `Micro
 ### Key code pattern (from both samples)
 
 ```csharp
-// 1. Embed the user's question
-var queryEmbedding = await embeddingGenerator.GenerateAsync([userQuestion]);
+// 1. Embed the user's question (single-string convenience method)
+var queryEmbedding = await embeddingGenerator.GenerateEmbeddingAsync(userQuestion);
 
 // 2. Find the most relevant documents
-var results = vectorStore.Search(queryEmbedding[0], topK: 3);
+var results = vectorStore.Search(queryEmbedding, topK: 3);
 
 // 3. Build a prompt with retrieved context
 var context = string.Join("\n\n", results.Select(r => r.Content));

@@ -324,6 +324,129 @@ public class LocalEmbeddingGeneratorTests
         generator.Dispose();
     }
 
+    // =========================================================================
+    // Single-string GenerateAsync extension method tests
+    // =========================================================================
+
+    [Fact]
+    public async Task GenerateAsync_SingleString_NullGenerator_ThrowsArgumentNullException()
+    {
+        IEmbeddingGenerator<string, Embedding<float>> generator = null!;
+        await Assert.ThrowsAsync<ArgumentNullException>(() => generator.GenerateAsync("test"));
+    }
+
+    [Fact]
+    public async Task GenerateEmbeddingAsync_NullGenerator_ThrowsArgumentNullException()
+    {
+        IEmbeddingGenerator<string, Embedding<float>> generator = null!;
+        await Assert.ThrowsAsync<ArgumentNullException>(() => generator.GenerateEmbeddingAsync("test"));
+    }
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    public async Task GenerateAsync_SingleString_ReturnsSingleEmbedding()
+    {
+        var modelPath = GetModelPath();
+        Skip.If(modelPath == null, "Model not available for testing");
+
+        var options = new LocalEmbeddingsOptions
+        {
+            ModelPath = modelPath,
+            EnsureModelDownloaded = false
+        };
+
+        using var generator = new LocalEmbeddingGenerator(options);
+        var result = await generator.GenerateAsync("Hello world");
+
+        Assert.Single(result);
+        Assert.Equal(384, result[0].Vector.Length);
+    }
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    public async Task GenerateAsync_SingleString_NullValue_ThrowsArgumentNullException()
+    {
+        var modelPath = GetModelPath();
+        Skip.If(modelPath == null, "Model not available for testing");
+
+        var options = new LocalEmbeddingsOptions
+        {
+            ModelPath = modelPath,
+            EnsureModelDownloaded = false
+        };
+
+        using var generator = new LocalEmbeddingGenerator(options);
+        string value = null!;
+        await Assert.ThrowsAsync<ArgumentNullException>(() => generator.GenerateAsync(value));
+    }
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    public async Task GenerateEmbeddingAsync_ReturnsSingleEmbedding()
+    {
+        var modelPath = GetModelPath();
+        Skip.If(modelPath == null, "Model not available for testing");
+
+        var options = new LocalEmbeddingsOptions
+        {
+            ModelPath = modelPath,
+            EnsureModelDownloaded = false
+        };
+
+        using var generator = new LocalEmbeddingGenerator(options);
+        var embedding = await generator.GenerateEmbeddingAsync("Hello world");
+
+        Assert.NotNull(embedding);
+        Assert.Equal(384, embedding.Vector.Length);
+    }
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    public async Task GenerateEmbeddingAsync_NullValue_ThrowsArgumentNullException()
+    {
+        var modelPath = GetModelPath();
+        Skip.If(modelPath == null, "Model not available for testing");
+
+        var options = new LocalEmbeddingsOptions
+        {
+            ModelPath = modelPath,
+            EnsureModelDownloaded = false
+        };
+
+        using var generator = new LocalEmbeddingGenerator(options);
+        string value = null!;
+        await Assert.ThrowsAsync<ArgumentNullException>(() => generator.GenerateEmbeddingAsync(value));
+    }
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    public async Task GenerateEmbeddingAsync_MatchesBatchResult()
+    {
+        var modelPath = GetModelPath();
+        Skip.If(modelPath == null, "Model not available for testing");
+
+        var options = new LocalEmbeddingsOptions
+        {
+            ModelPath = modelPath,
+            EnsureModelDownloaded = false
+        };
+
+        using var generator = new LocalEmbeddingGenerator(options);
+        const string text = "Consistency check between single and batch API";
+
+        var singleResult = await generator.GenerateEmbeddingAsync(text);
+        var batchResult = await generator.GenerateAsync([text]);
+
+        var singleVector = singleResult.Vector.ToArray();
+        var batchVector = batchResult[0].Vector.ToArray();
+
+        Assert.Equal(singleVector.Length, batchVector.Length);
+        for (int i = 0; i < singleVector.Length; i++)
+        {
+            Assert.Equal(singleVector[i], batchVector[i]);
+        }
+    }
+
     /// <summary>
     /// Gets the path to a model directory if available (for integration tests).
     /// </summary>

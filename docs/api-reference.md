@@ -62,6 +62,46 @@ public sealed class LocalEmbeddingsOptions
 | `EnsureModelDownloaded` | `bool` | `true` | Download model on startup if not cached |
 | `NormalizeEmbeddings` | `bool` | `false` | Normalize vectors to unit length |
 
+## EmbeddingGeneratorExtensions
+
+Convenience extension methods on `IEmbeddingGenerator<string, Embedding<float>>` for single-string embedding generation. These live in the `ElBruno.LocalEmbeddings` namespace, so they appear automatically — no extra `using` required.
+
+```csharp
+public static class EmbeddingGeneratorExtensions
+{
+    // Returns a GeneratedEmbeddings collection (single item)
+    public static Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
+        this IEmbeddingGenerator<string, Embedding<float>> generator,
+        string value,
+        EmbeddingGenerationOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    // Returns a single Embedding<float> directly
+    public static Task<Embedding<float>> GenerateEmbeddingAsync(
+        this IEmbeddingGenerator<string, Embedding<float>> generator,
+        string value,
+        EmbeddingGenerationOptions? options = null,
+        CancellationToken cancellationToken = default);
+}
+```
+
+### Usage examples
+
+```csharp
+// GenerateAsync — single string, returns collection
+var result = await generator.GenerateAsync("Hello, world!");
+float[] vector = result[0].Vector.ToArray();
+
+// GenerateEmbeddingAsync — single string, returns embedding directly
+var embedding = await generator.GenerateEmbeddingAsync("Hello, world!");
+float[] vector = embedding.Vector.ToArray();
+
+// Batch processing (existing API) — still available
+var results = await generator.GenerateAsync(new[] { "text1", "text2", "text3" });
+```
+
+> **Tip:** Use `GenerateEmbeddingAsync` when you have a single text and want the embedding directly. Use the batch `GenerateAsync(IEnumerable<string>)` when processing multiple texts for better throughput.
+
 ## EmbeddingExtensions
 
 Utility methods for embedding comparison and retrieval.
