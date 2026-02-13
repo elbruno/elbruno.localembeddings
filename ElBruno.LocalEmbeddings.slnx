@@ -1,7 +1,9 @@
 <Solution>
   <Folder Name="/samples/">
     <Project Path="samples/ConsoleApp/ConsoleApp.csproj" />
+    <Project Path="samples/ConsoleAppLite/ConsoleAppLite.csproj" />
     <Project Path="samples/HelloWorldAltModel/HelloWorldAltModel.csproj" />
+    <Project Path="samples/RaspberryPiTiny/RaspberryPiTiny.csproj" />
     <Project Path="samples/RagChat/RagChat.csproj" />
     <Project Path="samples/RagFoundryLocal/RagFoundryLocal.csproj" />
     <Project Path="samples/RagOllama/RagOllama.csproj" />

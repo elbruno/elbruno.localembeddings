@@ -1,5 +1,6 @@
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
+using System.Runtime.InteropServices;
 
 namespace ElBruno.LocalEmbeddings;
 
@@ -35,10 +36,18 @@ public sealed class OnnxEmbeddingModel : IDisposable
     /// </summary>
     /// <param name="modelPath">The path to the ONNX model file.</param>
     /// <param name="normalizeEmbeddings">Whether to L2-normalize embeddings to unit length.</param>
+    /// <param name="useParallelExecution">Whether to use parallel execution mode in ONNX Runtime.</param>
+    /// <param name="interOpNumThreads">Optional inter-op thread count override.</param>
+    /// <param name="intraOpNumThreads">Optional intra-op thread count override.</param>
     /// <exception cref="ArgumentException">Thrown when the model path is null or empty.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the model file does not exist.</exception>
     /// <exception cref="InvalidOperationException">Thrown when a model is already loaded.</exception>
-    public void Load(string modelPath, bool normalizeEmbeddings = false)
+    public void Load(
+        string modelPath,
+        bool normalizeEmbeddings = false,
+        bool useParallelExecution = true,
+        int? interOpNumThreads = null,
+        int? intraOpNumThreads = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -57,21 +66,135 @@ public sealed class OnnxEmbeddingModel : IDisposable
             throw new InvalidOperationException("A model is already loaded. Dispose this instance and create a new one to load a different model.");
         }
 
-        var sessionOptions = new SessionOptions
-        {
-            GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
-            ExecutionMode = ExecutionMode.ORT_PARALLEL,
-            InterOpNumThreads = Environment.ProcessorCount,
-            IntraOpNumThreads = Environment.ProcessorCount
-        };
+        ValidateThreadCount(interOpNumThreads, nameof(interOpNumThreads));
+        ValidateThreadCount(intraOpNumThreads, nameof(intraOpNumThreads));
 
-        _session = new InferenceSession(modelPath, sessionOptions);
+        EnsureLinuxOnnxRuntimeAliases();
+
+        var defaultThreadCount = Environment.ProcessorCount;
+        var resolvedInterOpNumThreads = interOpNumThreads ?? defaultThreadCount;
+        var resolvedIntraOpNumThreads = intraOpNumThreads ?? defaultThreadCount;
+
+        SessionOptions sessionOptions;
+        try
+        {
+            sessionOptions = new SessionOptions
+            {
+                GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
+                ExecutionMode = useParallelExecution ? ExecutionMode.ORT_PARALLEL : ExecutionMode.ORT_SEQUENTIAL,
+                InterOpNumThreads = resolvedInterOpNumThreads,
+                IntraOpNumThreads = resolvedIntraOpNumThreads
+            };
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or TypeInitializationException)
+        {
+            throw new InvalidOperationException(
+                BuildOnnxNativeLoadErrorMessage(modelPath),
+                ex);
+        }
+
+        try
+        {
+            _session = new InferenceSession(modelPath, sessionOptions);
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or TypeInitializationException)
+        {
+            sessionOptions.Dispose();
+            throw new InvalidOperationException(
+                BuildOnnxNativeLoadErrorMessage(modelPath),
+                ex);
+        }
+
         _outputNames = _session.OutputMetadata.Keys.ToArray();
         _normalizeEmbeddings = normalizeEmbeddings;
 
         // Determine embedding dimension from model output
         var outputMeta = _session.OutputMetadata.Values.First();
         EmbeddingDimension = outputMeta.Dimensions.Length > 2 ? outputMeta.Dimensions[2] : outputMeta.Dimensions[^1];
+    }
+
+    private static void EnsureLinuxOnnxRuntimeAliases()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            return;
+        }
+
+        string? runtimeFolder = RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.Arm64 => "linux-arm64",
+            Architecture.X64 => "linux-x64",
+            Architecture.Arm => "linux-arm",
+            _ => null
+        };
+
+        if (runtimeFolder is null)
+        {
+            return;
+        }
+
+        var baseDirectory = AppContext.BaseDirectory;
+        var nativeDirectory = Path.Combine(baseDirectory, "runtimes", runtimeFolder, "native");
+        var canonicalLibraryPath = Path.Combine(nativeDirectory, "libonnxruntime.so");
+
+        if (!File.Exists(canonicalLibraryPath))
+        {
+            return;
+        }
+
+        var aliasNames = new[] { "onnxruntime.dll.so", "libonnxruntime.dll.so" };
+        foreach (var aliasName in aliasNames)
+        {
+            TryCreateAliasCopy(canonicalLibraryPath, Path.Combine(nativeDirectory, aliasName));
+            TryCreateAliasCopy(canonicalLibraryPath, Path.Combine(baseDirectory, aliasName));
+        }
+    }
+
+    private static void ValidateThreadCount(int? threadCount, string paramName)
+    {
+        if (threadCount is <= 0)
+        {
+            throw new ArgumentOutOfRangeException(paramName, "Thread count must be greater than zero when specified.");
+        }
+    }
+
+    private static void TryCreateAliasCopy(string sourcePath, string destinationPath)
+    {
+        if (File.Exists(destinationPath))
+        {
+            return;
+        }
+
+        try
+        {
+            File.Copy(sourcePath, destinationPath);
+        }
+        catch
+        {
+            // Best effort only. If this fails, ONNX Runtime will still throw and
+            // callers receive a detailed error message with platform diagnostics.
+        }
+    }
+
+    private static string BuildOnnxNativeLoadErrorMessage(string modelPath)
+    {
+        var osDescription = RuntimeInformation.OSDescription;
+        var architecture = RuntimeInformation.ProcessArchitecture;
+        var baseDirectory = AppContext.BaseDirectory;
+
+        string? runtimeFolder = RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.Arm64 => "linux-arm64",
+            Architecture.X64 => "linux-x64",
+            Architecture.Arm => "linux-arm",
+            _ => null
+        };
+
+        var nativeDirectory = runtimeFolder is null
+            ? "<unknown>"
+            : Path.Combine(baseDirectory, "runtimes", runtimeFolder, "native");
+
+        return $"Failed to initialize ONNX Runtime native libraries. OS: {osDescription}; Architecture: {architecture}; Model path: '{modelPath}'; Base directory: '{baseDirectory}'; Expected native directory: '{nativeDirectory}'. On Linux, ensure ONNX native libraries are present and loadable (libonnxruntime.so and provider dependencies).";
     }
 
     /// <summary>

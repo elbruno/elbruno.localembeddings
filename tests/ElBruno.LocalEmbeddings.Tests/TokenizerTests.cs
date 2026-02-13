@@ -235,8 +235,12 @@ public class TokenizerTests
     }
 
     /// <summary>
-    /// Gets the path to a tokenizer file if available (for integration tests).
+    /// Gets the path to the model directory containing vocab.txt (for integration tests).
     /// </summary>
+    /// <remarks>
+    /// Returns the model directory path, not a specific file. The <see cref="Tokenizer"/>
+    /// constructor handles directories by looking for <c>vocab.txt</c> inside.
+    /// </remarks>
     private static string? GetTokenizerPath()
     {
         // Check default cache location
@@ -245,14 +249,14 @@ public class TokenizerTests
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share", "LocalEmbeddings", "models");
 
         var modelDir = Path.Combine(defaultCache, "sentence-transformers_all-MiniLM-L6-v2");
-        var tokenizerPath = Path.Combine(modelDir, "tokenizer.json");
+        var vocabPath = Path.Combine(modelDir, "vocab.txt");
 
-        if (File.Exists(tokenizerPath))
-            return tokenizerPath;
+        if (File.Exists(vocabPath))
+            return modelDir;
 
         // Try alternative locations
         var envPath = Environment.GetEnvironmentVariable("LOCALEMBEDDINGS_TEST_TOKENIZER");
-        if (!string.IsNullOrEmpty(envPath) && File.Exists(envPath))
+        if (!string.IsNullOrEmpty(envPath) && (Directory.Exists(envPath) || File.Exists(envPath)))
             return envPath;
 
         return null;

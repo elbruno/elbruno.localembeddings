@@ -50,4 +50,25 @@ public sealed class LocalEmbeddingsOptions
     /// </para>
     /// </remarks>
     public bool NormalizeEmbeddings { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether ONNX Runtime should use parallel execution mode.
+    /// Default is true.
+    /// </summary>
+    /// <remarks>
+    /// Set this to <see langword="false"/> on low-resource devices to reduce CPU pressure.
+    /// </remarks>
+    public bool UseParallelExecution { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the number of inter-op threads used by ONNX Runtime.
+    /// If null, defaults to <see cref="Environment.ProcessorCount"/>.
+    /// </summary>
+    public int? InterOpNumThreads { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of intra-op threads used by ONNX Runtime.
+    /// If null, defaults to <see cref="Environment.ProcessorCount"/>.
+    /// </summary>
+    public int? IntraOpNumThreads { get; set; }
 }

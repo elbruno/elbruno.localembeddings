@@ -62,7 +62,12 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
         // Load the ONNX model
         _model = new OnnxEmbeddingModel();
         var modelPath = Path.Combine(modelDirectory, "model.onnx");
-        _model.Load(modelPath, options.NormalizeEmbeddings);
+        _model.Load(
+            modelPath,
+            options.NormalizeEmbeddings,
+            options.UseParallelExecution,
+            options.InterOpNumThreads,
+            options.IntraOpNumThreads);
 
         // Initialize the tokenizer
         _tokenizer = new Tokenizer(modelDirectory, options.MaxSequenceLength);

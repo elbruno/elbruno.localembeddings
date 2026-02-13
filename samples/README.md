@@ -1,12 +1,14 @@
 # Samples — ElBruno.LocalEmbeddings
 
-Five sample projects demonstrating LocalEmbeddings from basic usage to full RAG with a local LLM.
+Seven sample projects demonstrating LocalEmbeddings from basic usage to full RAG with a local LLM.
 
 ## Overview
 
 | Sample | What It Shows | LLM Required? |
 |--------|--------------|---------------|
 | [HelloWorldAltModel](#helloworldaltmodel) | Minimal hello world with a non-default free model | No |
+| [RaspberryPiTiny](#raspberrypitiny) | Ultra-small sample for Raspberry Pi and low-memory devices | No |
+| [ConsoleAppLite](#consoleapplite) | Lightweight menu sample for low-resource devices | No |
 | [ConsoleApp](#consoleapp) | Embedding basics: generation, similarity, search, DI | No |
 | [RagChat](#ragchat) | Semantic search Q&A over an in-memory FAQ dataset | No |
 | [RagOllama](#ragollama) | Full RAG chat using Ollama with phi4-mini + Kernel Memory | Yes (Ollama) |
@@ -34,6 +36,34 @@ dotnet run --project samples/HelloWorldAltModel
 
 ---
 
+## RaspberryPiTiny
+
+Smallest sample focused on device stability.
+
+- Default mode runs **one** embedding and exits
+- Optional mode computes similarity for **two** short texts
+- Uses conservative runtime settings (`ORT_SEQUENTIAL`, one thread)
+
+### Prerequisites
+
+- .NET 10 SDK
+
+### Run
+
+Default (single embedding):
+
+```bash
+dotnet run --project samples/RaspberryPiTiny
+```
+
+Similarity mode (two embeddings + cosine similarity):
+
+```bash
+dotnet run --project samples/RaspberryPiTiny -- sim
+```
+
+---
+
 ## ConsoleApp
 
 **The best place to start.** Walks through 6 progressive examples in a single file:
@@ -53,6 +83,36 @@ dotnet run --project samples/HelloWorldAltModel
 
 ```bash
 dotnet run --project samples/ConsoleApp
+```
+
+---
+
+## ConsoleAppLite
+
+Lightweight sample designed for low-resource environments (for example Raspberry Pi).
+
+- Loads one model once
+- Runs only one small scenario
+- Exits immediately (no long full-demo flow)
+
+### Scenarios
+
+1. Generate one embedding (Hello World)
+2. Generate two embeddings and compute cosine similarity
+
+### Run
+
+Interactive menu:
+
+```bash
+dotnet run --project samples/ConsoleAppLite
+```
+
+Run a single scenario directly:
+
+```bash
+dotnet run --project samples/ConsoleAppLite -- 1
+dotnet run --project samples/ConsoleAppLite -- 2
 ```
 
 ---
