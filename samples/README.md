@@ -90,7 +90,14 @@ Full **Retrieval-Augmented Generation** combining LocalEmbeddings for retrieval 
 - **Embeddings:** `LocalEmbeddingGenerator` via `.WithLocalEmbeddings()` (all-MiniLM-L6-v2, runs locally via ONNX)
 - **Chat LLM:** phi4-mini via `OllamaSharp` (`IChatClient`)
 - **Semantic Memory:** Microsoft Kernel Memory with `ElBruno.LocalEmbeddings.KernelMemory` adapter
-- **Flow:** Import documents into Kernel Memory → ask a question → KM retrieves relevant chunks → generates an answer via the Ollama LLM
+- **Flow:** Import facts into Kernel Memory → ask a question → KM retrieves relevant chunks → Ollama LLM generates an answer
+- **Sample data:** Fun facts about people and movies — e.g. "What is Bruno's favourite super hero?"
+
+### Approach
+
+RagOllama uses **Microsoft Kernel Memory** as a high-level orchestrator. You call `memory.ImportTextAsync()` to ingest facts and `memory.AskStreamingAsync()` to query. Kernel Memory handles chunking, embedding, storage, retrieval, and prompt building internally. The `ElBruno.LocalEmbeddings.KernelMemory` companion package plugs local ONNX embeddings into this pipeline via the `ITextEmbeddingGenerator` adapter.
+
+This is the **easiest path** if you want a turnkey RAG pipeline with minimal code.
 
 ### Prerequisites
 
@@ -113,11 +120,18 @@ dotnet run --project samples/RagOllama
 
 ## RagFoundryLocal
 
-Same minimal flow as RagOllama, but using **Microsoft Foundry Local** instead of Ollama.
+Full **Retrieval-Augmented Generation** using **Microsoft Foundry Local** for the LLM and **LocalEmbeddings** for retrieval. Uses the same sample data and question as RagOllama so you can compare the two approaches side by side.
 
 - **Embeddings:** `LocalEmbeddingGenerator` (all-MiniLM-L6-v2, runs locally via ONNX)
 - **Chat LLM:** phi4-mini via `FoundryLocalManager` → OpenAI-compatible endpoint → `IChatClient`
-- **Flow:** Ask once without memory, then ask again with embedding-based retrieved context
+- **Flow:** Ask once without memory → embed facts + query with `LocalEmbeddingGenerator` → find closest matches with `FindClosest` → build a prompt with retrieved context → stream the LLM answer
+- **Sample data:** Same facts as RagOllama — e.g. "What is Bruno's favourite super hero?"
+
+### Approach
+
+RagFoundryLocal implements the **RAG pipeline manually** — you control every step: embedding the facts, embedding the query, finding the closest matches with `FindClosest`, building the prompt with retrieved context, and streaming the response from the LLM. There is no Kernel Memory abstraction; you work directly with `LocalEmbeddingGenerator`, `EmbeddingExtensions`, and `IChatClient`.
+
+This approach gives you **full control** over the retrieval and prompt-building steps, and demonstrates how the core `ElBruno.LocalEmbeddings` library works without any companion packages.
 
 ### Prerequisites
 
@@ -130,6 +144,21 @@ Same minimal flow as RagOllama, but using **Microsoft Foundry Local** instead of
 ```bash
 dotnet run --project samples/RagFoundryLocal
 ```
+
+---
+
+## RagOllama vs RagFoundryLocal
+
+Both samples answer the same question using the same facts, but take different approaches:
+
+| Aspect | RagOllama | RagFoundryLocal |
+|--------|-----------|-----------------|
+| **LLM runtime** | Ollama | Microsoft Foundry Local |
+| **Embedding integration** | `ElBruno.LocalEmbeddings.KernelMemory` adapter | `ElBruno.LocalEmbeddings` directly |
+| **RAG orchestration** | Microsoft Kernel Memory (high-level) | Manual (embed → search → prompt → stream) |
+| **Retrieval** | Automatic via `memory.AskStreamingAsync()` | Explicit via `FindClosest()` + `BuildPrompt()` |
+| **Companion package** | Yes (`ElBruno.LocalEmbeddings.KernelMemory`) | No (core library only) |
+| **Best for** | Turnkey RAG with minimal code | Full control over the pipeline |
 
 ---
 

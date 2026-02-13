@@ -5,19 +5,26 @@ using Microsoft.AI.Foundry.Local;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using System.ClientModel;
+using System.Text.Json;
 
-var modelIdChat = "phi4-mini";
-var question = "What is the default model in LocalEmbeddings?";
+var modelAlias = "phi-4-mini";
+var question = "What is Bruno's favourite super hero?";
 const int topK = 3;
 
 Console.WriteLine($"Question: {question}");
 
-await using var manager = await FoundryLocalManager.StartModelAsync(modelIdChat);
+await using var manager = await FoundryLocalManager.StartModelAsync(modelAlias);
+
+// Resolve the alias to the actual model ID registered on the server
+var modelIdChat = await ResolveModelIdAsync(manager.Endpoint, modelAlias);
+Console.WriteLine($"Model loaded: {modelIdChat}");
+
 var openAiClient = new OpenAIClient(
     new ApiKeyCredential(manager.ApiKey),
     new OpenAIClientOptions { Endpoint = manager.Endpoint });
 IChatClient chatClient = openAiClient.GetChatClient(modelIdChat).AsIChatClient();
 
+// --- Ask without memory ---
 Console.WriteLine($"\n--- {modelIdChat} response (no memory) ---");
 await foreach (var update in chatClient.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, question)]))
 {
@@ -27,20 +34,27 @@ await foreach (var update in chatClient.GetStreamingResponseAsync([new ChatMessa
     }
 }
 
+// --- Build context with local embeddings ---
 Console.WriteLine("\n\n--- Importing facts with local embeddings ---");
 string[] facts =
 [
-    ".NET local embeddings can run offline using ONNX Runtime and HuggingFace sentence transformer models.",
-    "LocalEmbeddingGenerator implements IEmbeddingGenerator<string, Embedding<float>> from Microsoft.Extensions.AI.",
-    "The default model in LocalEmbeddings is sentence-transformers/all-MiniLM-L6-v2 with 384 dimensions.",
-    "EmbeddingExtensions.CosineSimilarity compares vectors by angle, which is useful for semantic search.",
-    "EmbeddingExtensions.FindClosest returns the top K items sorted by descending cosine similarity score.",
-    "Set LocalEmbeddingsOptions.ModelPath to load a local ONNX model directory instead of downloading."
+    "Gisela's favourite super hero is Batman",
+    "Gisela watched Venom 3 2 weeks ago",
+    "Bruno's favourite super hero is Invincible",
+    "Bruno went to the cinema to watch Venom 3",
+    "Bruno doesn't like the super hero movie: Eternals",
+    "ACE and Goku watched the movies Venom 3 and Eternals",
 ];
 
 using var embeddingGenerator = new LocalEmbeddingGenerator(new LocalEmbeddingsOptions());
 var factEmbeddings = await embeddingGenerator.GenerateAsync(facts);
 var indexedFacts = facts.Zip(factEmbeddings, (fact, embedding) => (Item: fact, Embedding: embedding));
+
+for (var i = 0; i < facts.Length; i++)
+{
+    Console.WriteLine($"  [{i + 1}] {facts[i]}");
+}
+
 var queryEmbeddings = await embeddingGenerator.GenerateAsync([question]);
 if (queryEmbeddings.Count == 0)
 {
@@ -52,6 +66,7 @@ var contextDocs = indexedFacts
     .FindClosest(queryEmbeddings[0], topK: topK)
     .Select(match => match.Item);
 
+// --- Ask with memory ---
 Console.WriteLine($"\n--- Asking with memory: {question} ---");
 await foreach (var update in chatClient.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, BuildPrompt(question, contextDocs))]))
 {
@@ -74,4 +89,21 @@ Context:
 
 Question: {question}
 """;
+}
+
+static async Task<string> ResolveModelIdAsync(Uri endpoint, string alias)
+{
+    using var http = new HttpClient { BaseAddress = endpoint };
+    var json = await http.GetStringAsync("/v1/models");
+    using var doc = JsonDocument.Parse(json);
+    foreach (var model in doc.RootElement.GetProperty("data").EnumerateArray())
+    {
+        string id = model.GetProperty("id").GetString()!;
+        if (id.Contains(alias, StringComparison.OrdinalIgnoreCase))
+        {
+            return id;
+        }
+    }
+
+    return alias;
 }
