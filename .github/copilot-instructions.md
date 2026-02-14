@@ -205,14 +205,16 @@ public static class ServiceCollectionExtensions
 
 #### Async Patterns
 ```csharp
-// Good: Use ConfigureAwait(false) in library code
+// Good: Use ConfigureAwait(false) in library code to avoid deadlocks
 public async Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
     IEnumerable<string> values,
     EmbeddingGenerationOptions? options = null,
     CancellationToken cancellationToken = default)
 {
-    var result = await ProcessAsync(values, cancellationToken).ConfigureAwait(false);
-    return result;
+    // ConfigureAwait(false) prevents capturing the synchronization context
+    var session = await _sessionFactory.CreateAsync(cancellationToken).ConfigureAwait(false);
+    var embeddings = await session.RunAsync(values, cancellationToken).ConfigureAwait(false);
+    return new GeneratedEmbeddings<Embedding<float>>(embeddings);
 }
 ```
 
@@ -264,13 +266,22 @@ var path = Path.Combine(directory, filename); // Good
 
 ### Security Examples
 ```csharp
-// Good: Validate file paths
-public static string ValidateModelPath(string path)
+// Good: Validate file paths with proper directory traversal prevention
+public static string ValidateModelPath(string? path)
 {
+    // Input validation
+    if (string.IsNullOrWhiteSpace(path))
+    {
+        throw new ArgumentException("Model path cannot be null or empty", nameof(path));
+    }
+    
+    // Normalize paths to prevent traversal attacks
     var fullPath = Path.GetFullPath(path);
     var allowedDirectory = Path.GetFullPath(DefaultModelDirectory);
     
-    if (!fullPath.StartsWith(allowedDirectory, StringComparison.OrdinalIgnoreCase))
+    // Use GetRelativePath to safely check if path is within allowed directory
+    var relativePath = Path.GetRelativePath(allowedDirectory, fullPath);
+    if (relativePath.StartsWith("..", StringComparison.Ordinal))
     {
         throw new ArgumentException("Model path must be within allowed directory", nameof(path));
     }
