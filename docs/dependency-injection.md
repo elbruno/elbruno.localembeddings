@@ -122,3 +122,40 @@ After calling any `AddLocalEmbeddingsWithKernelMemory` overload, both interfaces
 - `ITextEmbeddingGenerator` — for Kernel Memory consumers
 
 See [Kernel Memory Integration](kernel-memory-integration.md) for the full guide.
+
+---
+
+## VectorData Integration
+
+The companion package `ElBruno.LocalEmbeddings.VectorData` adds DI helpers for `Microsoft.Extensions.VectorData`.
+
+```bash
+dotnet add package ElBruno.LocalEmbeddings.VectorData
+```
+
+### Register LocalEmbeddings + VectorStore
+
+```csharp
+using ElBruno.LocalEmbeddings.VectorData.Extensions;
+
+services.AddLocalEmbeddingsWithVectorStore(
+    _ => CreateYourVectorStore(),
+    options =>
+    {
+        options.ModelName = "sentence-transformers/all-MiniLM-L6-v2";
+    });
+```
+
+### Register a typed collection
+
+```csharp
+services.AddVectorStoreCollection<int, ProductRecord>("products");
+```
+
+After registration, you can resolve:
+
+- `IEmbeddingGenerator<string, Embedding<float>>`
+- `VectorStore`
+- `VectorStoreCollection<int, ProductRecord>`
+
+See [VectorData Integration](vector-data-integration.md) for full usage details.

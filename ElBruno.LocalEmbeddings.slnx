@@ -11,9 +11,11 @@
   <Folder Name="/src/">
     <Project Path="src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.KernelMemory/ElBruno.LocalEmbeddings.KernelMemory.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.VectorData/ElBruno.LocalEmbeddings.VectorData.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.KernelMemory.Tests/ElBruno.LocalEmbeddings.KernelMemory.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.VectorData.Tests/ElBruno.LocalEmbeddings.VectorData.Tests.csproj" />
   </Folder>
 </Solution>

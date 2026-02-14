@@ -151,7 +151,27 @@ The `AddLocalEmbeddings()` method registers:
 
 See [Dependency Injection docs](dependency-injection.md) for all registration overloads including `IConfiguration` binding from `appsettings.json`.
 
-## Step 6: RAG — Combine with a Local LLM
+## Step 6 (Optional): Plug into Microsoft.Extensions.VectorData
+
+When your app needs a real vector-store abstraction (instead of in-memory tuple search), use the companion package `ElBruno.LocalEmbeddings.VectorData`.
+
+```bash
+dotnet add package ElBruno.LocalEmbeddings.VectorData
+```
+
+```csharp
+using ElBruno.LocalEmbeddings.VectorData.Extensions;
+using Microsoft.Extensions.VectorData;
+
+services.AddLocalEmbeddingsWithVectorStore(
+    _ => CreateYourVectorStore(),
+    options => options.ModelName = "sentence-transformers/all-MiniLM-L6-v2")
+    .AddVectorStoreCollection<int, ProductRecord>("products");
+```
+
+This keeps embedding generation local while aligning storage/search with the standard `Microsoft.Extensions.VectorData` abstractions.
+
+## Step 7: RAG — Combine with a Local LLM
 
 Retrieval-Augmented Generation (RAG) combines embeddings-based search with an LLM to answer questions using your own data. The pattern:
 
@@ -207,4 +227,5 @@ await foreach (var chunk in chatClient.GetStreamingResponseAsync(prompt))
 - **[Alternative Models](alternative-models.md)** — Step-by-step local model download + non-default model hello world
 - **[Dependency Injection](dependency-injection.md)** — All DI overloads and `IConfiguration` binding
 - **[Kernel Memory Integration](kernel-memory-integration.md)** — Use local embeddings with Microsoft Kernel Memory for semantic memory / RAG
+- **[VectorData Integration](vector-data-integration.md)** — Use local embeddings with Microsoft.Extensions.VectorData abstractions
 - **[Samples README](../samples/README.md)** — All sample projects with prerequisites and run instructions

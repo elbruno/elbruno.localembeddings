@@ -6,6 +6,7 @@
 |---------|-------------|
 | `ElBruno.LocalEmbeddings` | Core library — local ONNX embedding generation with M.E.AI |
 | `ElBruno.LocalEmbeddings.KernelMemory` | Companion package — Kernel Memory `ITextEmbeddingGenerator` adapter + builder/DI extensions |
+| `ElBruno.LocalEmbeddings.VectorData` | Companion package — DI helpers for `Microsoft.Extensions.VectorData` (`VectorStore` + typed collections) |
 
 ## LocalEmbeddingGenerator
 
@@ -293,3 +294,44 @@ After calling `AddLocalEmbeddingsWithKernelMemory`, both interfaces resolve from
 
 - `IEmbeddingGenerator<string, Embedding<float>>` — for M.E.AI consumers
 - `ITextEmbeddingGenerator` — for Kernel Memory consumers
+
+---
+
+## ElBruno.LocalEmbeddings.VectorData
+
+Companion package providing `Microsoft.Extensions.VectorData` integration. Install separately:
+
+```bash
+dotnet add package ElBruno.LocalEmbeddings.VectorData
+```
+
+### ServiceCollectionExtensions (VectorData)
+
+Extension methods for `IServiceCollection` in namespace `ElBruno.LocalEmbeddings.VectorData.Extensions`.
+
+```csharp
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddLocalEmbeddingsWithVectorStore(
+        this IServiceCollection services,
+        Func<IServiceProvider, VectorStore> vectorStoreFactory,
+        Action<LocalEmbeddingsOptions>? configure = null);
+
+    public static IServiceCollection AddLocalEmbeddingsWithVectorStore(
+        this IServiceCollection services,
+        Func<IServiceProvider, VectorStore> vectorStoreFactory,
+        LocalEmbeddingsOptions options);
+
+    public static IServiceCollection AddLocalEmbeddingsWithVectorStore(
+        this IServiceCollection services,
+        Func<IServiceProvider, VectorStore> vectorStoreFactory,
+        IConfiguration configuration);
+
+    public static IServiceCollection AddVectorStoreCollection<TKey, TRecord>(
+        this IServiceCollection services,
+        string collectionName,
+        VectorStoreCollectionDefinition? definition = null)
+        where TKey : notnull
+        where TRecord : class;
+}
+```

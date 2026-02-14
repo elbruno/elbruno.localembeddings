@@ -10,6 +10,7 @@ A .NET library for generating text embeddings locally using ONNX Runtime and Mic
 - **Local Embedding Generation** — Run inference entirely on your machine using ONNX Runtime
 - **Microsoft.Extensions.AI Integration** — Implements `IEmbeddingGenerator<string, Embedding<float>>`
 - **Kernel Memory Integration** — Companion package `ElBruno.LocalEmbeddings.KernelMemory` provides a native `ITextEmbeddingGenerator` adapter for [Microsoft Kernel Memory](https://github.com/microsoft/kernel-memory)
+- **VectorData Integration** — Companion package `ElBruno.LocalEmbeddings.VectorData` adds DI helpers for `Microsoft.Extensions.VectorData` (`VectorStore` and typed collections)
 - **HuggingFace Model Support** — Use popular sentence transformer models from HuggingFace Hub
 - **Automatic Model Caching** — Models are downloaded once and cached locally
 - **Dependency Injection Support** — First-class `IServiceCollection` integration
@@ -27,6 +28,12 @@ For **Kernel Memory** integration, also install the companion package:
 
 ```bash
 dotnet add package ElBruno.LocalEmbeddings.KernelMemory
+```
+
+For **VectorData** integration, install:
+
+```bash
+dotnet add package ElBruno.LocalEmbeddings.VectorData
 ```
 
 ## Quick Start
@@ -90,6 +97,7 @@ See [Configuration docs](docs/configuration.md) for supported models, local mode
 | [Alternative Models](docs/alternative-models.md) | Non-default free models, local download workflow, and license notes |
 | [Dependency Injection](docs/dependency-injection.md) | All DI overloads and `IConfiguration` binding |
 | [Kernel Memory Integration](docs/kernel-memory-integration.md) | Using local embeddings with Microsoft Kernel Memory |
+| [VectorData Integration](docs/vector-data-integration.md) | Using local embeddings with Microsoft.Extensions.VectorData abstractions |
 | [Contributing](docs/contributing.md) | Build from source, repo structure, guidelines |
 | [Publishing](docs/publishing.md) | NuGet publishing with GitHub Actions + Trusted Publishing |
 
