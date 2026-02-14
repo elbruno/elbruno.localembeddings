@@ -1,6 +1,6 @@
 {
     "name": "ElBruno.LocalEmbeddings (.NET 10)",
-    "image": "mcr.microsoft.com/devcontainers/dotnet:1-10.0-bookworm",
+    "image": "mcr.microsoft.com/devcontainers/dotnet:1-10.0",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
     "remoteUser": "vscode",
     "containerEnv": {
@@ -25,5 +25,6 @@
             }
         }
     },
-    "postCreateCommand": "dotnet restore"
+    "postCreateCommand": "bash -lc 'mkdir -p /home/vscode/.nuget /home/vscode/.nuget/packages /home/vscode/.nuget/NuGet /home/vscode/.local/share && if command -v sudo >/dev/null 2>&1; then sudo chown -R vscode:vscode /home/vscode/.nuget /home/vscode/.local/share; else chown -R vscode:vscode /home/vscode/.nuget /home/vscode/.local/share; fi && dotnet restore'",
+    "postStartCommand": "bash -lc 'mkdir -p /home/vscode/.nuget /home/vscode/.nuget/packages /home/vscode/.nuget/NuGet /home/vscode/.local/share && if command -v sudo >/dev/null 2>&1; then sudo chown -R vscode:vscode /home/vscode/.nuget /home/vscode/.local/share; else chown -R vscode:vscode /home/vscode/.nuget /home/vscode/.local/share; fi'"
 }
