@@ -1,6 +1,6 @@
 # Samples — ElBruno.LocalEmbeddings
 
-Seven sample projects demonstrating LocalEmbeddings from basic usage to full RAG with a local LLM.
+Eight sample projects demonstrating LocalEmbeddings from basic usage to full RAG with a local LLM.
 
 ## Overview
 
@@ -10,6 +10,7 @@ Seven sample projects demonstrating LocalEmbeddings from basic usage to full RAG
 | [RaspberryPiTiny](#raspberrypitiny) | Ultra-small sample for Raspberry Pi and low-memory devices | No |
 | [ConsoleAppLite](#consoleapplite) | Lightweight menu sample for low-resource devices | No |
 | [ConsoleApp](#consoleapp) | Embedding basics: generation, similarity, search, DI | No |
+| [BenchmarkSample](#benchmarksample) | BenchmarkDotNet performance suite with cross-platform baselines | No |
 | [RagChat](#ragchat) | Semantic search Q&A over an in-memory FAQ dataset | No |
 | [RagOllama](#ragollama) | Full RAG chat using Ollama with phi4-mini + Kernel Memory | Yes (Ollama) |
 | [RagFoundryLocal](#ragfoundrylocal) | Full RAG chat using Foundry Local with phi4-mini | Yes (Foundry Local) |
@@ -114,6 +115,44 @@ Run a single scenario directly:
 dotnet run --project samples/ConsoleAppLite -- 1
 dotnet run --project samples/ConsoleAppLite -- 2
 ```
+
+---
+
+## BenchmarkSample
+
+[BenchmarkDotNet](https://benchmarkdotnet.org/) performance suite for reproducible benchmarking of embedding generation, tokenization, and cosine similarity.
+
+- **Embedding benchmarks:** single-text and batch (10/50/100) throughput
+- **Similarity benchmarks:** TensorPrimitives cosine similarity (384/768-dim), nearest-neighbour search (100/1000 docs)
+- **Tokenizer benchmarks:** short text, long text, and batch (10/50) tokenization
+- **Cross-platform baselines:** strategy for capturing and comparing results on Windows and Linux
+
+### Prerequisites
+
+- .NET 10 SDK
+- Model pre-downloaded (auto-downloads on first run)
+
+### Run
+
+All benchmarks:
+
+```bash
+dotnet run -c Release --project samples/BenchmarkSample
+```
+
+Specific class:
+
+```bash
+dotnet run -c Release --project samples/BenchmarkSample -- --filter "*EmbeddingBenchmarks*"
+```
+
+Export JSON for baseline comparison:
+
+```bash
+dotnet run -c Release --project samples/BenchmarkSample -- --exporters json
+```
+
+See [samples/BenchmarkSample/README.md](BenchmarkSample/README.md) for full details and baseline strategy.
 
 ---
 

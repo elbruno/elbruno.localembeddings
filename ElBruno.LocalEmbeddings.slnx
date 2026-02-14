@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/samples/">
+    <Project Path="samples/BenchmarkSample/BenchmarkSample.csproj" />
     <Project Path="samples/ConsoleApp/ConsoleApp.csproj" />
     <Project Path="samples/ConsoleAppLite/ConsoleAppLite.csproj" />
     <Project Path="samples/HelloWorldAltModel/HelloWorldAltModel.csproj" />
