@@ -103,5 +103,17 @@ public class EmbeddingExtensionsTests
         Assert.Equal(0f, similarity, 4);
     }
 
+    [Fact]
+    public void CosineSimilarity_WithKnownVectors_ReturnsExpectedValue()
+    {
+        ReadOnlyMemory<float> a = new float[] { 1f, 2f, 3f };
+        ReadOnlyMemory<float> b = new float[] { 4f, 5f, 6f };
+
+        var similarity = a.CosineSimilarity(b);
+        var expected = 32f / (MathF.Sqrt(14f) * MathF.Sqrt(77f));
+
+        Assert.Equal(expected, similarity, 4);
+    }
+
     private static Embedding<float> CreateEmbedding(float[] vector) => new(vector);
 }

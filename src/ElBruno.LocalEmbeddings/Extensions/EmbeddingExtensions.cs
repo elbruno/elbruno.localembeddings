@@ -1,3 +1,4 @@
+using TensorPrimitives = System.Numerics.Tensors.TensorPrimitives;
 using Microsoft.Extensions.AI;
 
 namespace ElBruno.LocalEmbeddings.Extensions;
@@ -32,19 +33,7 @@ public static class EmbeddingExtensions
             throw new ArgumentException("Vectors must have the same length.", nameof(b));
         }
 
-        float dotProduct = 0;
-        float normA = 0;
-        float normB = 0;
-
-        for (int i = 0; i < spanA.Length; i++)
-        {
-            dotProduct += spanA[i] * spanB[i];
-            normA += spanA[i] * spanA[i];
-            normB += spanB[i] * spanB[i];
-        }
-
-        var denominator = MathF.Sqrt(normA) * MathF.Sqrt(normB);
-        return denominator == 0 ? 0 : dotProduct / denominator;
+        return TensorPrimitives.CosineSimilarity(spanA, spanB);
     }
 
     /// <summary>

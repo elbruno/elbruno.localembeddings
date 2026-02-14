@@ -1,6 +1,7 @@
+using System.Runtime.InteropServices;
+using TensorPrimitives = System.Numerics.Tensors.TensorPrimitives;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using System.Runtime.InteropServices;
 
 namespace ElBruno.LocalEmbeddings;
 
@@ -349,13 +350,10 @@ public sealed class OnnxEmbeddingModel : IDisposable
     /// <param name="vector">The vector to normalize.</param>
     private static void L2Normalize(float[] vector)
     {
-        var norm = MathF.Sqrt(vector.Sum(x => x * x));
+        var norm = TensorPrimitives.Norm(vector);
         if (norm > 0)
         {
-            for (int i = 0; i < vector.Length; i++)
-            {
-                vector[i] /= norm;
-            }
+            TensorPrimitives.Divide(vector, norm, vector);
         }
     }
 

@@ -25,6 +25,7 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.24.1" />
     <PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
+    <PackageReference Include="System.Numerics.Tensors" Version="9.0.3" />
   </ItemGroup>
 
   <ItemGroup>
