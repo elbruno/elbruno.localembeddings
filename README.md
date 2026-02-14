@@ -99,7 +99,10 @@ See [Configuration docs](docs/configuration.md) for supported models, local mode
 | [Kernel Memory Integration](docs/kernel-memory-integration.md) | Using local embeddings with Microsoft Kernel Memory |
 | [VectorData Integration](docs/vector-data-integration.md) | Using local embeddings with Microsoft.Extensions.VectorData abstractions |
 | [Contributing](docs/contributing.md) | Build from source, repo structure, guidelines |
+| [Roadmap](docs/plans/roadmap_260213_0803.md) | Planned and completed features/samples with priorities |
 | [Publishing](docs/publishing.md) | NuGet publishing with GitHub Actions + Trusted Publishing |
+
+Have an idea for a new feature or sample? Please open an issue and share your suggestion.
 
 ## Building from Source
 
