@@ -41,8 +41,8 @@ dotnet add package ElBruno.LocalEmbeddings.VectorData
 ```csharp
 using ElBruno.LocalEmbeddings;
 
-// Create the generator (downloads model automatically on first run)
-using var generator = new LocalEmbeddingGenerator();
+// Async-first creation (recommended for ASP.NET/UI contexts)
+await using var generator = await LocalEmbeddingGenerator.CreateAsync();
 
 // Generate a single embedding — no array wrapping needed
 var embedding = await generator.GenerateEmbeddingAsync("Hello, world!");
@@ -55,6 +55,8 @@ Console.WriteLine($"Embedding: [{string.Join(", ", result[0].Vector.ToArray().Ta
 
 For custom models and runtime behavior, use the options-based constructor:
 `new LocalEmbeddingGenerator(new LocalEmbeddingsOptions { ... })`.
+
+> **Note:** The synchronous constructor remains available for backward compatibility, but performs blocking initialization when downloads are needed.
 
 Want to go further? See the [Getting Started guide](docs/getting-started.md) for a step-by-step walkthrough — from cosine similarity to semantic search, dependency injection, and full RAG with a local LLM.
 
@@ -101,6 +103,7 @@ See [Configuration docs](docs/configuration.md) for supported models, local mode
 | [Contributing](docs/contributing.md) | Build from source, repo structure, guidelines |
 | [Roadmap](docs/plans/roadmap_260213_0803.md) | Planned and completed features/samples with priorities |
 | [Publishing](docs/publishing.md) | NuGet publishing with GitHub Actions + Trusted Publishing |
+| [Changelog](docs/changelog.md) | Versioned summary of notable changes |
 
 Have an idea for a new feature or sample? Please open an issue and share your suggestion.
 

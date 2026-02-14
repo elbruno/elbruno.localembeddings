@@ -134,13 +134,27 @@ public sealed class Tokenizer
     /// <remarks>
     /// <para>
     /// All outputs are padded to the same length (the specified maxLength), making them
-    /// suitable for batched inference with <see cref="OnnxEmbeddingModel.GenerateEmbeddings"/>.
+    /// suitable for batched inference with <see cref="OnnxEmbeddingModel.GenerateEmbeddings(long[][], long[][])"/>.
     /// </para>
     /// <para>
     /// This method is thread-safe.
     /// </para>
     /// </remarks>
     public (long[][] InputIds, long[][] AttentionMasks) TokenizeBatch(IEnumerable<string> texts, int? maxLength = null)
+        => TokenizeBatch(texts, maxLength, CancellationToken.None);
+
+    /// <summary>
+    /// Tokenizes multiple texts, padding all to the same length for batched inference.
+    /// </summary>
+    /// <param name="texts">The texts to tokenize.</param>
+    /// <param name="maxLength">Optional override for maximum sequence length.</param>
+    /// <param name="cancellationToken">Token used to cancel processing while tokenizing a batch.</param>
+    /// <returns>A tuple containing arrays of input IDs and attention masks.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when texts is null.</exception>
+    public (long[][] InputIds, long[][] AttentionMasks) TokenizeBatch(
+        IEnumerable<string> texts,
+        int? maxLength,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(texts);
 
@@ -155,11 +169,30 @@ public sealed class Tokenizer
 
         for (int i = 0; i < textList.Count; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var (ids, mask) = Tokenize(textList[i], maxLength);
             inputIds[i] = ids;
             attentionMasks[i] = mask;
         }
 
         return (inputIds, attentionMasks);
+    }
+
+    /// <summary>
+    /// Counts tokens for the specified text using the configured tokenizer rules.
+    /// </summary>
+    /// <param name="text">Text to tokenize and count.</param>
+    /// <param name="maxLength">Optional override for maximum sequence length.</param>
+    /// <returns>The number of non-padding tokens in the encoded sequence.</returns>
+    public int CountTokens(string text, int? maxLength = null)
+    {
+        var (_, attentionMask) = Tokenize(text, maxLength);
+        var count = 0;
+        for (int i = 0; i < attentionMask.Length; i++)
+        {
+            count += (int)attentionMask[i];
+        }
+
+        return count;
     }
 }

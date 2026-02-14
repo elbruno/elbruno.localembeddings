@@ -13,7 +13,7 @@
 The main class for generating embeddings. Implements `IEmbeddingGenerator<string, Embedding<float>>`.
 
 ```csharp
-public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
+public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>, IAsyncDisposable
 {
     // Constructors
     public LocalEmbeddingGenerator();
@@ -38,7 +38,10 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
 
     public TService? GetService<TService>(object? key = null) where TService : class;
 
+    public int CountTokens(string text);
+
     public void Dispose();
+    public ValueTask DisposeAsync();
 }
 ```
 
@@ -214,7 +217,7 @@ dotnet add package ElBruno.LocalEmbeddings.KernelMemory
 Adapter that bridges `IEmbeddingGenerator<string, Embedding<float>>` (M.E.AI) to Kernel Memory's `ITextEmbeddingGenerator`. Namespace: `ElBruno.LocalEmbeddings.KernelMemory`.
 
 ```csharp
-public sealed class LocalEmbeddingTextGenerator : ITextEmbeddingGenerator, IDisposable
+public sealed class LocalEmbeddingTextGenerator : ITextEmbeddingGenerator, IDisposable, IAsyncDisposable
 {
     // Constructor
     public LocalEmbeddingTextGenerator(
@@ -235,6 +238,7 @@ public sealed class LocalEmbeddingTextGenerator : ITextEmbeddingGenerator, IDisp
     public IReadOnlyList<string> GetTokens(string text);
 
     public void Dispose();
+    public ValueTask DisposeAsync();
 }
 ```
 
@@ -252,6 +256,14 @@ Extension methods for `IKernelMemoryBuilder`. Namespace: `ElBruno.LocalEmbedding
 ```csharp
 public static class KernelMemoryBuilderExtensions
 {
+    // Search-only mode (disables text generation requirement)
+    public static IKernelMemoryBuilder WithLocalEmbeddingsSearchOnly(
+        this IKernelMemoryBuilder builder);
+
+    public static IKernelMemoryBuilder WithLocalEmbeddingsSearchOnly(
+        this IKernelMemoryBuilder builder,
+        LocalEmbeddingsOptions options);
+
     // Default options (sentence-transformers/all-MiniLM-L6-v2)
     public static IKernelMemoryBuilder WithLocalEmbeddings(
         this IKernelMemoryBuilder builder);

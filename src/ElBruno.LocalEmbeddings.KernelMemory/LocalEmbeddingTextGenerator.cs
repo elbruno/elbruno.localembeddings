@@ -36,7 +36,7 @@ namespace ElBruno.LocalEmbeddings.KernelMemory;
 ///     .Build();
 /// </code>
 /// </example>
-public sealed class LocalEmbeddingTextGenerator : ITextEmbeddingGenerator, IDisposable
+public sealed class LocalEmbeddingTextGenerator : ITextEmbeddingGenerator, IDisposable, IAsyncDisposable
 {
     private readonly IEmbeddingGenerator<string, Embedding<float>> _generator;
     private readonly ITextTokenizer? _customTokenizer;
@@ -115,6 +115,11 @@ public sealed class LocalEmbeddingTextGenerator : ITextEmbeddingGenerator, IDisp
             return _customTokenizer.CountTokens(text);
         }
 
+        if (_generator is LocalEmbeddingGenerator localGenerator)
+        {
+            return localGenerator.CountTokens(text);
+        }
+
         if (string.IsNullOrWhiteSpace(text))
         {
             return 0;
@@ -154,6 +159,29 @@ public sealed class LocalEmbeddingTextGenerator : ITextEmbeddingGenerator, IDisp
     public void Dispose()
     {
         if (_ownsGenerator && _generator is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Asynchronously disposes the adapter and optionally the underlying generator.
+    /// </summary>
+    /// <returns>A value task representing completion of disposal.</returns>
+    public async ValueTask DisposeAsync()
+    {
+        if (!_ownsGenerator)
+        {
+            return;
+        }
+
+        if (_generator is IAsyncDisposable asyncDisposable)
+        {
+            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+            return;
+        }
+
+        if (_generator is IDisposable disposable)
         {
             disposable.Dispose();
         }

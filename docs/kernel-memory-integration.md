@@ -76,6 +76,16 @@ builder.WithLocalEmbeddings(existingGenerator, maxTokens: 512);
 
 The adapter does **not** take ownership — the caller manages the generator's lifecycle.
 
+### Search-only mode (no text generation required)
+
+If your scenario is retrieval/search only, you can explicitly disable text generation and still use local embeddings:
+
+```csharp
+builder.WithLocalEmbeddingsSearchOnly();
+```
+
+This helper configures Kernel Memory with `WithoutTextGenerator()` and registers local embeddings, so `Build()` works for search-only pipelines.
+
 ## Dependency Injection
 
 For host-based applications, register both M.E.AI and Kernel Memory interfaces in one call:

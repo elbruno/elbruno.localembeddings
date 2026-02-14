@@ -16,6 +16,14 @@ var options = new LocalEmbeddingsOptions
 };
 ```
 
+For async applications (ASP.NET, UI), prefer:
+
+```csharp
+await using var generator = await LocalEmbeddingGenerator.CreateAsync(options);
+```
+
+The synchronous constructor remains available for compatibility but can block during model resolution/download.
+
 ## Supported Models
 
 ### Default Model

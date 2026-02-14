@@ -211,6 +211,16 @@ public sealed class OnnxEmbeddingModel : IDisposable
     /// This method is thread-safe and can be called concurrently from multiple threads.
     /// </remarks>
     public float[] GenerateEmbedding(long[] inputIds, long[] attentionMask)
+        => GenerateEmbedding(inputIds, attentionMask, CancellationToken.None);
+
+    /// <summary>
+    /// Generates an embedding for the given tokenized input.
+    /// </summary>
+    /// <param name="inputIds">The tokenized input IDs.</param>
+    /// <param name="attentionMask">The attention mask.</param>
+    /// <param name="cancellationToken">Token used to cancel execution.</param>
+    /// <returns>The embedding vector.</returns>
+    public float[] GenerateEmbedding(long[] inputIds, long[] attentionMask, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -227,7 +237,8 @@ public sealed class OnnxEmbeddingModel : IDisposable
             throw new InvalidOperationException("No model is loaded. Call Load() first.");
         }
 
-        var embeddings = GenerateEmbeddings([inputIds], [attentionMask]);
+        cancellationToken.ThrowIfCancellationRequested();
+        var embeddings = GenerateEmbeddings([inputIds], [attentionMask], cancellationToken);
         return embeddings[0];
     }
 
@@ -242,7 +253,7 @@ public sealed class OnnxEmbeddingModel : IDisposable
     /// <exception cref="ArgumentException">Thrown when arrays have mismatched lengths or sequences have different lengths.</exception>
     /// <remarks>
     /// <para>
-    /// Batched inference is more efficient than calling <see cref="GenerateEmbedding"/> multiple times,
+    /// Batched inference is more efficient than calling <see cref="GenerateEmbedding(long[], long[])"/> multiple times,
     /// as it reduces overhead and enables better parallelization on the hardware.
     /// </para>
     /// <para>
@@ -254,6 +265,16 @@ public sealed class OnnxEmbeddingModel : IDisposable
     /// </para>
     /// </remarks>
     public float[][] GenerateEmbeddings(long[][] inputIds, long[][] attentionMasks)
+        => GenerateEmbeddings(inputIds, attentionMasks, CancellationToken.None);
+
+    /// <summary>
+    /// Generates embeddings for multiple tokenized inputs in a single batched inference call.
+    /// </summary>
+    /// <param name="inputIds">Array of tokenized input ID sequences.</param>
+    /// <param name="attentionMasks">Array of attention masks.</param>
+    /// <param name="cancellationToken">Token used to cancel execution.</param>
+    /// <returns>Array of embedding vectors, one per input.</returns>
+    public float[][] GenerateEmbeddings(long[][] inputIds, long[][] attentionMasks, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -275,12 +296,15 @@ public sealed class OnnxEmbeddingModel : IDisposable
             throw new InvalidOperationException("No model is loaded. Call Load() first.");
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
+
         var batchSize = inputIds.Length;
         var sequenceLength = inputIds[0].Length;
 
         // Validate all sequences have the same length
         for (int i = 0; i < batchSize; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (inputIds[i].Length != sequenceLength)
             {
                 throw new ArgumentException($"All input sequences must have the same length. Expected {sequenceLength}, got {inputIds[i].Length} at index {i}.");
@@ -299,6 +323,7 @@ public sealed class OnnxEmbeddingModel : IDisposable
 
         for (int i = 0; i < batchSize; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             Array.Copy(inputIds[i], 0, flatInputIds, i * sequenceLength, sequenceLength);
             Array.Copy(attentionMasks[i], 0, flatAttentionMask, i * sequenceLength, sequenceLength);
         }
@@ -325,6 +350,7 @@ public sealed class OnnxEmbeddingModel : IDisposable
 
         // Run inference
         using var results = _session.Run(inputs, _outputNames);
+        cancellationToken.ThrowIfCancellationRequested();
 
         // Get output tensor - typically "last_hidden_state" with shape [batch, seq, hidden]
         var outputTensor = results.First().AsTensor<float>();
@@ -337,6 +363,7 @@ public sealed class OnnxEmbeddingModel : IDisposable
         {
             for (int i = 0; i < embeddings.Length; i++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 L2Normalize(embeddings[i]);
             }
         }

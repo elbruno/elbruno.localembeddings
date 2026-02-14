@@ -16,7 +16,8 @@ dotnet add package ElBruno.LocalEmbeddings
 using ElBruno.LocalEmbeddings;
 
 // Create the generator (downloads model automatically on first run)
-using var generator = new LocalEmbeddingGenerator();
+// Async factory is recommended in ASP.NET/UI contexts.
+await using var generator = await LocalEmbeddingGenerator.CreateAsync();
 
 // Generate an embedding — single-string convenience method
 var embedding = await generator.GenerateEmbeddingAsync("Hello, world!");
@@ -27,6 +28,8 @@ Console.WriteLine($"First 3 values: {vector[0]:F4}, {vector[1]:F4}, {vector[2]:F
 ```
 
 The first run downloads the default model (`sentence-transformers/all-MiniLM-L6-v2`) and caches it locally. Subsequent runs load instantly.
+
+> **Compatibility note:** `new LocalEmbeddingGenerator()` is still supported, but it may block while resolving/downloading the model.
 
 > **Tip:** `GenerateEmbeddingAsync(string)` returns a single `Embedding<float>` directly. If you need the full `GeneratedEmbeddings` collection, use `GenerateAsync(string)` instead. For multiple texts, use the batch overload `GenerateAsync(IEnumerable<string>)`.
 

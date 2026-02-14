@@ -18,9 +18,10 @@ namespace ElBruno.LocalEmbeddings;
 /// session and tokenizer are designed for concurrent access.
 /// </para>
 /// </remarks>
-public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
+public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>, IAsyncDisposable
 {
     private static readonly string[] QuantizedModelFileNames = ["model_quantized.onnx", "model_int8.onnx"];
+    private static readonly HttpClient SharedModelDownloadHttpClient = new();
     private readonly OnnxEmbeddingModel _model;
     private readonly Tokenizer _tokenizer;
     private readonly EmbeddingGeneratorMetadata _metadata;
@@ -44,9 +45,14 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
     /// <exception cref="ArgumentNullException">Thrown when options is null.</exception>
     /// <exception cref="InvalidOperationException">Thrown when model download or loading fails.</exception>
     /// <remarks>
-    /// If <see cref="LocalEmbeddingsOptions.EnsureModelDownloaded"/> is true and 
+    /// If <see cref="LocalEmbeddingsOptions.EnsureModelDownloaded"/> is true and
     /// <see cref="LocalEmbeddingsOptions.ModelPath"/> is not specified, the model
     /// will be downloaded synchronously during construction.
+    /// <para>
+    /// <strong>Important:</strong> This constructor performs blocking initialization.
+    /// In UI/ASP.NET request contexts, prefer <see cref="CreateAsync(CancellationToken)"/>
+    /// or <see cref="CreateAsync(LocalEmbeddingsOptions, CancellationToken)"/>.
+    /// </para>
     /// </remarks>
     public LocalEmbeddingGenerator(LocalEmbeddingsOptions options)
         : this(ResolveModelDirectory(options), options)
@@ -115,12 +121,11 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
     /// <exception cref="InvalidOperationException">Thrown when model download or loading fails.</exception>
     /// <remarks>
     /// <para>
-    /// This factory method performs model download and ONNX session creation on a background thread,
-    /// avoiding blocking the caller's thread. Use this in async contexts instead of the constructor.
+    /// This factory method performs model download asynchronously and then initializes the generator.
+    /// Use this in async contexts instead of the constructor.
     /// </para>
     /// <para>
-    /// This is equivalent to calling the constructor but wrapped in <see cref="Task.Run{TResult}(Func{TResult})"/>
-    /// for non-blocking initialization.
+    /// The constructor remains available for backwards compatibility.
     /// </para>
     /// </remarks>
     /// <example>
@@ -162,10 +167,10 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
         cancellationToken.ThrowIfCancellationRequested();
 
         // Tokenize all inputs
-        var (inputIds, attentionMasks) = _tokenizer.TokenizeBatch(valuesList);
+        var (inputIds, attentionMasks) = _tokenizer.TokenizeBatch(valuesList, maxLength: null, cancellationToken);
 
         // Generate embeddings in a single batched call
-        var rawEmbeddings = _model.GenerateEmbeddings(inputIds, attentionMasks);
+        var rawEmbeddings = _model.GenerateEmbeddings(inputIds, attentionMasks, cancellationToken);
 
         // Wrap results in the M.E.AI types
         var result = new GeneratedEmbeddings<Embedding<float>>(
@@ -207,6 +212,27 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
         _disposed = true;
     }
 
+    /// <summary>
+    /// Asynchronously disposes the generator and releases underlying resources.
+    /// </summary>
+    /// <returns>A completed disposal task.</returns>
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    /// <summary>
+    /// Counts tokens for the specified text using the model tokenizer.
+    /// </summary>
+    /// <param name="text">Text to tokenize and count.</param>
+    /// <returns>The number of non-padding tokens produced by the tokenizer.</returns>
+    public int CountTokens(string text)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _tokenizer.CountTokens(text);
+    }
+
     private static string ResolveModelDirectory(LocalEmbeddingsOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -222,7 +248,7 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
                 "Either ModelPath must be specified or EnsureModelDownloaded must be true.");
         }
 
-        var downloader = new ModelDownloader(new HttpClient(), options.CacheDirectory);
+        var downloader = new ModelDownloader(SharedModelDownloadHttpClient, options.CacheDirectory);
         return downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized).GetAwaiter().GetResult();
     }
 
@@ -241,7 +267,7 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
                 "Either ModelPath must be specified or EnsureModelDownloaded must be true.");
         }
 
-        var downloader = new ModelDownloader(new HttpClient(), options.CacheDirectory);
+        var downloader = new ModelDownloader(SharedModelDownloadHttpClient, options.CacheDirectory);
         return await downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 

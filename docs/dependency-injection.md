@@ -123,6 +123,8 @@ After calling any `AddLocalEmbeddingsWithKernelMemory` overload, both interfaces
 
 See [Kernel Memory Integration](kernel-memory-integration.md) for the full guide.
 
+For retrieval-only pipelines built with `KernelMemoryBuilder`, use `WithLocalEmbeddingsSearchOnly()` to disable text generation requirements while keeping local embedding support.
+
 ---
 
 ## VectorData Integration

@@ -11,6 +11,37 @@ namespace ElBruno.LocalEmbeddings.KernelMemory.Extensions;
 public static class KernelMemoryBuilderExtensions
 {
     /// <summary>
+    /// Registers local embeddings and configures Kernel Memory for search-only scenarios.
+    /// </summary>
+    /// <param name="builder">The Kernel Memory builder.</param>
+    /// <returns>The builder for chaining.</returns>
+    /// <remarks>
+    /// This helper calls <c>WithoutTextGenerator()</c> before registering local embeddings,
+    /// allowing <c>Build()</c> for retrieval-only scenarios that do not require text generation.
+    /// </remarks>
+    public static IKernelMemoryBuilder WithLocalEmbeddingsSearchOnly(this IKernelMemoryBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        return builder.WithoutTextGenerator().WithLocalEmbeddings();
+    }
+
+    /// <summary>
+    /// Registers local embeddings with custom options and configures Kernel Memory for search-only scenarios.
+    /// </summary>
+    /// <param name="builder">The Kernel Memory builder.</param>
+    /// <param name="options">Embedding generator options.</param>
+    /// <returns>The builder for chaining.</returns>
+    public static IKernelMemoryBuilder WithLocalEmbeddingsSearchOnly(
+        this IKernelMemoryBuilder builder,
+        LocalEmbeddingsOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(options);
+
+        return builder.WithoutTextGenerator().WithLocalEmbeddings(options);
+    }
+
+    /// <summary>
     /// Registers a <see cref="LocalEmbeddingGenerator"/>-backed embedding generator
     /// with the Kernel Memory builder using default options.
     /// </summary>
