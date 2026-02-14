@@ -154,7 +154,7 @@ The companion package provides a thin adapter layer:
 - Implements Kernel Memory's `ITextEmbeddingGenerator` (which includes `ITextTokenizer`)
 - Wraps any `IEmbeddingGenerator<string, Embedding<float>>` — not just `LocalEmbeddingGenerator`
 - Converts M.E.AI `Embedding<float>` to KM `Embedding` (both wrap `ReadOnlyMemory<float>`)
-- Token counting uses a word-boundary heuristic by default; supply a custom `ITextTokenizer` for precise counts
+- Token counting uses tokenizer-backed counting automatically when wrapping `LocalEmbeddingGenerator`; for other generator types, it falls back to a word-boundary heuristic (or you can supply a custom `ITextTokenizer`)
 - Thread-safe when the underlying generator is thread-safe
 
 ### Why a Separate Package?

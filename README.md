@@ -38,19 +38,32 @@ dotnet add package ElBruno.LocalEmbeddings.VectorData
 
 ## Quick Start
 
+### 1) Generate one embedding
+
 ```csharp
 using ElBruno.LocalEmbeddings;
 
-// Async-first creation (recommended for ASP.NET/UI contexts)
 await using var generator = await LocalEmbeddingGenerator.CreateAsync();
-
-// Generate a single embedding — no array wrapping needed
 var embedding = await generator.GenerateEmbeddingAsync("Hello, world!");
-Console.WriteLine($"Dimensions: {embedding.Vector.Length}"); // 384
+Console.WriteLine(embedding.Vector.Length); // 384
+```
 
-// Or get the full result collection
-var result = await generator.GenerateAsync("Hello, world!");
-Console.WriteLine($"Embedding: [{string.Join(", ", result[0].Vector.ToArray().Take(3))}...]");
+### 2) Generate embeddings for multiple texts
+
+```csharp
+var inputs = new[] { "first text", "second text", "third text" };
+var embeddings = await generator.GenerateAsync(inputs);
+Console.WriteLine(embeddings.Count); // 3
+```
+
+### 3) Compare two texts with cosine similarity
+
+```csharp
+using ElBruno.LocalEmbeddings.Extensions;
+
+var pair = await generator.GenerateAsync(["I love coding", "I enjoy programming"]);
+var score = pair[0].CosineSimilarity(pair[1]);
+Console.WriteLine(score);
 ```
 
 For custom models and runtime behavior, use the options-based constructor:
@@ -58,7 +71,7 @@ For custom models and runtime behavior, use the options-based constructor:
 
 > **Note:** The synchronous constructor remains available for backward compatibility, but performs blocking initialization when downloads are needed.
 
-Want to go further? See the [Getting Started guide](docs/getting-started.md) for a step-by-step walkthrough — from cosine similarity to semantic search, dependency injection, and full RAG with a local LLM.
+Want to go further? Read the [Getting Started guide](docs/getting-started.md) and the other docs in this repo for DI, configuration, VectorData, Kernel Memory, and full RAG examples.
 
 Prefer a containerized dev environment? See the Dev Container section in the [Contributing guide](docs/contributing.md#dev-container-vs-code).
 
