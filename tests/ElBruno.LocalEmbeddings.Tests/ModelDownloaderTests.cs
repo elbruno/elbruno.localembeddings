@@ -206,6 +206,112 @@ public class ModelDownloaderTests
     }
 
     [Fact]
+    public async Task EnsureModelAsync_WithPreferQuantized_DownloadsQuantizedModelWhenAvailable()
+    {
+        var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");
+
+        try
+        {
+            var fakeQuantizedModelContent = new byte[] { 0x51, 0x4F, 0x4E, 0x4E, 0x58 };
+
+            var mockHandler = new Mock<HttpMessageHandler>();
+            mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(r => r.RequestUri!.ToString().Contains("model_quantized.onnx")),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(fakeQuantizedModelContent)
+                });
+
+            mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(r => !r.RequestUri!.ToString().Contains("model_quantized.onnx")),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
+
+            var httpClient = new HttpClient(mockHandler.Object);
+            var downloader = new ModelDownloader(httpClient, cacheDir);
+
+            var resultPath = await downloader.EnsureModelAsync("test/model", preferQuantized: true);
+
+            Assert.True(Directory.Exists(resultPath));
+            var quantizedModelFile = Path.Combine(resultPath, "model_quantized.onnx");
+            Assert.True(File.Exists(quantizedModelFile));
+            Assert.Equal(fakeQuantizedModelContent, await File.ReadAllBytesAsync(quantizedModelFile));
+            Assert.False(File.Exists(Path.Combine(resultPath, "model.onnx")));
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+                Directory.Delete(cacheDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task EnsureModelAsync_WithPreferQuantized_FallsBackToDefaultModel()
+    {
+        var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");
+
+        try
+        {
+            var fakeModelContent = new byte[] { 0x4F, 0x4E, 0x4E, 0x58 };
+
+            var mockHandler = new Mock<HttpMessageHandler>();
+            mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(r => r.RequestUri!.ToString().Contains("model.onnx")),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(fakeModelContent)
+                });
+
+            mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(r =>
+                        r.RequestUri!.ToString().Contains("model_quantized.onnx") ||
+                        r.RequestUri!.ToString().Contains("model_int8.onnx")),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
+
+            mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(r =>
+                        !r.RequestUri!.ToString().Contains("model_quantized.onnx") &&
+                        !r.RequestUri!.ToString().Contains("model_int8.onnx") &&
+                        !r.RequestUri!.ToString().Contains("model.onnx")),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
+
+            var httpClient = new HttpClient(mockHandler.Object);
+            var downloader = new ModelDownloader(httpClient, cacheDir);
+
+            var resultPath = await downloader.EnsureModelAsync("test/model", preferQuantized: true);
+
+            Assert.True(Directory.Exists(resultPath));
+            var modelFile = Path.Combine(resultPath, "model.onnx");
+            Assert.True(File.Exists(modelFile));
+            Assert.Equal(fakeModelContent, await File.ReadAllBytesAsync(modelFile));
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+                Directory.Delete(cacheDir, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task EnsureModelAsync_ReportsProgress()
     {
         var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");
@@ -244,7 +350,7 @@ public class ModelDownloaderTests
             var downloader = new ModelDownloader(httpClient, cacheDir);
             var progress = new Progress<double>(p => progressValues.Add(p));
 
-            await downloader.EnsureModelAsync("test/model", progress);
+            await downloader.EnsureModelAsync("test/model", progress: progress);
 
             // Should have reported some progress
             Assert.NotEmpty(progressValues);

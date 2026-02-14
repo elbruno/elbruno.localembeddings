@@ -20,6 +20,7 @@ namespace ElBruno.LocalEmbeddings;
 /// </remarks>
 public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
 {
+    private static readonly string[] QuantizedModelFileNames = ["model_quantized.onnx", "model_int8.onnx"];
     private readonly OnnxEmbeddingModel _model;
     private readonly Tokenizer _tokenizer;
     private readonly EmbeddingGeneratorMetadata _metadata;
@@ -48,31 +49,17 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
     /// will be downloaded synchronously during construction.
     /// </remarks>
     public LocalEmbeddingGenerator(LocalEmbeddingsOptions options)
+        : this(ResolveModelDirectory(options), options)
+    {
+    }
+
+    private LocalEmbeddingGenerator(string modelDirectory, LocalEmbeddingsOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        string modelDirectory;
-
-        if (!string.IsNullOrWhiteSpace(options.ModelPath))
-        {
-            // Use the provided local model path
-            modelDirectory = options.ModelPath;
-        }
-        else if (options.EnsureModelDownloaded)
-        {
-            // Download the model synchronously
-            var downloader = new ModelDownloader(new HttpClient(), options.CacheDirectory);
-            modelDirectory = downloader.EnsureModelAsync(options.ModelName).GetAwaiter().GetResult();
-        }
-        else
-        {
-            throw new InvalidOperationException(
-                "Either ModelPath must be specified or EnsureModelDownloaded must be true.");
-        }
-
         // Load the ONNX model
         _model = new OnnxEmbeddingModel();
-        var modelPath = Path.Combine(modelDirectory, "model.onnx");
+        var modelPath = ResolveModelPath(modelDirectory, options.PreferQuantized);
         _model.Load(
             modelPath,
             options.NormalizeEmbeddings,
@@ -102,12 +89,11 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
     /// <exception cref="InvalidOperationException">Thrown when model download or loading fails.</exception>
     /// <remarks>
     /// <para>
-    /// This factory method performs model download and ONNX session creation on a background thread,
-    /// avoiding blocking the caller's thread. Use this in async contexts instead of the constructor.
+    /// This factory method performs model download asynchronously and then initializes the generator.
+    /// Use this in async contexts instead of the constructor to avoid sync-over-async blocking during download.
     /// </para>
     /// <para>
-    /// This is equivalent to calling the constructor but wrapped in <see cref="Task.Run{TResult}(Func{TResult})"/>
-    /// for non-blocking initialization.
+    /// The constructor remains available for backwards compatibility.
     /// </para>
     /// </remarks>
     /// <example>
@@ -145,13 +131,14 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
     /// });
     /// </code>
     /// </example>
-    public static Task<LocalEmbeddingGenerator> CreateAsync(
+    public static async Task<LocalEmbeddingGenerator> CreateAsync(
         LocalEmbeddingsOptions options,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        return Task.Run(() => new LocalEmbeddingGenerator(options), cancellationToken);
+        var modelDirectory = await ResolveModelDirectoryAsync(options, cancellationToken).ConfigureAwait(false);
+        return new LocalEmbeddingGenerator(modelDirectory, options);
     }
 
     /// <inheritdoc />
@@ -218,5 +205,60 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
 
         _model.Dispose();
         _disposed = true;
+    }
+
+    private static string ResolveModelDirectory(LocalEmbeddingsOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (!string.IsNullOrWhiteSpace(options.ModelPath))
+        {
+            return options.ModelPath;
+        }
+
+        if (!options.EnsureModelDownloaded)
+        {
+            throw new InvalidOperationException(
+                "Either ModelPath must be specified or EnsureModelDownloaded must be true.");
+        }
+
+        var downloader = new ModelDownloader(new HttpClient(), options.CacheDirectory);
+        return downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized).GetAwaiter().GetResult();
+    }
+
+    private static async Task<string> ResolveModelDirectoryAsync(LocalEmbeddingsOptions options, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (!string.IsNullOrWhiteSpace(options.ModelPath))
+        {
+            return options.ModelPath;
+        }
+
+        if (!options.EnsureModelDownloaded)
+        {
+            throw new InvalidOperationException(
+                "Either ModelPath must be specified or EnsureModelDownloaded must be true.");
+        }
+
+        var downloader = new ModelDownloader(new HttpClient(), options.CacheDirectory);
+        return await downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized, cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    private static string ResolveModelPath(string modelDirectory, bool preferQuantized)
+    {
+        if (preferQuantized)
+        {
+            foreach (var quantizedModelFileName in QuantizedModelFileNames)
+            {
+                var quantizedModelPath = Path.Combine(modelDirectory, quantizedModelFileName);
+                if (File.Exists(quantizedModelPath))
+                {
+                    return quantizedModelPath;
+                }
+            }
+        }
+
+        return Path.Combine(modelDirectory, "model.onnx");
     }
 }

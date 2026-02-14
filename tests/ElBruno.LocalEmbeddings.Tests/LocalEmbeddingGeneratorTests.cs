@@ -24,6 +24,18 @@ public class LocalEmbeddingGeneratorTests
     }
 
     [Fact]
+    public async Task CreateAsync_WithNoModelPathAndEnsureDownloadedFalse_ThrowsInvalidOperationException()
+    {
+        var options = new LocalEmbeddingsOptions
+        {
+            ModelPath = null,
+            EnsureModelDownloaded = false
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => LocalEmbeddingGenerator.CreateAsync(options));
+    }
+
+    [Fact]
     public void Constructor_WithNonExistentModelPath_ThrowsFileNotFoundException()
     {
         var options = new LocalEmbeddingsOptions

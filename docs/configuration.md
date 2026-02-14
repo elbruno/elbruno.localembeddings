@@ -11,7 +11,8 @@ var options = new LocalEmbeddingsOptions
     CacheDirectory = @"C:\models\cache",
     MaxSequenceLength = 256,
     EnsureModelDownloaded = true,
-    NormalizeEmbeddings = false
+    NormalizeEmbeddings = false,
+    PreferQuantized = false
 };
 ```
 
@@ -33,6 +34,26 @@ var options = new LocalEmbeddingsOptions
 ```
 
 For non-default model walkthroughs (including local download + license notes), see [Alternative Models](alternative-models.md).
+
+### Quantized ONNX Model Preference
+
+You can prefer INT8 quantized model variants when available:
+
+```csharp
+var options = new LocalEmbeddingsOptions
+{
+    ModelName = "sentence-transformers/all-MiniLM-L6-v2",
+    PreferQuantized = true
+};
+```
+
+When enabled, LocalEmbeddings tries these files in order:
+
+1. `onnx/model_quantized.onnx`
+2. `onnx/model_int8.onnx`
+3. `onnx/model.onnx` (fallback)
+
+Quantized models are typically much smaller and can reduce memory usage, with a small potential quality trade-off depending on the model.
 
 ### Local Model Path
 

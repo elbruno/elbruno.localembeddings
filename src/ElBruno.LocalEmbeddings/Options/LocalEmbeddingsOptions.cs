@@ -61,6 +61,16 @@ public sealed class LocalEmbeddingsOptions
     public bool UseParallelExecution { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets whether to prefer a quantized model variant (INT8) when available.
+    /// Default is false.
+    /// </summary>
+    /// <remarks>
+    /// When enabled, the downloader and model loader will prefer <c>model_quantized.onnx</c>
+    /// or <c>model_int8.onnx</c>, and fall back to <c>model.onnx</c>.
+    /// </remarks>
+    public bool PreferQuantized { get; set; } = false;
+
+    /// <summary>
     /// Gets or sets the number of inter-op threads used by ONNX Runtime.
     /// If null, defaults to <see cref="Environment.ProcessorCount"/>.
     /// </summary>

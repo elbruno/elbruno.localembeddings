@@ -71,6 +71,10 @@ public sealed class LocalEmbeddingsOptions
     public int MaxSequenceLength { get; set; }
     public bool EnsureModelDownloaded { get; set; }
     public bool NormalizeEmbeddings { get; set; }
+    public bool PreferQuantized { get; set; }
+    public bool UseParallelExecution { get; set; }
+    public int? InterOpNumThreads { get; set; }
+    public int? IntraOpNumThreads { get; set; }
 }
 ```
 
@@ -82,6 +86,10 @@ public sealed class LocalEmbeddingsOptions
 | `MaxSequenceLength` | `int` | `512` | Maximum token sequence length |
 | `EnsureModelDownloaded` | `bool` | `true` | Download model on startup if not cached |
 | `NormalizeEmbeddings` | `bool` | `false` | Normalize vectors to unit length |
+| `PreferQuantized` | `bool` | `false` | Prefer quantized ONNX files (`model_quantized.onnx`/`model_int8.onnx`) with fallback to `model.onnx` |
+| `UseParallelExecution` | `bool` | `true` | Enable ONNX Runtime parallel execution mode |
+| `InterOpNumThreads` | `int?` | `null` | Optional inter-op thread count override |
+| `IntraOpNumThreads` | `int?` | `null` | Optional intra-op thread count override |
 
 ## EmbeddingGeneratorExtensions
 

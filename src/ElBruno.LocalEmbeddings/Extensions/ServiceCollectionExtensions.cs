@@ -94,6 +94,10 @@ public static class ServiceCollectionExtensions
                 o.MaxSequenceLength = options.MaxSequenceLength;
                 o.EnsureModelDownloaded = options.EnsureModelDownloaded;
                 o.NormalizeEmbeddings = options.NormalizeEmbeddings;
+                o.UseParallelExecution = options.UseParallelExecution;
+                o.PreferQuantized = options.PreferQuantized;
+                o.InterOpNumThreads = options.InterOpNumThreads;
+                o.IntraOpNumThreads = options.IntraOpNumThreads;
             });
 
         return services.AddLocalEmbeddingsCore();

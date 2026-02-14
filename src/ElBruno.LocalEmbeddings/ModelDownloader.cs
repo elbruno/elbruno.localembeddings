@@ -9,10 +9,11 @@ public interface IModelDownloader
     /// Downloads a model if not already cached.
     /// </summary>
     /// <param name="modelName">The HuggingFace model name (e.g., "sentence-transformers/all-MiniLM-L6-v2").</param>
+    /// <param name="preferQuantized">Whether to prefer quantized model files when available.</param>
     /// <param name="progress">Optional progress reporter (0.0 to 1.0).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The local path to the model directory.</returns>
-    Task<string> EnsureModelAsync(string modelName, IProgress<double>? progress = null, CancellationToken cancellationToken = default);
+    Task<string> EnsureModelAsync(string modelName, bool preferQuantized = false, IProgress<double>? progress = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the local cache directory for models.
@@ -28,6 +29,7 @@ public sealed class ModelDownloader : IModelDownloader
 {
     private const string DefaultModel = "sentence-transformers/all-MiniLM-L6-v2";
     private const string HuggingFaceBaseUrl = "https://huggingface.co";
+    private static readonly string[] QuantizedModelFiles = ["model_quantized.onnx", "model_int8.onnx"];
 
     private static readonly string[] TokenizerFiles = ["tokenizer.json", "tokenizer_config.json", "vocab.txt"];
 
@@ -58,7 +60,7 @@ public sealed class ModelDownloader : IModelDownloader
     public static string DefaultModelName => DefaultModel;
 
     /// <inheritdoc />
-    public async Task<string> EnsureModelAsync(string modelName, IProgress<double>? progress = null, CancellationToken cancellationToken = default)
+    public async Task<string> EnsureModelAsync(string modelName, bool preferQuantized = false, IProgress<double>? progress = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(modelName))
         {
@@ -67,16 +69,15 @@ public sealed class ModelDownloader : IModelDownloader
 
         var sanitizedName = SanitizeModelName(modelName);
         var modelDirectory = Path.Combine(_cacheDirectory, sanitizedName);
-        var modelPath = Path.Combine(modelDirectory, "model.onnx");
 
         // Create directory if it doesn't exist
         Directory.CreateDirectory(modelDirectory);
 
+        var modelFileName = await EnsureModelFileAsync(modelName, modelDirectory, preferQuantized, cancellationToken).ConfigureAwait(false);
+        var modelPath = Path.Combine(modelDirectory, modelFileName);
+
         // Track total files to download for progress
-        var filesToDownload = new List<(string url, string localPath, bool required)>
-        {
-            (GetOnnxModelUrl(modelName), modelPath, true)
-        };
+        var filesToDownload = new List<(string url, string localPath, bool required)>();
 
         // Add tokenizer files
         foreach (var tokenizerFile in TokenizerFiles)
@@ -85,7 +86,9 @@ public sealed class ModelDownloader : IModelDownloader
         }
 
         var completedFiles = 0;
-        var totalFiles = filesToDownload.Count;
+        var totalFiles = TokenizerFiles.Length + 1;
+        completedFiles++;
+        progress?.Report((double)completedFiles / totalFiles);
 
         foreach (var (url, localPath, required) in filesToDownload)
         {
@@ -175,11 +178,58 @@ public sealed class ModelDownloader : IModelDownloader
             .Replace('|', '_');
     }
 
-    private static string GetOnnxModelUrl(string modelName)
-        => $"{HuggingFaceBaseUrl}/{modelName}/resolve/main/onnx/model.onnx";
+    private static string GetOnnxModelUrl(string modelName, string modelFileName = "model.onnx")
+        => $"{HuggingFaceBaseUrl}/{modelName}/resolve/main/onnx/{modelFileName}";
 
     private static string GetTokenizerFileUrl(string modelName, string fileName)
         => $"{HuggingFaceBaseUrl}/{modelName}/resolve/main/{fileName}";
+
+    private async Task<string> EnsureModelFileAsync(string modelName, string modelDirectory, bool preferQuantized, CancellationToken cancellationToken)
+    {
+        if (preferQuantized)
+        {
+            foreach (var quantizedFile in QuantizedModelFiles)
+            {
+                if (File.Exists(Path.Combine(modelDirectory, quantizedFile)))
+                {
+                    return quantizedFile;
+                }
+            }
+        }
+
+        var defaultModelPath = Path.Combine(modelDirectory, "model.onnx");
+        if (File.Exists(defaultModelPath))
+        {
+            return "model.onnx";
+        }
+
+        if (preferQuantized)
+        {
+            foreach (var quantizedFile in QuantizedModelFiles)
+            {
+                var quantizedPath = Path.Combine(modelDirectory, quantizedFile);
+                try
+                {
+                    await DownloadFileAsync(GetOnnxModelUrl(modelName, quantizedFile), quantizedPath, progress: null, cancellationToken).ConfigureAwait(false);
+                    return quantizedFile;
+                }
+                catch (HttpRequestException)
+                {
+                    // Fall back to trying the next quantized filename, then FP32.
+                }
+            }
+        }
+
+        try
+        {
+            await DownloadFileAsync(GetOnnxModelUrl(modelName), defaultModelPath, progress: null, cancellationToken).ConfigureAwait(false);
+            return "model.onnx";
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new InvalidOperationException($"Failed to download required model file from '{GetOnnxModelUrl(modelName)}': {ex.Message}", ex);
+        }
+    }
 
     private async Task DownloadFileAsync(string url, string destinationPath, IProgress<double>? progress, CancellationToken cancellationToken)
     {
