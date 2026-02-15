@@ -9,6 +9,12 @@
 
 A .NET library for generating text embeddings locally using ONNX Runtime and Microsoft.Extensions.AI abstractions — no external API calls required.
 
+## 🎥 Quick Overview
+
+New to local embeddings? Watch this **[5-minute video](https://www.youtube.com/watch?v=0rRgSQWlVm8)** explaining the main goal of the library.
+
+Want to build RAG applications? Read this **[blog post about 3 RAG approaches in .NET](https://elbruno.com/2026/02/14/%f0%9f%a7%a0-building-rag-in-net-with-local-embeddings-3-approaches-zero-cloud-calls/)** with local embeddings and zero cloud calls.
+
 ## Features
 
 - **Local Embedding Generation** — Run inference entirely on your machine using ONNX Runtime
