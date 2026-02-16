@@ -45,38 +45,7 @@ public sealed class ClipImageEncoder : IDisposable
     public float[] Encode(string imagePath)
     {
         using var image = Image.Load<Rgb24>(imagePath);
-
-        image.Mutate(x => x.Resize(ImageSize, ImageSize));
-
-        var tensor = new DenseTensor<float>(new[] { 1, 3, ImageSize, ImageSize });
-
-        image.ProcessPixelRows(accessor =>
-        {
-            for (int y = 0; y < ImageSize; y++)
-            {
-                var pixelRow = accessor.GetRowSpan(y);
-                for (int x = 0; x < ImageSize; x++)
-                {
-                    var pixel = pixelRow[x];
-
-                    tensor[0, 0, y, x] = (pixel.R / 255.0f - Mean[0]) / Std[0];
-                    tensor[0, 1, y, x] = (pixel.G / 255.0f - Mean[1]) / Std[1];
-                    tensor[0, 2, y, x] = (pixel.B / 255.0f - Mean[2]) / Std[2];
-                }
-            }
-        });
-
-        var inputs = new List<NamedOnnxValue>
-        {
-            NamedOnnxValue.CreateFromTensor(_inputName, tensor)
-        };
-
-        using var results = _session.Run(inputs);
-        var output = results.First().AsEnumerable<float>().ToArray();
-
-        Normalize(output);
-
-        return output;
+        return EncodeImage(image);
     }
 
     /// <summary>
@@ -87,7 +56,11 @@ public sealed class ClipImageEncoder : IDisposable
     public float[] Encode(Stream imageStream)
     {
         using var image = Image.Load<Rgb24>(imageStream);
+        return EncodeImage(image);
+    }
 
+    private float[] EncodeImage(Image<Rgb24> image)
+    {
         image.Mutate(x => x.Resize(ImageSize, ImageSize));
 
         var tensor = new DenseTensor<float>(new[] { 1, 3, ImageSize, ImageSize });

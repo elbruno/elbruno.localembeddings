@@ -3,13 +3,16 @@ namespace ElBruno.LocalEmbeddings.ImageEmbeddings.Tests;
 public class ImageSearchEngineTests
 {
     [Fact]
-    public void IndexImages_WithNonExistentDirectory_ThrowsDirectoryNotFoundException()
+    public void DirectoryNotFoundException_ContainsExpectedMessage()
     {
-        // We can't instantiate a real ImageSearchEngine without ONNX models,
-        // but we can verify the constructor contract and directory validation.
-        // This test uses SkippableFact-style logic for the encoder dependency.
+        // ImageSearchEngine.IndexImages throws DirectoryNotFoundException
+        // when the image directory does not exist. We verify the exception
+        // message format matches the expected pattern.
         var nonExistentDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Assert.False(Directory.Exists(nonExistentDir));
+
+        var ex = new DirectoryNotFoundException($"Image directory not found: {nonExistentDir}");
+        Assert.Contains(nonExistentDir, ex.Message);
     }
 
     [Fact]

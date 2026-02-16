@@ -90,15 +90,17 @@ try
     var searchEngine = new ImageSearchEngine(imageEncoder, textEncoder);
 
     startTime = DateTime.Now;
+
+    string[] extensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif"];
+    var imageFiles = Directory.GetFiles(imageDir)
+        .Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+        .ToList();
+
     searchEngine.IndexImages(imageDir, (current, total) =>
     {
-        string[] extensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif"];
-        var files = Directory.GetFiles(imageDir)
-            .Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-            .ToList();
-        if (current <= files.Count)
+        if (current <= imageFiles.Count)
         {
-            ImageRagChatConsoleRenderer.PrintIndexingProgress(current, total, Path.GetFileName(files[current - 1]));
+            ImageRagChatConsoleRenderer.PrintIndexingProgress(current, total, Path.GetFileName(imageFiles[current - 1]));
         }
     });
     var indexTime = DateTime.Now - startTime;
