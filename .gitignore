@@ -112,6 +112,8 @@ secrets.json
 
 # CLIP model files (large ONNX models, download separately)
 samples/ImageSearchSample/clip-models/
+samples/ImageRagSimple/clip-models/
+samples/ImageRagChat/clip-models/
 
 # BenchmarkDotNet
 BenchmarkDotNet.Artifacts/

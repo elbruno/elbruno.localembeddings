@@ -4,6 +4,8 @@
     <Project Path="samples/ConsoleApp/ConsoleApp.csproj" />
     <Project Path="samples/ConsoleAppLite/ConsoleAppLite.csproj" />
     <Project Path="samples/HelloWorldAltModel/HelloWorldAltModel.csproj" />
+    <Project Path="samples/ImageRagChat/ImageRagChat.csproj" />
+    <Project Path="samples/ImageRagSimple/ImageRagSimple.csproj" />
     <Project Path="samples/ImageSearchSample/ImageSearchSample.csproj" />
     <Project Path="samples/RaspberryPiTiny/RaspberryPiTiny.csproj" />
     <Project Path="samples/RagChat/RagChat.csproj" />
@@ -12,11 +14,13 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.ImageEmbeddings/ElBruno.LocalEmbeddings.ImageEmbeddings.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.KernelMemory/ElBruno.LocalEmbeddings.KernelMemory.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.VectorData/ElBruno.LocalEmbeddings.VectorData.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.ImageEmbeddings.Tests/ElBruno.LocalEmbeddings.ImageEmbeddings.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.KernelMemory.Tests/ElBruno.LocalEmbeddings.KernelMemory.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.VectorData.Tests/ElBruno.LocalEmbeddings.VectorData.Tests.csproj" />
   </Folder>
