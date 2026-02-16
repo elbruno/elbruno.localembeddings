@@ -10,27 +10,24 @@ class Program
         Console.WriteLine("=== CLIP Image Search Sample ===\n");
 
         // Parse arguments
-        if (args.Length < 2)
+        if (!TryParseArguments(args, out string modelDir, out string imageDir))
         {
-            Console.WriteLine("Usage: ImageSearchSample <model-directory> <image-directory>");
+            Console.WriteLine("Usage: ImageSearchSample --model-dir <model-directory> --image-dir <image-directory>");
             Console.WriteLine();
             Console.WriteLine("Arguments:");
-            Console.WriteLine("  model-directory   - Directory containing CLIP ONNX models:");
+            Console.WriteLine("  --model-dir, -m   - Directory containing CLIP ONNX models:");
             Console.WriteLine("                      - text_model.onnx (text encoder)");
             Console.WriteLine("                      - vision_model.onnx (image encoder)");
             Console.WriteLine("                      - vocab.json (vocabulary)");
             Console.WriteLine("                      - merges.txt (BPE merges)");
-            Console.WriteLine("  image-directory   - Directory containing images to search");
+            Console.WriteLine("  --image-dir, -i   - Directory containing images to search");
             Console.WriteLine();
             Console.WriteLine("Example:");
-            Console.WriteLine("  dotnet run --project samples/ImageSearchSample -- ./clip-models ./my-images");
+            Console.WriteLine("  dotnet run --project samples/ImageSearchSample -- --model-dir ./clip-models --image-dir ./my-images");
             Console.WriteLine();
             Console.WriteLine("See README.md for model download instructions.");
             return;
         }
-
-        string modelDir = args[0];
-        string imageDir = args[1];
 
         // Validate paths
         if (!Directory.Exists(modelDir))
@@ -129,5 +126,58 @@ class Program
             Console.WriteLine($"Error: {ex.Message}");
             Console.WriteLine(ex.StackTrace);
         }
+    }
+
+    private static bool TryParseArguments(string[] args, out string modelDir, out string imageDir)
+    {
+        modelDir = string.Empty;
+        imageDir = string.Empty;
+
+        if (TryGetOptionValue(args, "--model-dir", "-m", out string? modelValue) &&
+            TryGetOptionValue(args, "--image-dir", "-i", out string? imageValue))
+        {
+            modelDir = modelValue;
+            imageDir = imageValue;
+            return true;
+        }
+
+        if (args.Length >= 2)
+        {
+            modelDir = args[0];
+            imageDir = args[1];
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryGetOptionValue(string[] args, string longName, string shortName, out string? value)
+    {
+        for (int i = 0; i < args.Length; i++)
+        {
+            string arg = args[i];
+
+            if (arg.Equals(longName, StringComparison.OrdinalIgnoreCase) ||
+                arg.Equals(shortName, StringComparison.OrdinalIgnoreCase))
+            {
+                if (i + 1 < args.Length)
+                {
+                    value = args[i + 1];
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+
+            if (arg.StartsWith(longName + "=", StringComparison.OrdinalIgnoreCase))
+            {
+                value = arg[(longName.Length + 1)..];
+                return true;
+            }
+        }
+
+        value = null;
+        return false;
     }
 }

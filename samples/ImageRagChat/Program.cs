@@ -9,26 +9,23 @@ ImageRagChatConsoleRenderer.PrintBanner();
 // =============================================================================
 // Step 1: Parse Arguments
 // =============================================================================
-if (args.Length < 2)
+if (!TryParseArguments(args, out string modelDir, out string imageDir))
 {
-    AnsiConsole.MarkupLine("[bold red]Usage:[/] ImageRagChat [green]<model-directory>[/] [green]<image-directory>[/]");
+    AnsiConsole.MarkupLine("[bold red]Usage:[/] ImageRagChat [green]--model-dir[/] [grey]<model-directory>[/] [green]--image-dir[/] [grey]<image-directory>[/]");
     AnsiConsole.WriteLine();
     AnsiConsole.MarkupLine("Arguments:");
-    AnsiConsole.MarkupLine("  [green]model-directory[/]   Directory containing CLIP ONNX models:");
+    AnsiConsole.MarkupLine("  [green]--model-dir, -m[/]   Directory containing CLIP ONNX models:");
     AnsiConsole.MarkupLine("                       text_model.onnx, vision_model.onnx, vocab.json, merges.txt");
-    AnsiConsole.MarkupLine("  [green]image-directory[/]   Directory containing images to search");
+    AnsiConsole.MarkupLine("  [green]--image-dir, -i[/]   Directory containing images to search");
     AnsiConsole.WriteLine();
     AnsiConsole.MarkupLine("Example:");
-    AnsiConsole.MarkupLine("  [grey]dotnet run --project samples/ImageRagChat -- ./clip-models ./my-images[/]");
+    AnsiConsole.MarkupLine("  [grey]dotnet run --project samples/ImageRagChat -- --model-dir ./clip-models --image-dir ./my-images[/]");
     AnsiConsole.WriteLine();
     AnsiConsole.MarkupLine("To get CLIP models:");
     AnsiConsole.MarkupLine("  [grey]pip install optimum[exporters][/]");
     AnsiConsole.MarkupLine("  [grey]optimum-cli export onnx --model openai/clip-vit-base-patch32 ./clip-models/[/]");
     return;
 }
-
-string modelDir = args[0];
-string imageDir = args[1];
 
 if (!Directory.Exists(modelDir))
 {
@@ -181,4 +178,57 @@ catch (Exception ex)
 {
     ImageRagChatConsoleRenderer.PrintError($"Error: {ex.Message}");
     AnsiConsole.WriteException(ex);
+}
+
+static bool TryParseArguments(string[] args, out string modelDir, out string imageDir)
+{
+    modelDir = string.Empty;
+    imageDir = string.Empty;
+
+    if (TryGetOptionValue(args, "--model-dir", "-m", out string? modelValue) &&
+        TryGetOptionValue(args, "--image-dir", "-i", out string? imageValue))
+    {
+        modelDir = modelValue;
+        imageDir = imageValue;
+        return true;
+    }
+
+    if (args.Length >= 2)
+    {
+        modelDir = args[0];
+        imageDir = args[1];
+        return true;
+    }
+
+    return false;
+}
+
+static bool TryGetOptionValue(string[] args, string longName, string shortName, out string? value)
+{
+    for (int i = 0; i < args.Length; i++)
+    {
+        string arg = args[i];
+
+        if (arg.Equals(longName, StringComparison.OrdinalIgnoreCase) ||
+            arg.Equals(shortName, StringComparison.OrdinalIgnoreCase))
+        {
+            if (i + 1 < args.Length)
+            {
+                value = args[i + 1];
+                return true;
+            }
+
+            value = null;
+            return false;
+        }
+
+        if (arg.StartsWith(longName + "=", StringComparison.OrdinalIgnoreCase))
+        {
+            value = arg[(longName.Length + 1)..];
+            return true;
+        }
+    }
+
+    value = null;
+    return false;
 }

@@ -86,10 +86,18 @@ All samples require two arguments:
 1. Path to the **model directory** (e.g., `./scripts/clip-models`)
 2. Path to the **image directory** (e.g., `./samples/images`)
 
-If you ran one of the download scripts, you can use this command line command directly:
+If you ran one of the download scripts (default location) and want to use the sample images, you can use these command line commands directly:
 
 ```bash
-dotnet run --project samples/ImageRagSimple -- ./scripts/clip-models ./samples/images
+dotnet run --project samples/ImageRagSimple -- --model-dir ./scripts/clip-models --image-dir ./samples/images
+```
+
+```bash
+dotnet run --project samples/ImageRagChat -- --model-dir ./scripts/clip-models --image-dir ./samples/images
+```
+
+```bash
+dotnet run --project samples/ImageSearchSample -- --model-dir ./scripts/clip-models --image-dir ./samples/images
 ```
 
 ### Running ImageRagSimple
@@ -97,7 +105,7 @@ dotnet run --project samples/ImageRagSimple -- ./scripts/clip-models ./samples/i
 A bare-bones example that indexes images and runs a few hardcoded queries ("a cat", "sunset").
 
 ```bash
-dotnet run --project samples/ImageRagSimple -- ./scripts/clip-models ./samples/images
+dotnet run --project samples/ImageRagSimple -- --model-dir ./scripts/clip-models --image-dir ./samples/images
 ```
 
 ### Running ImageRagChat
@@ -105,7 +113,7 @@ dotnet run --project samples/ImageRagSimple -- ./scripts/clip-models ./samples/i
 An interactive chat application. Type queries to search your images in real-time.
 
 ```bash
-dotnet run --project samples/ImageRagChat -- ./scripts/clip-models ./samples/images
+dotnet run --project samples/ImageRagChat -- --model-dir ./scripts/clip-models --image-dir ./samples/images
 ```
 
 **Commands:**
@@ -117,7 +125,7 @@ dotnet run --project samples/ImageRagChat -- ./scripts/clip-models ./samples/ima
 ### Running ImageSearchSample
 
 ```bash
-dotnet run --project samples/ImageSearchSample -- ./scripts/clip-models ./samples/images
+dotnet run --project samples/ImageSearchSample -- --model-dir ./scripts/clip-models --image-dir ./samples/images
 ```
 
 ---

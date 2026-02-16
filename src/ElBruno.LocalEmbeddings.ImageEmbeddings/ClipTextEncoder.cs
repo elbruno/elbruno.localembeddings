@@ -16,7 +16,7 @@ public sealed class ClipTextEncoder : IDisposable
     private readonly InferenceSession _session;
     private readonly ClipTokenizer _tokenizer;
     private readonly string _inputIdsName;
-    private readonly string _attentionMaskName;
+    private readonly string? _attentionMaskName;
     private readonly string _outputName;
 
     /// <summary>
@@ -30,11 +30,24 @@ public sealed class ClipTextEncoder : IDisposable
         _session = new InferenceSession(modelPath);
         _tokenizer = new ClipTokenizer(vocabPath, mergesPath);
 
-        _inputIdsName = _session.InputMetadata.Keys.FirstOrDefault(k => k.Contains("input_ids") || k.Contains("input"))
-            ?? _session.InputMetadata.Keys.First();
-        _attentionMaskName = _session.InputMetadata.Keys.FirstOrDefault(k => k.Contains("attention_mask") || k.Contains("mask"))
-            ?? _session.InputMetadata.Keys.Skip(1).First();
-        _outputName = _session.OutputMetadata.Keys.First();
+        var inputKeys = _session.InputMetadata.Keys.ToArray();
+        if (inputKeys.Length == 0)
+        {
+            throw new InvalidOperationException("The CLIP text model does not define any inputs.");
+        }
+
+        _inputIdsName = inputKeys.FirstOrDefault(k => k.Contains("input_ids", StringComparison.OrdinalIgnoreCase)
+            || k.Contains("input", StringComparison.OrdinalIgnoreCase)) ?? inputKeys[0];
+        _attentionMaskName = inputKeys.FirstOrDefault(k => k.Contains("attention_mask", StringComparison.OrdinalIgnoreCase)
+            || k.Contains("mask", StringComparison.OrdinalIgnoreCase));
+
+        var outputKeys = _session.OutputMetadata.Keys.ToArray();
+        if (outputKeys.Length == 0)
+        {
+            throw new InvalidOperationException("The CLIP text model does not define any outputs.");
+        }
+
+        _outputName = outputKeys[0];
     }
 
     /// <summary>
@@ -57,9 +70,13 @@ public sealed class ClipTextEncoder : IDisposable
 
         var inputs = new List<NamedOnnxValue>
         {
-            NamedOnnxValue.CreateFromTensor(_inputIdsName, inputIdsTensor),
-            NamedOnnxValue.CreateFromTensor(_attentionMaskName, attentionMaskTensor)
+            NamedOnnxValue.CreateFromTensor(_inputIdsName, inputIdsTensor)
         };
+
+        if (_attentionMaskName != null)
+        {
+            inputs.Add(NamedOnnxValue.CreateFromTensor(_attentionMaskName, attentionMaskTensor));
+        }
 
         using var results = _session.Run(inputs);
         var output = results.First().AsEnumerable<float>().ToArray();
