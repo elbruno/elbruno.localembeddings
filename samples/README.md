@@ -18,6 +18,20 @@ Nine sample projects demonstrating LocalEmbeddings from basic usage to full RAG 
 
 ---
 
+## Image Samples (Multimodal RAG)
+
+For all image-related samples (searching images with text), please refer to the dedicated guide:
+
+👉 **[Image Embeddings Samples & Setup](README_IMAGES.md)**
+
+It covers:
+
+- Downloading the required CLIP models (`.onnx`)
+- Using the shared sample images
+- Running the `ImageRagSimple`, `ImageRagChat`, and `ImageSearchSample` projects
+
+---
+
 ## HelloWorldAltModel
 
 Simple hello world sample using a free non-default model:
@@ -240,7 +254,19 @@ Text-to-image **semantic search** using CLIP (Contrastive Language–Image Pretr
 
 ### CLIP Model Setup
 
-Export from HuggingFace using Optimum CLI:
+Use the provided helper scripts to download the required models:
+
+```powershell
+# Windows
+./scripts/download_clip_models.ps1
+```
+
+```bash
+# Linux/macOS
+./scripts/download_clip_models.sh
+```
+
+Alternatively, export from HuggingFace using Optimum CLI:
 
 ```bash
 pip install optimum[exporters]

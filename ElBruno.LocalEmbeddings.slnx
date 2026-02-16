@@ -14,6 +14,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.ImageEmbeddings.Downloader/ElBruno.LocalEmbeddings.ImageEmbeddings.Downloader.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.ImageEmbeddings/ElBruno.LocalEmbeddings.ImageEmbeddings.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.KernelMemory/ElBruno.LocalEmbeddings.KernelMemory.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.VectorData/ElBruno.LocalEmbeddings.VectorData.csproj" />

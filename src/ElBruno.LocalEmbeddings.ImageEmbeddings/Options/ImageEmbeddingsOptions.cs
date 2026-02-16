@@ -54,4 +54,11 @@ public sealed class ImageEmbeddingsOptions
     /// Gets the full path to the merge rules file.
     /// </summary>
     public string MergesPath => Path.Combine(ModelDirectory, MergesFileName);
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to ensure the model files are downloaded.
+    /// If true, the library will attempt to download missing model files to <see cref="ModelDirectory"/>.
+    /// Default is false.
+    /// </summary>
+    public bool EnsureModelDownloaded { get; set; } = false;
 }

@@ -1,3 +1,4 @@
+using ElBruno.LocalEmbeddings.ImageEmbeddings.Downloader;
 using ElBruno.LocalEmbeddings.ImageEmbeddings.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -27,6 +28,7 @@ public static class ServiceCollectionExtensions
     /// services.AddImageEmbeddings(options =>
     /// {
     ///     options.ModelDirectory = "/path/to/clip-models";
+    ///     options.EnsureModelDownloaded = true;
     /// });
     /// </code>
     /// </example>
@@ -39,11 +41,7 @@ public static class ServiceCollectionExtensions
         var options = new ImageEmbeddingsOptions();
         configure(options);
 
-        services.TryAddSingleton(new ClipImageEncoder(options.VisionModelPath));
-        services.TryAddSingleton(new ClipTextEncoder(options.TextModelPath, options.VocabPath, options.MergesPath));
-        services.TryAddSingleton<ImageSearchEngine>();
-
-        return services;
+        return services.AddImageEmbeddings(options);
     }
 
     /// <summary>
@@ -60,10 +58,55 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        services.TryAddSingleton(new ClipImageEncoder(options.VisionModelPath));
-        services.TryAddSingleton(new ClipTextEncoder(options.TextModelPath, options.VocabPath, options.MergesPath));
+        if (options.EnsureModelDownloaded)
+        {
+            services.AddImageModelDownloader();
+        }
+
+        services.TryAddSingleton(sp =>
+        {
+            EnsureModels(sp, options);
+            return new ClipImageEncoder(options.VisionModelPath);
+        });
+
+        services.TryAddSingleton(sp =>
+        {
+            EnsureModels(sp, options);
+            return new ClipTextEncoder(options.TextModelPath, options.VocabPath, options.MergesPath);
+        });
+
         services.TryAddSingleton<ImageSearchEngine>();
 
         return services;
+    }
+
+    private static void EnsureModels(IServiceProvider services, ImageEmbeddingsOptions options)
+    {
+        if (options.EnsureModelDownloaded)
+        {
+            var downloader = services.GetRequiredService<IImageModelDownloader>();
+            // Synchronously ensure models are downloaded to prevent startup errors
+            downloader.EnsureModelDownloadedAsync(options.ModelDirectory).GetAwaiter().GetResult();
+        }
+        else
+        {
+            // Verify files exist, else throw friendly error
+            var requiredFiles = new[]
+            {
+                (options.TextModelPath, "Text Model"),
+                (options.VisionModelPath, "Vision Model"),
+                (options.VocabPath, "Vocab File"),
+                (options.MergesPath, "Merges File")
+            };
+
+            var missingFiles = requiredFiles.Where(f => !File.Exists(f.Item1)).ToList();
+            if (missingFiles.Count > 0)
+            {
+                var missingFileNames = string.Join(", ", missingFiles.Select(f => f.Item2));
+                throw new InvalidOperationException(
+                    $"Missing required model files: {missingFileNames}. " +
+                    $"Please ensure they exist in '{options.ModelDirectory}' or set 'EnsureModelDownloaded' to true.");
+            }
+        }
     }
 }

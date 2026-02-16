@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ElBruno.LocalEmbeddings\ElBruno.LocalEmbeddings.csproj" />
+    <ProjectReference Include="..\ElBruno.LocalEmbeddings.ImageEmbeddings.Downloader\ElBruno.LocalEmbeddings.ImageEmbeddings.Downloader.csproj" />
   </ItemGroup>
 
   <ItemGroup>
