@@ -9,6 +9,10 @@
 
 A .NET library for generating text embeddings locally using ONNX Runtime and Microsoft.Extensions.AI abstractions — no external API calls required.
 
+## 🚀 See It in Action
+
+![Aspire App Running](images/AgentOrch-Anim01%20(2).gif)
+
 ## 🎥 Quick Overview
 
 New to local embeddings? Watch this **[5-minute video](https://www.youtube.com/watch?v=0rRgSQWlVm8)** explaining the main goal of the library.
