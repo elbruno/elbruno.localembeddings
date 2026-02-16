@@ -16,6 +16,7 @@ The `ElBruno.LocalEmbeddings.ImageEmbeddings` library brings multimodal capabili
 | :--- | :--- | :--- |
 | **[ImageRagSimple](ImageRagSimple/Program.cs)** | Minimal Console App | Basic indexing and search loop. Good start for understanding the API. |
 | **[ImageRagChat](ImageRagChat/Program.cs)** | Interactive CLI | Rich UI using Spectre.Console. Supports text and image queries. |
+| **[DocumentRagFoundry](DocumentRagFoundry/Program.cs)** | Multimodal RAG with Foundry Local | PDF processing, dual embeddings (text + image), phi-4-mini LLM for Q&A. |
 
 ---
 
@@ -108,6 +109,30 @@ dotnet run --project samples/ImageRagChat -- --model-dir ./scripts/clip-models -
 * Type any text to search (e.g., "fast car")
 * Type `image: path/to/image.jpg` to find similar images
 * Type `exit` to quit
+
+### Running DocumentRagFoundry
+
+A multimodal RAG application that processes PDFs and images, then uses Foundry Local (phi-4-mini) to answer questions.
+
+**Prerequisites:**
+
+* Foundry Local running with phi-4-mini available
+* CLIP models downloaded (see setup above)
+* Documents placed in `samples/docs/` (PDFs and/or images)
+
+```bash
+dotnet run --project samples/DocumentRagFoundry
+```
+
+**How it works:**
+
+* Indexes PDFs (text + page images) and standalone images
+* Ask questions in natural language
+* Retrieves relevant text snippets and images
+* Generates answers using Foundry Local phi-4-mini with context
+* Type `exit` to quit
+
+See [DocumentRagFoundry/README.md](DocumentRagFoundry/README.md) for detailed documentation.
 
 ---
 
