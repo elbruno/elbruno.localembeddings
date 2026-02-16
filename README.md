@@ -119,6 +119,8 @@ See the [samples README](samples/README.md) for prerequisites and run instructio
 | [RagChat](samples/RagChat) | Embedding-only semantic search Q&A using shared VectorData `InMemoryVectorStore` (no LLM needed) |
 | [RagOllama](samples/RagOllama) | Full RAG with Ollama + phi4-mini + Kernel Memory |
 | [RagFoundryLocal](samples/RagFoundryLocal) | Full RAG with Foundry Local + phi4-mini |
+| [ImageRagSimple](samples/ImageRagSimple) | Minimal image RAG: index images → search by text |
+| [ImageRagChat](samples/ImageRagChat) | Interactive image RAG chat with text and image-to-image search |
 
 ## Configuration
 

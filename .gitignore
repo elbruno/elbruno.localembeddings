@@ -112,6 +112,10 @@ secrets.json
 
 # CLIP model files (large ONNX models, download separately)
 scripts/clip-models/
+**/clip-models/
+*.onnx
+vocab.json
+merges.txt
 
 # BenchmarkDotNet
 BenchmarkDotNet.Artifacts/

@@ -1,12 +1,13 @@
 # Publishing a New Version to NuGet
 
-This guide covers how to publish new versions of **ElBruno.LocalEmbeddings**, **ElBruno.LocalEmbeddings.KernelMemory**, and **ElBruno.LocalEmbeddings.VectorData** to NuGet.org using GitHub Actions and NuGet Trusted Publishing (keyless, OIDC-based).
+This guide covers how to publish new versions of **ElBruno.LocalEmbeddings**, **ElBruno.LocalEmbeddings.ImageEmbeddings**, **ElBruno.LocalEmbeddings.KernelMemory**, and **ElBruno.LocalEmbeddings.VectorData** to NuGet.org using GitHub Actions and NuGet Trusted Publishing (keyless, OIDC-based).
 
 ## Packages
 
 | Package | Project | Description |
 |---------|---------|-------------|
 | `ElBruno.LocalEmbeddings` | `src/ElBruno.LocalEmbeddings/` | Core library — local ONNX embedding generation |
+| `ElBruno.LocalEmbeddings.ImageEmbeddings` | `src/ElBruno.LocalEmbeddings.ImageEmbeddings/` | Companion — CLIP-based image embeddings |
 | `ElBruno.LocalEmbeddings.KernelMemory` | `src/ElBruno.LocalEmbeddings.KernelMemory/` | Companion — Kernel Memory adapter + extensions |
 | `ElBruno.LocalEmbeddings.VectorData` | `src/ElBruno.LocalEmbeddings.VectorData/` | Companion — Microsoft.Extensions.VectorData integration |
 
@@ -29,9 +30,10 @@ These steps only need to be done once.
 | **Workflow File** | `publish.yml` |
 | **Environment** | `release` |
 
-   You need to create this policy **three times** — once per package:
+   You need to create this policy **four times** — once per package:
 
 - `ElBruno.LocalEmbeddings`
+- `ElBruno.LocalEmbeddings.ImageEmbeddings`
 - `ElBruno.LocalEmbeddings.KernelMemory`
 - `ElBruno.LocalEmbeddings.VectorData`
 
@@ -53,9 +55,10 @@ These steps only need to be done once.
 
 This is the standard workflow — the version is derived from the release tag.
 
-1. **Update the version** in all three csproj files:
+1. **Update the version** in all four csproj files:
 
    - `src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj`
+   - `src/ElBruno.LocalEmbeddings.ImageEmbeddings/ElBruno.LocalEmbeddings.ImageEmbeddings.csproj`
    - `src/ElBruno.LocalEmbeddings.KernelMemory/ElBruno.LocalEmbeddings.KernelMemory.csproj`
    - `src/ElBruno.LocalEmbeddings.VectorData/ElBruno.LocalEmbeddings.VectorData.csproj`
 
@@ -95,7 +98,7 @@ The workflow (`.github/workflows/publish.yml`) uses **NuGet Trusted Publishing**
 GitHub Release created (e.g. v1.2.0)
   → GitHub Actions triggers publish.yml
     → Builds + tests all projects
-    → Packs three .nupkg files (LocalEmbeddings, KernelMemory, VectorData)
+   → Packs four .nupkg files (LocalEmbeddings, ImageEmbeddings, KernelMemory, VectorData)
     → Requests an OIDC token from GitHub
     → Exchanges the token with NuGet.org for a temporary API key (valid 1 hour)
     → Pushes all packages to NuGet.org
