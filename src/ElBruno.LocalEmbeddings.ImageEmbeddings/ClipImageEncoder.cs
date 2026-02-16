@@ -5,11 +5,16 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Numerics.Tensors;
 
-namespace ImageSearchSample;
+namespace ElBruno.LocalEmbeddings.ImageEmbeddings;
 
 /// <summary>
 /// CLIP image encoder using ONNX Runtime and ImageSharp.
 /// </summary>
+/// <remarks>
+/// Loads a CLIP vision encoder ONNX model and encodes images into
+/// L2-normalized embedding vectors suitable for cross-modal similarity search.
+/// Images are preprocessed to 224×224 pixels with CLIP normalization.
+/// </remarks>
 public sealed class ClipImageEncoder : IDisposable
 {
     private readonly InferenceSession _session;
@@ -17,10 +22,14 @@ public sealed class ClipImageEncoder : IDisposable
     private readonly string _outputName;
 
     // CLIP normalization parameters
-    private static readonly float[] Mean = { 0.48145466f, 0.4578275f, 0.40821073f };
-    private static readonly float[] Std = { 0.26862954f, 0.26130258f, 0.27577711f };
+    private static readonly float[] Mean = [0.48145466f, 0.4578275f, 0.40821073f];
+    private static readonly float[] Std = [0.26862954f, 0.26130258f, 0.27577711f];
     private const int ImageSize = 224;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ClipImageEncoder"/> class.
+    /// </summary>
+    /// <param name="modelPath">Path to the CLIP vision encoder ONNX model file.</param>
     public ClipImageEncoder(string modelPath)
     {
         _session = new InferenceSession(modelPath);
@@ -31,18 +40,31 @@ public sealed class ClipImageEncoder : IDisposable
     /// <summary>
     /// Encodes an image file to an L2-normalized embedding vector.
     /// </summary>
+    /// <param name="imagePath">Path to the image file to encode.</param>
+    /// <returns>An L2-normalized float array representing the image embedding.</returns>
     public float[] Encode(string imagePath)
     {
-        // Load and preprocess image
         using var image = Image.Load<Rgb24>(imagePath);
-        
-        // Resize to 224x224
+        return EncodeImage(image);
+    }
+
+    /// <summary>
+    /// Encodes an image from a stream to an L2-normalized embedding vector.
+    /// </summary>
+    /// <param name="imageStream">A stream containing the image data.</param>
+    /// <returns>An L2-normalized float array representing the image embedding.</returns>
+    public float[] Encode(Stream imageStream)
+    {
+        using var image = Image.Load<Rgb24>(imageStream);
+        return EncodeImage(image);
+    }
+
+    private float[] EncodeImage(Image<Rgb24> image)
+    {
         image.Mutate(x => x.Resize(ImageSize, ImageSize));
 
-        // Create NCHW tensor [1, 3, 224, 224]
         var tensor = new DenseTensor<float>(new[] { 1, 3, ImageSize, ImageSize });
 
-        // Convert to normalized float tensor
         image.ProcessPixelRows(accessor =>
         {
             for (int y = 0; y < ImageSize; y++)
@@ -51,8 +73,7 @@ public sealed class ClipImageEncoder : IDisposable
                 for (int x = 0; x < ImageSize; x++)
                 {
                     var pixel = pixelRow[x];
-                    
-                    // Normalize: (pixel / 255 - mean) / std
+
                     tensor[0, 0, y, x] = (pixel.R / 255.0f - Mean[0]) / Std[0];
                     tensor[0, 1, y, x] = (pixel.G / 255.0f - Mean[1]) / Std[1];
                     tensor[0, 2, y, x] = (pixel.B / 255.0f - Mean[2]) / Std[2];
@@ -60,7 +81,6 @@ public sealed class ClipImageEncoder : IDisposable
             }
         });
 
-        // Run inference
         var inputs = new List<NamedOnnxValue>
         {
             NamedOnnxValue.CreateFromTensor(_inputName, tensor)
@@ -69,7 +89,6 @@ public sealed class ClipImageEncoder : IDisposable
         using var results = _session.Run(inputs);
         var output = results.First().AsEnumerable<float>().ToArray();
 
-        // L2 normalize
         Normalize(output);
 
         return output;
@@ -85,6 +104,7 @@ public sealed class ClipImageEncoder : IDisposable
         }
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _session?.Dispose();

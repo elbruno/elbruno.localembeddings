@@ -4,14 +4,14 @@ This directory is for storing images to search with the CLIP model.
 
 ## Getting Sample Images
 
-To test the ImageSearchSample, you need a collection of images. Here are some options:
+To test the image RAG samples, you need a collection of images. Here are some options:
 
 ### Option 1: Use Your Own Images
 
 Copy any images you have to this directory:
 
 ```bash
-cp ~/Pictures/*.jpg samples/ImageSearchSample/images/
+cp ~/Pictures/*.jpg samples/images/
 ```
 
 Supported formats: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`
@@ -22,8 +22,8 @@ Supported formats: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`
 
 ```bash
 # Download a few sample images from COCO
-mkdir -p samples/ImageSearchSample/images
-cd samples/ImageSearchSample/images
+mkdir -p samples/images
+cd samples/images
 
 # Example: download some sample images (requires wget or curl)
 wget http://images.cocodataset.org/val2017/000000039769.jpg  # cat
@@ -34,6 +34,7 @@ wget http://images.cocodataset.org/val2017/000000000285.jpg  # bicycle
 **Unsplash Sample Images:**
 
 Download free high-quality images from [Unsplash](https://unsplash.com/):
+
 - Search for topics: "nature", "animals", "cities", "food", etc.
 - Download a variety of images (aim for 10-20 images for a good demo)
 - Place them in this directory
@@ -41,6 +42,7 @@ Download free high-quality images from [Unsplash](https://unsplash.com/):
 ### Option 3: Public Domain Images
 
 Use public domain images from:
+
 - [Wikimedia Commons](https://commons.wikimedia.org/)
 - [Pexels](https://www.pexels.com/)
 - [Pixabay](https://pixabay.com/)
@@ -50,7 +52,7 @@ Use public domain images from:
 After adding images, your directory should look like this:
 
 ```
-samples/ImageSearchSample/images/
+samples/images/
 ├── README.md (this file)
 ├── cat.jpg
 ├── dog.jpg

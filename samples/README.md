@@ -1,6 +1,6 @@
 # Samples — ElBruno.LocalEmbeddings
 
-Nine sample projects demonstrating LocalEmbeddings from basic usage to full RAG with a local LLM.
+Eight sample projects demonstrating LocalEmbeddings from basic usage to full RAG with a local LLM.
 
 ## Overview
 
@@ -12,9 +12,22 @@ Nine sample projects demonstrating LocalEmbeddings from basic usage to full RAG 
 | [ConsoleApp](#consoleapp) | Embedding basics: generation, similarity, search, DI | No |
 | [BenchmarkSample](#benchmarksample) | BenchmarkDotNet performance suite with cross-platform baselines | No |
 | [RagChat](#ragchat) | Semantic search Q&A over an in-memory FAQ dataset | No |
-| [ImageSearchSample](#imagesearchsample) | Multimodal CLIP text-to-image search with ONNX Runtime | No |
 | [RagOllama](#ragollama) | Full RAG chat using Ollama with phi4-mini + Kernel Memory | Yes (Ollama) |
 | [RagFoundryLocal](#ragfoundrylocal) | Full RAG chat using Foundry Local with phi4-mini | Yes (Foundry Local) |
+
+---
+
+## Image Samples (Multimodal RAG)
+
+For all image-related samples (searching images with text), please refer to the dedicated guide:
+
+👉 **[Image Embeddings Samples & Setup](README_IMAGES.md)**
+
+It covers:
+
+- Downloading the required CLIP models (`.onnx`)
+- Using the shared sample images
+- Running the `ImageRagSimple` and `ImageRagChat` projects
 
 ---
 
@@ -212,67 +225,6 @@ Notes:
 - Keep `MaxSequenceLength` consistent when comparing models so results are easier to benchmark.
 
 ---
-
-## ImageSearchSample
-
-Text-to-image **semantic search** using CLIP (Contrastive Language–Image Pretraining) models running entirely locally via ONNX Runtime. Search a collection of images using natural language queries.
-
-- **Embeddings:** CLIP text and vision encoders (separate ONNX models)
-- **Search:** Natural language queries → find semantically matching images
-- **Tokenization:** BPE tokenizer for CLIP (not WordPiece like BERT)
-- **Image preprocessing:** Resize, normalize, NCHW format for CLIP vision encoder
-- **Ranking:** Cosine similarity between query and image embeddings
-
-### What It Demonstrates
-
-- Loading and running **multimodal CLIP models** with ONNX Runtime
-- Implementing **BPE tokenization** for text encoding
-- **Image preprocessing** for CLIP vision encoding
-- **Cross-modal search** (text → images)
-- Indexing images by computing their embeddings
-- Cosine similarity ranking for semantic search
-
-### Prerequisites
-
-1. .NET 10 SDK
-2. **CLIP ONNX models** — text encoder, vision encoder, vocabulary, and merge files
-3. **Sample images** — a directory of images to search
-
-### CLIP Model Setup
-
-Export from HuggingFace using Optimum CLI:
-
-```bash
-pip install optimum[exporters]
-optimum-cli export onnx --model openai/clip-vit-base-patch32 ./clip-models/
-```
-
-Or download pre-exported models:
-
-```bash
-git clone https://huggingface.co/Xenova/clip-vit-base-patch32 clip-models
-```
-
-### Run
-
-```bash
-dotnet run --project samples/ImageSearchSample -- <model-directory> <image-directory>
-```
-
-Example:
-
-```bash
-dotnet run --project samples/ImageSearchSample -- ./clip-models ./my-images
-```
-
-### Example Queries
-
-- "a cat sitting on a couch"
-- "sunset over the ocean"
-- "a person riding a bicycle"
-- "a red car"
-
-See [samples/ImageSearchSample/README.md](ImageSearchSample/README.md) for complete setup and usage instructions.
 
 ---
 

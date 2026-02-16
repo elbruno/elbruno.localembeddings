@@ -55,6 +55,7 @@ jobs:
       - name: Pack
         run: |
           dotnet pack src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj -c Release --no-build -p:Version=${{ steps.version.outputs.version }} -o artifacts
+          dotnet pack src/ElBruno.LocalEmbeddings.ImageEmbeddings/ElBruno.LocalEmbeddings.ImageEmbeddings.csproj -c Release --no-build -p:Version=${{ steps.version.outputs.version }} -o artifacts
           dotnet pack src/ElBruno.LocalEmbeddings.KernelMemory/ElBruno.LocalEmbeddings.KernelMemory.csproj -c Release --no-build -p:Version=${{ steps.version.outputs.version }} -o artifacts
           dotnet pack src/ElBruno.LocalEmbeddings.VectorData/ElBruno.LocalEmbeddings.VectorData.csproj -c Release --no-build -p:Version=${{ steps.version.outputs.version }} -o artifacts
 
