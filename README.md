@@ -13,7 +13,9 @@ A .NET library for generating text embeddings locally using ONNX Runtime and Mic
 
 New to local embeddings? Watch this **[5-minute video](https://www.youtube.com/watch?v=0rRgSQWlVm8)** explaining the main goal of the library.
 
-Want to build RAG applications? Read this **[blog post about 3 RAG approaches in .NET](https://elbruno.com/2026/02/14/%f0%9f%a7%a0-building-rag-in-net-with-local-embeddings-3-approaches-zero-cloud-calls/)** with local embeddings and zero cloud calls.
+Want to build RAG applications? Read this **[blog post about 3 RAG approaches in .NET](https://elbruno.com/2026/02/14/%f0%9f%a4%96-building-rag-in-net-with-local-embeddings-3-approaches-zero-cloud-calls/)** with local embeddings and zero cloud calls.
+
+Interested in **image embeddings**? Check out the **[YouTube video](https://www.youtube.com/watch?v=nVTropZJC88)** and **[blog post](https://elbruno.com/2026/02/16/%f0%9f%96%bc%ef%b8%8f-local-image-embeddings-in-net-clip-onnx/)** about local image embeddings with CLIP and ONNX.
 
 ## Features
 
