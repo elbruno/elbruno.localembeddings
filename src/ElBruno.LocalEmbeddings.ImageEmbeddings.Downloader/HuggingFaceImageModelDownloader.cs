@@ -59,6 +59,21 @@ public class HuggingFaceImageModelDownloader : IImageModelDownloader
                 RequiredFiles = RequiredFiles
             }, cancellationToken).ConfigureAwait(false);
 
+            // The downloader preserves subdirectory structure (e.g., onnx/text_model.onnx).
+            // Move ONNX files to the output directory root for backward compatibility.
+            var onnxSubDir = Path.Combine(outputDirectory, "onnx");
+            if (Directory.Exists(onnxSubDir))
+            {
+                foreach (var file in Directory.GetFiles(onnxSubDir, "*.onnx"))
+                {
+                    var destPath = Path.Combine(outputDirectory, Path.GetFileName(file));
+                    if (!File.Exists(destPath))
+                    {
+                        File.Move(file, destPath);
+                    }
+                }
+            }
+
             _logger.LogInformation("Successfully ensured all CLIP model files are present in {Directory}", outputDirectory);
         }
         catch (Exception ex)
