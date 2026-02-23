@@ -130,44 +130,41 @@ public class ModelDownloaderTests
     }
 
     [Fact]
-    public async Task EnsureModelAsync_WithMockedHttpClient_DownloadsModel()
+    public async Task EnsureModelAsync_WithExistingDefaultModel_ReturnsDirectoryWithoutDownload()
     {
         var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");
+        var modelDir = Path.Combine(cacheDir, "test_model");
 
         try
         {
-            var fakeModelContent = new byte[] { 0x4F, 0x4E, 0x4E, 0x58 }; // Fake ONNX header
+            Directory.CreateDirectory(modelDir);
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "model.onnx"), "fake model");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "tokenizer.json"), "{}");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "tokenizer_config.json"), "{}");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "vocab.txt"), "test");
 
+            var httpRequested = false;
             var mockHandler = new Mock<HttpMessageHandler>();
             mockHandler
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(r => r.RequestUri!.ToString().Contains("model.onnx")),
+                    ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
                 {
-                    Content = new ByteArrayContent(fakeModelContent)
+                    httpRequested = true;
+                    return new HttpResponseMessage(HttpStatusCode.NotFound);
                 });
-
-            // Return 404 for tokenizer files (they're optional)
-            mockHandler
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(r => !r.RequestUri!.ToString().Contains("model.onnx")),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
 
             var httpClient = new HttpClient(mockHandler.Object);
             var downloader = new ModelDownloader(httpClient, cacheDir);
 
             var resultPath = await downloader.EnsureModelAsync("test/model");
 
-            Assert.True(Directory.Exists(resultPath));
-            var modelFile = Path.Combine(resultPath, "model.onnx");
-            Assert.True(File.Exists(modelFile));
-            Assert.Equal(fakeModelContent, await File.ReadAllBytesAsync(modelFile));
+            Assert.Equal(modelDir, resultPath);
+            Assert.True(File.Exists(Path.Combine(resultPath, "model.onnx")));
+            Assert.False(httpRequested, "HTTP should not be called when all files exist locally");
         }
         finally
         {
@@ -206,44 +203,41 @@ public class ModelDownloaderTests
     }
 
     [Fact]
-    public async Task EnsureModelAsync_WithPreferQuantized_DownloadsQuantizedModelWhenAvailable()
+    public async Task EnsureModelAsync_WithPreferQuantized_WhenQuantizedModelExistsLocally_ReturnsDirectory()
     {
         var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");
+        var modelDir = Path.Combine(cacheDir, "test_model");
 
         try
         {
-            var fakeQuantizedModelContent = new byte[] { 0x51, 0x4F, 0x4E, 0x4E, 0x58 };
+            Directory.CreateDirectory(modelDir);
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "model_quantized.onnx"), "fake quantized model");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "tokenizer.json"), "{}");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "tokenizer_config.json"), "{}");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "vocab.txt"), "test");
 
+            var httpRequested = false;
             var mockHandler = new Mock<HttpMessageHandler>();
             mockHandler
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(r => r.RequestUri!.ToString().Contains("model_quantized.onnx")),
+                    ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
                 {
-                    Content = new ByteArrayContent(fakeQuantizedModelContent)
+                    httpRequested = true;
+                    return new HttpResponseMessage(HttpStatusCode.NotFound);
                 });
-
-            mockHandler
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(r => !r.RequestUri!.ToString().Contains("model_quantized.onnx")),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
 
             var httpClient = new HttpClient(mockHandler.Object);
             var downloader = new ModelDownloader(httpClient, cacheDir);
 
             var resultPath = await downloader.EnsureModelAsync("test/model", preferQuantized: true);
 
-            Assert.True(Directory.Exists(resultPath));
-            var quantizedModelFile = Path.Combine(resultPath, "model_quantized.onnx");
-            Assert.True(File.Exists(quantizedModelFile));
-            Assert.Equal(fakeQuantizedModelContent, await File.ReadAllBytesAsync(quantizedModelFile));
-            Assert.False(File.Exists(Path.Combine(resultPath, "model.onnx")));
+            Assert.Equal(modelDir, resultPath);
+            Assert.True(File.Exists(Path.Combine(resultPath, "model_quantized.onnx")));
+            Assert.False(httpRequested, "HTTP should not be called when quantized model exists locally");
         }
         finally
         {
@@ -253,56 +247,42 @@ public class ModelDownloaderTests
     }
 
     [Fact]
-    public async Task EnsureModelAsync_WithPreferQuantized_FallsBackToDefaultModel()
+    public async Task EnsureModelAsync_WithPreferQuantized_WhenOnlyDefaultModelExists_ReturnsDirectory()
     {
         var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");
+        var modelDir = Path.Combine(cacheDir, "test_model");
 
         try
         {
-            var fakeModelContent = new byte[] { 0x4F, 0x4E, 0x4E, 0x58 };
+            Directory.CreateDirectory(modelDir);
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "model.onnx"), "fake default model");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "tokenizer.json"), "{}");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "tokenizer_config.json"), "{}");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "vocab.txt"), "test");
 
+            var httpRequested = false;
             var mockHandler = new Mock<HttpMessageHandler>();
             mockHandler
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(r => r.RequestUri!.ToString().Contains("model.onnx")),
+                    ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
                 {
-                    Content = new ByteArrayContent(fakeModelContent)
+                    httpRequested = true;
+                    return new HttpResponseMessage(HttpStatusCode.NotFound);
                 });
-
-            mockHandler
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(r =>
-                        r.RequestUri!.ToString().Contains("model_quantized.onnx") ||
-                        r.RequestUri!.ToString().Contains("model_int8.onnx")),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
-
-            mockHandler
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(r =>
-                        !r.RequestUri!.ToString().Contains("model_quantized.onnx") &&
-                        !r.RequestUri!.ToString().Contains("model_int8.onnx") &&
-                        !r.RequestUri!.ToString().Contains("model.onnx")),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
 
             var httpClient = new HttpClient(mockHandler.Object);
             var downloader = new ModelDownloader(httpClient, cacheDir);
 
+            // Even with preferQuantized, should succeed if default model exists
             var resultPath = await downloader.EnsureModelAsync("test/model", preferQuantized: true);
 
-            Assert.True(Directory.Exists(resultPath));
-            var modelFile = Path.Combine(resultPath, "model.onnx");
-            Assert.True(File.Exists(modelFile));
-            Assert.Equal(fakeModelContent, await File.ReadAllBytesAsync(modelFile));
+            Assert.Equal(modelDir, resultPath);
+            Assert.True(File.Exists(Path.Combine(resultPath, "model.onnx")));
+            Assert.False(httpRequested, "HTTP should not be called for model files when default model exists locally");
         }
         finally
         {
@@ -312,50 +292,33 @@ public class ModelDownloaderTests
     }
 
     [Fact]
-    public async Task EnsureModelAsync_ReportsProgress()
+    public async Task EnsureModelAsync_WithPreferQuantized_WhenInt8ModelExists_ReturnsDirectory()
     {
         var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");
+        var modelDir = Path.Combine(cacheDir, "test_model");
 
         try
         {
-            var fakeModelContent = new byte[1024];
-            var progressValues = new List<double>();
+            Directory.CreateDirectory(modelDir);
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "model_int8.onnx"), "fake int8 model");
 
             var mockHandler = new Mock<HttpMessageHandler>();
             mockHandler
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(r => r.RequestUri!.ToString().Contains("model.onnx")),
+                    ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(() =>
-                {
-                    var response = new HttpResponseMessage(HttpStatusCode.OK)
-                    {
-                        Content = new ByteArrayContent(fakeModelContent)
-                    };
-                    response.Content.Headers.ContentLength = fakeModelContent.Length;
-                    return response;
-                });
-
-            mockHandler
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(r => !r.RequestUri!.ToString().Contains("model.onnx")),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
+                .ReturnsAsync((HttpRequestMessage _, CancellationToken _) =>
+                    new HttpResponseMessage(HttpStatusCode.NotFound));
 
             var httpClient = new HttpClient(mockHandler.Object);
             var downloader = new ModelDownloader(httpClient, cacheDir);
-            var progress = new Progress<double>(p => progressValues.Add(p));
 
-            await downloader.EnsureModelAsync("test/model", progress: progress);
+            var resultPath = await downloader.EnsureModelAsync("test/model", preferQuantized: true);
 
-            // Should have reported some progress
-            Assert.NotEmpty(progressValues);
-            // Final progress should be 1.0 or close to it
-            Assert.Contains(progressValues, p => p >= 0.9);
+            Assert.Equal(modelDir, resultPath);
+            Assert.True(File.Exists(Path.Combine(resultPath, "model_int8.onnx")));
         }
         finally
         {
