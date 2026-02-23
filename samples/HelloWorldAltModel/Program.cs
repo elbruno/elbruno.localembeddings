@@ -7,7 +7,17 @@ var options = new LocalEmbeddingsOptions
     EnsureModelDownloaded = true
 };
 
-using var generator = new LocalEmbeddingGenerator(options);
+Console.WriteLine("Initializing model (will download if not cached)...");
+Console.WriteLine($"  Cache directory: {Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ElBruno", "LocalEmbeddings", "models")}");
+
+// Track download progress
+var progress = new Progress<double>(p =>
+{
+    Console.Write($"\r⬇️ Downloading model: {p:P0}   ");
+});
+
+using var generator = await LocalEmbeddingGenerator.CreateAsync(options, progress);
+Console.WriteLine();
 
 // Single-string overload — no array wrapping needed
 var embedding = await generator.GenerateEmbeddingAsync("Hello world from a non-default embeddings model!");

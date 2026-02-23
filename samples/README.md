@@ -17,6 +17,24 @@ Eight sample projects demonstrating LocalEmbeddings from basic usage to full RAG
 
 ---
 
+## Download Progress
+
+All samples that download models support progress reporting via `CreateAsync`. Here's the pattern:
+
+```csharp
+var progress = new Progress<double>(p =>
+{
+    Console.Write($"\r⬇️ Downloading model: {p:P0}   ");
+});
+
+using var generator = await LocalEmbeddingGenerator.CreateAsync(options, progress);
+Console.WriteLine();
+```
+
+The `IProgress<double>` reports values from 0 % to 100 %. If the model is already cached, no progress events fire and creation completes instantly.
+
+---
+
 ## Image Samples (Multimodal RAG)
 
 For all image-related samples (searching images with text), please refer to the dedicated guide:

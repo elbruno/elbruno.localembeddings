@@ -56,7 +56,9 @@ public sealed class ModelDownloader : IModelDownloader
         }
 
         _downloader = new HuggingFaceDownloader(httpClient);
-        _cacheDirectory = cacheDirectory ?? DefaultPathHelper.GetDefaultCacheDirectory("LocalEmbeddings");
+        _cacheDirectory = cacheDirectory ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "ElBruno", "LocalEmbeddings", "models");
     }
 
     /// <summary>

@@ -30,9 +30,17 @@ var options = new LocalEmbeddingsOptions
 };
 
 Console.WriteLine("Initializing model (will download if not cached)...");
+Console.WriteLine($"  Cache directory: {Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ElBruno", "LocalEmbeddings", "models")}");
 var startTime = DateTime.Now;
 
-using var generator = new LocalEmbeddingGenerator(options);
+// Track download progress
+var progress = new Progress<double>(p =>
+{
+    Console.Write($"\r⬇️ Downloading model: {p:P0}   ");
+});
+
+using var generator = await LocalEmbeddingGenerator.CreateAsync(options, progress);
+Console.WriteLine();
 
 var loadTime = DateTime.Now - startTime;
 Console.WriteLine($"✓ Model loaded in {loadTime.TotalSeconds:F2} seconds");
