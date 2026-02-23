@@ -109,7 +109,20 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
     /// </example>
     public static Task<LocalEmbeddingGenerator> CreateAsync(
         CancellationToken cancellationToken = default) =>
-        CreateAsync(new LocalEmbeddingsOptions(), cancellationToken);
+        CreateAsync(new LocalEmbeddingsOptions(), null, cancellationToken);
+
+    /// <summary>
+    /// Creates a new instance of <see cref="LocalEmbeddingGenerator"/> asynchronously with progress reporting.
+    /// </summary>
+    /// <param name="options">The configuration options for embedding generation.</param>
+    /// <param name="progress">An optional progress reporter that receives download progress (0.0 to 1.0).</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous creation operation.</returns>
+    public static Task<LocalEmbeddingGenerator> CreateAsync(
+        LocalEmbeddingsOptions options,
+        IProgress<double>? progress,
+        CancellationToken cancellationToken = default) =>
+        CreateAsyncCore(options, progress, cancellationToken);
 
     /// <summary>
     /// Creates a new instance of <see cref="LocalEmbeddingGenerator"/> asynchronously.
@@ -136,13 +149,19 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
     /// });
     /// </code>
     /// </example>
-    public static async Task<LocalEmbeddingGenerator> CreateAsync(
+    public static Task<LocalEmbeddingGenerator> CreateAsync(
         LocalEmbeddingsOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        CreateAsyncCore(options, null, cancellationToken);
+
+    private static async Task<LocalEmbeddingGenerator> CreateAsyncCore(
+        LocalEmbeddingsOptions options,
+        IProgress<double>? progress,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var modelDirectory = await ResolveModelDirectoryAsync(options, cancellationToken).ConfigureAwait(false);
+        var modelDirectory = await ResolveModelDirectoryAsync(options, progress, cancellationToken).ConfigureAwait(false);
         return new LocalEmbeddingGenerator(modelDirectory, options);
     }
 
@@ -252,7 +271,7 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
         return downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized).GetAwaiter().GetResult();
     }
 
-    private static async Task<string> ResolveModelDirectoryAsync(LocalEmbeddingsOptions options, CancellationToken cancellationToken)
+    private static async Task<string> ResolveModelDirectoryAsync(LocalEmbeddingsOptions options, IProgress<double>? progress, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
 
@@ -268,7 +287,7 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
         }
 
         var downloader = new ModelDownloader(SharedModelDownloadHttpClient, options.CacheDirectory);
-        return await downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return await downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized, progress, cancellationToken).ConfigureAwait(false);
     }
 
     private static string ResolveModelPath(string modelDirectory, bool preferQuantized)
