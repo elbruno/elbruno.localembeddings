@@ -69,6 +69,7 @@ public sealed class ProductRecord
     [VectorStoreVector(384, DistanceFunction = DistanceFunction.CosineSimilarity)]
     public ReadOnlyMemory<float> Vector { get; init; }
 }
+```
 
 ---
 
@@ -81,4 +82,3 @@ For deeper dives into vector database patterns:
 - 📖 **[ElBruno.Com Blog](https://elbruno.com)** — Production patterns, vector indexing tips
 - 🎥 **[YouTube Channel](https://www.youtube.com/elbruno)** — Live demos and architecture walkthroughs
 - 🔗 **[Dependency Injection Guide](dependency-injection.md)** — All DI patterns for vector stores
-```
