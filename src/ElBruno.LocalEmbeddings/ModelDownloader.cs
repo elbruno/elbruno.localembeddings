@@ -137,6 +137,21 @@ public sealed class ModelDownloader : IModelDownloader
             Progress = downloadProgress
         }, cancellationToken).ConfigureAwait(false);
 
+        // The downloader preserves subdirectory structure (e.g., onnx/model.onnx).
+        // Move ONNX files to the model directory root for backward compatibility.
+        var onnxSubDir = Path.Combine(modelDirectory, "onnx");
+        if (Directory.Exists(onnxSubDir))
+        {
+            foreach (var file in Directory.GetFiles(onnxSubDir, "*.onnx"))
+            {
+                var destPath = Path.Combine(modelDirectory, Path.GetFileName(file));
+                if (!File.Exists(destPath))
+                {
+                    File.Move(file, destPath);
+                }
+            }
+        }
+
         // Verify at least one ONNX model file exists
         var finalDefaultModel = File.Exists(Path.Combine(modelDirectory, "model.onnx"));
         var finalQuantizedModel = QuantizedModelFiles
