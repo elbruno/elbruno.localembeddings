@@ -31,14 +31,22 @@ jobs:
         id: version
         run: |
           if [[ "${{ github.event_name }}" == "release" ]]; then
-            # Strip leading 'v' from tag (v1.0.2 → 1.0.2)
+            # Strip leading 'v' from tag, then any stray leading dot.
+            # Handles both v1.2.3 and v.1.2.3 (common tagging mistake).
             VERSION="${{ github.event.release.tag_name }}"
-            VERSION="${VERSION#v}"
+            VERSION="${VERSION#v}"   # strip leading v  (v1.2.3 → 1.2.3)
+            VERSION="${VERSION#.}"   # strip stray dot  (.1.2.3 → 1.2.3)
           elif [[ -n "${{ inputs.version }}" ]]; then
             VERSION="${{ inputs.version }}"
           else
             # Read from csproj
             VERSION=$(grep -oP '<Version>\K[^<]+' src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj)
+          fi
+          # Validate: must match MAJOR.MINOR.PATCH (with optional pre-release suffix)
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "❌ Invalid version string: '$VERSION'"
+            echo "   Tag must be v1.2.3 or v.1.2.3 — not '${{ github.event.release.tag_name }}'"
+            exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "📦 Publishing version: $VERSION"
