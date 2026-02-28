@@ -123,19 +123,29 @@ public sealed class ImageSearchEngine
 
     private List<(string ImagePath, float Score)> RankResults(float[] queryEmbedding, int topK)
     {
-        var results = new List<(string Path, float Score)>();
+        // O(n log k) partial sort using a min-heap of size topK
+        var heap = new PriorityQueue<string, float>(topK);
         foreach (var (path, imageEmbedding) in _imageIndex)
         {
             float similarity = TensorPrimitives.CosineSimilarity(
                 queryEmbedding.AsSpan(),
                 imageEmbedding.AsSpan());
-            results.Add((path, similarity));
+
+            if (heap.Count < topK)
+            {
+                heap.Enqueue(path, similarity);
+            }
+            else if (heap.TryPeek(out _, out float lowestScore) && similarity > lowestScore)
+            {
+                heap.DequeueEnqueue(path, similarity);
+            }
         }
 
-        return results
-            .OrderByDescending(r => r.Score)
-            .Take(topK)
-            .ToList();
+        var results = new List<(string ImagePath, float Score)>(heap.Count);
+        while (heap.TryDequeue(out string? imagePath, out float score))
+            results.Add((imagePath, score));
+        results.Reverse(); // min-heap gives ascending order; we want descending
+        return results;
     }
 
     internal static string GetProgressFileName(string imagePath) => Path.GetFileName(imagePath);

@@ -21,6 +21,34 @@
 
 <!-- Append new learnings here as work progresses -->
 
+### 2025-07-16: Phase 3 Memory & Search Optimizations Implemented
+
+**PERF-09 — PriorityQueue min-heap in EmbeddingExtensions.FindClosest:**
+- Both `FindClosest<T>` and `FindClosest(Embedding, IReadOnlyList)` overloads replaced LINQ `OrderByDescending().Take()` with a `PriorityQueue<TElement, float>` min-heap of capacity `topK`.
+- Complexity improves from O(n log n) to O(n log k); at large corpus sizes with small topK this is a significant win.
+- `PriorityQueue.TryPeek(out _, out float lowestScore)` is the correct way to inspect the minimum priority — `Peek()` returns the element, not the priority.
+- `DequeueEnqueue` is available in .NET 8+ (safe since the project targets net8.0 and net10.0).
+- The second `FindClosest` overload preserves the `ThenBy(index)` tiebreaker by sorting the final topK results list after heap extraction — cost is O(k log k) on at most topK items.
+
+**PERF-10 — PriorityQueue min-heap in ImageSearchEngine.RankResults:**
+- Replaced the two-phase approach (accumulate all results into a List, then sort+take) with a single-pass min-heap.
+- Eliminates the intermediate `List<(string, float)>` whose size scales with corpus (n entries allocated, most discarded).
+
+**PERF-06/07 — Direct tensor access in ClipImageEncoder and ClipTextEncoder:**
+- Replaced `results.First().AsEnumerable<float>().ToArray()` with `results.First().AsTensor<float>().ToArray()`.
+- `AsTensor<T>()` returns the underlying `Tensor<T>` (a `DenseTensor<T>` for ORT inference results), and `.ToArray()` on it copies directly from the backing buffer, bypassing IEnumerable iterator overhead.
+
+**PERF-08 — Eliminated intermediate int[] in Tokenizer.Tokenize:**
+- `_tokenizer.EncodeToIds()` returns `IReadOnlyList<int>`. The original code called `.ToArray()` on it to get an `int[]`, then converted element-by-element to `long[]` in a for loop — allocating an entire array that was immediately discarded.
+- Fix: iterate `encoding` directly (it's already indexable as `IReadOnlyList<int>`), writing to `long[] inputIds` in the same loop. One fewer heap allocation per `Tokenize` call; at batch=100 this removes 100 `int[]` allocations per inference call.
+
+**PERF-12/13 — Removed redundant .ToList() calls:**
+- `LocalEmbeddingGenerator.GenerateAsync`: removed `.ToList()` on the `rawEmbeddings.Select(...)` passed to `GeneratedEmbeddings<T>` constructor (it accepts `IEnumerable<T>`), saving one intermediate list allocation per inference call.
+- `Tokenizer.TokenizeBatch`: changed `texts.ToList()` to `texts as IList<string> ?? texts.ToList()`. Since `GenerateAsync` always passes a `List<string>`, the `as` cast avoids re-allocating a duplicate list for every batch call.
+
+**Build result:** `dotnet build` succeeded with 0 warnings, 0 errors.
+**Test result:** All 396 tests passed across both target frameworks (net8.0 + net10.0), 10 skipped (require real CLIP model files).
+
 ### 2025-07-16: Phase 2 Performance Fixes Implemented
 
 **PERF-03 — SessionOptions disposal on success path (OnnxEmbeddingModel):**

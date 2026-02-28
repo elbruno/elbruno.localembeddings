@@ -193,7 +193,7 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
 
         // Wrap results in the M.E.AI types
         var result = new GeneratedEmbeddings<Embedding<float>>(
-            rawEmbeddings.Select(e => new Embedding<float>(e)).ToList());
+            rawEmbeddings.Select(e => new Embedding<float>(e)));
 
         return Task.FromResult(result);
     }

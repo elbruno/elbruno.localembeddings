@@ -105,17 +105,16 @@ public sealed class Tokenizer
 
         // Encode the text with special tokens
         var encoding = _tokenizer.EncodeToIds(text, effectiveMaxLength, out _, out _);
-        var tokenIds = encoding.ToArray();
 
         // Create arrays for input_ids and attention_mask
         var inputIds = new long[effectiveMaxLength];
         var attentionMask = new long[effectiveMaxLength];
 
-        // Copy token IDs and set attention mask
-        var copyLength = Math.Min(tokenIds.Length, effectiveMaxLength);
+        // Copy token IDs directly from IReadOnlyList<int>, avoiding intermediate int[] allocation
+        var copyLength = Math.Min(encoding.Count, effectiveMaxLength);
         for (int i = 0; i < copyLength; i++)
         {
-            inputIds[i] = tokenIds[i];
+            inputIds[i] = encoding[i];
             attentionMask[i] = 1;
         }
 
@@ -158,7 +157,7 @@ public sealed class Tokenizer
     {
         ArgumentNullException.ThrowIfNull(texts);
 
-        var textList = texts.ToList();
+        IList<string> textList = texts as IList<string> ?? texts.ToList();
         if (textList.Count == 0)
         {
             return ([], []);

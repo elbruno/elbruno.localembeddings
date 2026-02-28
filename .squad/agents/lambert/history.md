@@ -38,6 +38,22 @@
 - `MeanPoolingTests.cs` — PERF-02 SIMD correctness + PERF-01 regression (8 tests)
 - Total: 31 new tests, all passing on net8.0 and net10.0
 
+### Phase 3 Performance Tests (PERF-09, PERF-08, PERF-12/13)
+
+**PERF-09 (`FindClosest` heap):**
+- Created `tests/ElBruno.LocalEmbeddings.Tests/FindClosestTests.cs` (new file, 9 unit tests + 3 integration tests).
+- Key design: parity tests generate a deterministic corpus (fixed `Random(42)` seed, 100-200 items) and compare `FindClosest` output against an inline LINQ reference implementation — ensures heap result is byte-for-byte identical to the sorted LINQ reference.
+- Edge cases covered: topK > corpus size, topK=1, empty corpus, all-equal scores (distinctness of returned indices enforced), partial corpus with minScore filter.
+- The `FindClosest` signature is `(Embedding<float> query, IReadOnlyList<Embedding<float>> corpus, int topK, float? minScore)` — tests call it as a public extension method via `using ElBruno.LocalEmbeddings.Extensions`.
+
+**PERF-08/12/13 (tokenizer allocation regression):**
+- Added 3 `[SkippableFact]` + `[Trait("Category", "Integration")]` tests that verify: (1) special-token layout for a known input, (2) deterministic output across two calls to the same instance, (3) batch output matches individual `Tokenize` calls row-by-row.
+- All three skip cleanly when no model files are available (follows existing tokenizer test pattern).
+
+**Test counts (non-integration):** 9 new `[Fact]`/`[Theory]` tests, 0 failures, 0 warnings on both net8.0 and net10.0.
+
+**Run command verified:** `dotnet test tests/ElBruno.LocalEmbeddings.Tests/ --filter "Category!=Integration"` → 99 passed.
+
 ### Phase 2 Security Tests (SEC-003, SEC-004, SEC-005)
 
 **All Phase 2 implementations (Ash) were complete** before tests were written; tests verified them immediately.

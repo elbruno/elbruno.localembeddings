@@ -98,7 +98,7 @@ public sealed class ClipTextEncoder : IDisposable
         }
 
         using var results = _session.Run(inputs);
-        var output = results.First().AsEnumerable<float>().ToArray();
+        var output = results.First().AsTensor<float>().ToArray();
 
         Normalize(output);
 
