@@ -24,6 +24,14 @@
       },
       "reason": "Security specialist added — no existing security coverage",
       "created_at": "2026-02-28T13:37:11.999Z"
+    },
+    "2026-02-28-parker-added": {
+      "universe": "Alien",
+      "agent_map": {
+        "parker": "Parker"
+      },
+      "reason": "Performance specialist added — no existing perf/benchmark coverage",
+      "created_at": "2026-02-28T13:41:20.000Z"
     }
   }
 }
