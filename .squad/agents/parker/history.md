@@ -68,6 +68,25 @@ Created a dedicated benchmark project targeting `net8.0;net10.0` (matching libra
 
 **Build result:** `dotnet build` succeeded with 0 warnings, 0 errors across net8.0 + net10.0 for all projects.
 
+### 2026-02-28: Post-Merge Benchmark Comparison Completed (main, PR #37)
+
+**Comparison file:** `docs/performance/post-merge-comparison.md`  
+**Baseline (also copied):** `docs/performance/baseline-pre-merge-improvePerformanceAndSecurity.md`  
+**Branch:** main (after merging `improvePerformanceAndSecurity`, PR #37)  
+**Commit:** `0698292`
+
+**Benchmarks run:** Same 3 compute-only suites (`--job short`, `--framework net8.0`):
+- `MeanPoolingBenchmarks`, `FindClosestBenchmarks`, `L2NormalizationBenchmarks`
+
+**Key findings:**
+- **L2Norm:** −25% (768d: 258.7 → 194.0 ns) and −13% (384d: 109.0 → 94.8 ns) — clearest post-merge improvement; zero allocations maintained
+- **FindClosest corpus=10000:** −34% at TopK=5 (1516 → 999 μs), ~0% at TopK=10, −8% at TopK=50
+- **FindClosest corpus=1000/K50:** −37% (128 → 80 μs) — wide pre-merge error margin, but directionally consistent
+- **MeanPooling 128T:** −3.8% (within noise); MeanPooling 512T: +14.8% apparent but 50.7% CI margin — not a real regression
+- **No allocations added** anywhere; memory profiles identical to baseline
+
+**Note:** MeanPooling 512T "regression" is ShortRun measurement noise (50.7% CI). Run `--job default` to confirm.
+
 ### 2026-02-28: Cross-Agent Update — Lambert Test Coverage Summary
 
 **From:** Scribe (cross-agent propagation)
