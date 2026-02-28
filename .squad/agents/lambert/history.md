@@ -71,6 +71,24 @@
 
 **Run command verified:** `dotnet test tests/ElBruno.LocalEmbeddings.Tests/ --filter "Category!=Integration"` → 99 passed.
 
+### 2026-02-28: Cross-Agent Update — Ash Phase 4 Security Complete
+
+**From:** Scribe (cross-agent propagation)
+
+All 9 security findings from Ash's audit are now fully resolved:
+- **SEC-009 (`ClipTokenizer` file size guard):** Ash implemented the 50 MB guard in `ClipTokenizer.cs` (Phase 4). The TDD test `ClipTokenizer_OversizedVocabFile_ThrowsInvalidOperationException` that was written as a failing test in Phase 4 now passes. Guard throws `InvalidOperationException` with file name and actual size in MB.
+- **SEC-002 (`ModelDownloader` SocketsHttpHandler):** Implemented by Ash in Phase 4. The behavioral test `ModelDownloader_DefaultConstructor_UsesSocketsHttpHandler` verifies construction succeeds — private handler fields remain not introspectable.
+- All SEC-001 through SEC-009 are resolved and test-covered.
+
+### 2026-02-28: Cross-Agent Update — Parker Phase 3/4 Performance Complete
+
+**From:** Scribe (cross-agent propagation)
+
+Parker completed all actionable performance phases:
+- **PERF-09/10 (heap search):** Both `FindClosest` overloads and `ImageSearchEngine.RankResults` use O(n log k) `PriorityQueue` min-heaps. Lambert's `FindClosestTests.cs` parity tests (9 unit, deterministic Random(42) seed) confirm heap output is byte-for-byte identical to the LINQ reference.
+- **PERF-12/13 pattern:** `as IList<T> ?? .ToList()` is now applied in `TokenizeBatch`, `GenerateAsync`, and confirmed clean by Lambert's tokenizer regression tests.
+- **Phase 5 (benchmarks):** Parker is expanding `samples/BenchmarkSample/` with 7 missing benchmark classes (cold start, mean pooling, CLIP encoders, VectorStore search, quantized comparison). No test work needed from Lambert for benchmark infrastructure.
+
 ### Phase 2 Security Tests (SEC-003, SEC-004, SEC-005)
 
 **All Phase 2 implementations (Ash) were complete** before tests were written; tests verified them immediately.

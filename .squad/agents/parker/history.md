@@ -21,6 +21,20 @@
 
 <!-- Append new learnings here as work progresses -->
 
+### 2026-02-28: Cross-Agent Update — Lambert Test Coverage Summary
+
+**From:** Scribe (cross-agent propagation)
+
+Lambert provided comprehensive test coverage for all performance work across Phases 1–4:
+
+- **Phase 1 (PERF-01/02):** `MeanPoolingTests.cs` — 8 tests. Validates SIMD correctness of `ApplyMeanPooling` and ArrayPool regression. Required making `ApplyMeanPooling` `internal` and adding `InternalsVisibleTo` to the csproj.
+- **Phase 2 (PERF-03/15/16):** No dedicated tests — validated by running full build + existing suite (0 failures). SessionOptions disposal and CLIP encoder options are configuration-level changes; behavioral tests cover the inference path.
+- **Phase 3 (PERF-09/08/12/13):** `FindClosestTests.cs` (12 tests total) — 9 unit tests with parity checks against LINQ reference (deterministic Random(42) seed), 3 integration tokenizer regression tests. Confirms heap extraction is byte-for-byte identical to `OrderByDescending().Take()`.
+- **Phase 4 (PERF-04/05):** `AsyncPatternTests.cs` — 2 tests. Reflection check that `CreateAsync` overloads return `Task<LocalEmbeddingGenerator>`. DI registration check via `IServiceCollection` inspection (no `BuildServiceProvider` needed).
+- **Total Lambert tests for performance work: 22 tests** (8 + 0 + 12 + 2)
+
+Key cross-agent note: Lambert's Phase 3 parity tests use the public extension method API (`using ElBruno.LocalEmbeddings.Extensions`). Signature is `FindClosest(Embedding<float> query, IReadOnlyList<Embedding<float>> corpus, int topK, float? minScore)`. Any future signature change will break these tests.
+
 ### 2025-07-16: Phase 4 Async Pattern Polish Implemented
 
 **PERF-04/05 — Async factory documentation in DI extension methods:**

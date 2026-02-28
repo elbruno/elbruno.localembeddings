@@ -73,6 +73,19 @@
 
 **Pattern note:** `ArgumentException.ThrowIfNullOrWhiteSpace` and `ArgumentNullException.ThrowIfNull` are both available from .NET 8, consistent with the project's minimum target.
 
+### 2026-02-28: Cross-Agent Update — Lambert Test Coverage for Security Work
+
+**From:** Scribe (cross-agent propagation)
+
+Lambert provided complete test coverage for all 9 security findings across Phases 1–4:
+
+- **Phase 1 (SEC-001/006):** `HashVerificationTests.cs` (12 tests) and `ModelDownloaderSecurityTests.cs` (11 tests). Key insight: `SanitizeModelName` converts `/` → `_`, so slash-based traversal names don't trigger the `Path.GetFullPath` guard. Tests use bare `".."` to directly exercise the ArgumentException path.
+- **Phase 2 (SEC-003/004/005):** `ImageEmbeddingsOptionsValidationTests.cs` (18), `ClipEncoderConstructorTests.cs` (10), `ImageSearchEngineNullGuardTests.cs` (6). Use `Assert.ThrowsAny<ArgumentException>` with `ThrowIfNullOrWhiteSpace` (throws `ArgumentNullException` for null, `ArgumentException` for empty/whitespace). SEC-005 tests use `SkippableFact` + env vars for live ONNX tests.
+- **Phase 4 (SEC-002/007/008/009):** `ModelDownloaderSecurityTests.cs` appended (1), `ClipTokenizerFileSizeTests.cs` (2), `AsyncPatternTests.cs` (2). The SEC-009 TDD test (`ClipTokenizer_OversizedVocabFile_ThrowsInvalidOperationException`) now passes since the 50 MB guard is implemented.
+- **Total Lambert tests for security work: 60 tests** (23 + 34 + 3 + more partial)
+
+Pattern established by Lambert: zero-byte placeholder files isolate specific constructor guards in multi-parameter constructors (e.g., `ClipTextEncoder_NonExistentVocabFile` creates a real model file to pass the first check, then provides a missing vocabPath).
+
 ### 2026-06-XX: Phase 4 Security Polish Implemented
 
 **SEC-002 (HttpClient socket exhaustion):**
