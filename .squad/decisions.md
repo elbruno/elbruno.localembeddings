@@ -254,3 +254,11 @@ Sync-over-async patterns in `LocalEmbeddingGenerator` constructor and both `Serv
 - `AddLocalEmbeddingsCore` + `EnsureModels`: inline `// Sync-over-async` comments at call sites
 
 **Decision:** `CreateAsync()` is the recommended entry point for ASP.NET Core, UI frameworks, and any async-first environment. The constructor is acceptable for console applications and background services.
+
+---
+
+### 20260228-113434: User directive
+
+**By:** Bruno (via Copilot)  
+**What:** If a task is simple or easy, always use a 0x (fast/cheap) model like gpt-5-mini. Never over-provision model tier for trivial work.  
+**Why:** User request — captured for team memory. Overrides default model selection for low-complexity tasks.
