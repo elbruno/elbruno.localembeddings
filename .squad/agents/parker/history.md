@@ -21,6 +21,33 @@
 
 <!-- Append new learnings here as work progresses -->
 
+### 2025-07-16: Phase 4 Async Pattern Polish Implemented
+
+**PERF-04/05 — Async factory documentation in DI extension methods:**
+
+- **Main `ServiceCollectionExtensions.AddLocalEmbeddings`**: Expanded `<remarks>` to document the
+  sync-over-async risk in the DI factory (`new LocalEmbeddingGenerator(options)` blocks on
+  `GetAwaiter().GetResult()` when `EnsureModelDownloaded=true`). Added a two-part `<example>` block
+  showing both the standard DI usage and the fully async pre-build pattern:
+  `await CreateAsync(...)` → `AddSingleton(generator)`.
+- **`AddLocalEmbeddingsCore`**: Added an explicit inline `// Sync-over-async` comment on the
+  singleton factory lambda so code reviewers immediately see the risk without reading the outer docs.
+- **`CreateAsync(LocalEmbeddingsOptions, CancellationToken)`**: Enriched `<remarks>` to explain
+  when to prefer the factory over the constructor, and added a DI-registration code example showing
+  the pre-built singleton pattern.
+- **ImageEmbeddings `ServiceCollectionExtensions.AddImageEmbeddings`**: Added an
+  `<strong>Async-Safety Note</strong>` paragraph documenting that `EnsureModelDownloaded=true`
+  causes sync-over-async on first DI resolution. Updated the internal `EnsureModels` comment.
+
+**Residual allocation fix found and fixed:**
+
+- `GenerateAsync` line: `var valuesList = values.ToList()` → `IList<string> valuesList = values as IList<string> ?? values.ToList()`.
+  Phase 3 applied this same pattern to `Tokenizer.TokenizeBatch` but missed the call site in `GenerateAsync`.
+  When callers pass a `List<string>`, this eliminates one redundant allocation per call.
+  The `IList<string>` type satisfies the `.Count` check and is accepted by `TokenizeBatch(IEnumerable<string>, ...)`.
+
+**Build result:** `dotnet build` succeeded with 0 warnings, 0 errors across net8.0 + net10.0.
+
 ### 2025-07-16: Phase 3 Memory & Search Optimizations Implemented
 
 **PERF-09 — PriorityQueue min-heap in EmbeddingExtensions.FindClosest:**

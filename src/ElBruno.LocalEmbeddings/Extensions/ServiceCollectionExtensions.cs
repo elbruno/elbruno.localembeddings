@@ -32,14 +32,37 @@ public static class ServiceCollectionExtensions
     /// The <see cref="IModelDownloader"/> is registered using <see cref="IHttpClientFactory"/>
     /// for proper HttpClient lifecycle management.
     /// </para>
+    /// <para>
+    /// <strong>Async-Safety Note:</strong> When <see cref="LocalEmbeddingsOptions.EnsureModelDownloaded"/>
+    /// is <see langword="true"/> (the default), the DI factory resolves the generator by calling the
+    /// <see cref="LocalEmbeddingGenerator"/> constructor, which performs a synchronous model download
+    /// on the first service resolution. This is acceptable during host startup for most application
+    /// types (worker services, console apps, ASP.NET Core apps where the first request resolves DI),
+    /// but it can cause thread-pool starvation in hot-path or UI contexts.
+    /// </para>
+    /// <para>
+    /// For fully non-blocking initialization, call
+    /// <see cref="LocalEmbeddingGenerator.CreateAsync(LocalEmbeddingsOptions, CancellationToken)"/>
+    /// before building the host and register the pre-built instance as a singleton directly:
+    /// </para>
     /// </remarks>
     /// <example>
+    /// Standard DI registration (synchronous download on first resolve):
     /// <code>
     /// services.AddLocalEmbeddings(options =>
     /// {
     ///     options.ModelName = "sentence-transformers/all-MiniLM-L6-v2";
     ///     options.MaxSequenceLength = 256;
     /// });
+    /// </code>
+    /// Fully async DI initialization — no thread-pool blocking:
+    /// <code>
+    /// // In Program.cs, before builder.Build():
+    /// var generator = await LocalEmbeddingGenerator.CreateAsync(new LocalEmbeddingsOptions
+    /// {
+    ///     ModelName = "sentence-transformers/all-MiniLM-L6-v2"
+    /// });
+    /// builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;float&gt;&gt;&gt;(generator);
     /// </code>
     /// </example>
     public static IServiceCollection AddLocalEmbeddings(
@@ -191,8 +214,12 @@ public static class ServiceCollectionExtensions
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("LocalEmbeddings/1.0");
             });
 
-        // Register the embedding generator as a singleton
-        // It resolves IOptions<LocalEmbeddingsOptions> and IModelDownloader from the container
+        // Register the embedding generator as a singleton.
+        // NOTE: The factory calls the LocalEmbeddingGenerator constructor, which performs
+        // a synchronous model download when EnsureModelDownloaded=true (sync-over-async).
+        // This blocks the resolving thread on first resolution. If non-blocking startup is
+        // required, use LocalEmbeddingGenerator.CreateAsync() before host build and register
+        // the pre-built instance with AddSingleton(generator) instead.
         services.TryAddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(sp =>
         {
             var options = sp.GetRequiredService<IOptions<LocalEmbeddingsOptions>>().Value;

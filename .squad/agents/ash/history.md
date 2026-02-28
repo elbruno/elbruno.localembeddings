@@ -73,4 +73,28 @@
 
 **Pattern note:** `ArgumentException.ThrowIfNullOrWhiteSpace` and `ArgumentNullException.ThrowIfNull` are both available from .NET 8, consistent with the project's minimum target.
 
+### 2026-06-XX: Phase 4 Security Polish Implemented
+
+**SEC-002 (HttpClient socket exhaustion):**
+- Parameterless `ModelDownloader()` constructor updated to use `new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(2) }` instead of bare `new HttpClient()`.
+- XML doc comment added noting that DI/IHttpClientFactory path is preferred for production.
+
+**SEC-007 (Sync-over-async documentation):**
+- Added `<remarks>` paragraph to the `LocalEmbeddingGenerator(LocalEmbeddingsOptions)` constructor XML doc, explicitly warning about potential deadlocks in async-first environments and recommending `CreateAsync()`.
+- Added inline comment `// Sync-over-async: safe in console/desktop apps. Use CreateAsync() in async contexts.` at the `.GetAwaiter().GetResult()` call site in `ResolveModelDirectory`.
+
+**SEC-008 (OnnxRuntime 1.24.1 → 1.24.2):**
+- Bumped `Microsoft.ML.OnnxRuntime` from 1.24.1 to 1.24.2 in:
+  - `src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj`
+  - `src/ElBruno.LocalEmbeddings.ImageEmbeddings/ElBruno.LocalEmbeddings.ImageEmbeddings.csproj`
+  - `tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj` (direct ref caused NU1605 downgrade error)
+- No other package versions changed.
+
+**SEC-009 (ClipTokenizer file size guard):**
+- Added a 50 MB size guard for both `vocabJsonPath` and `mergesTxtPath` in `ClipTokenizer` constructor.
+- `const long MaxVocabFileSizeBytes = 50 * 1024 * 1024` scoped inside the constructor.
+- Vocab size is checked before `File.ReadAllText`; merges size is checked after `File.Exists` (preserves existing FileNotFoundException).
+- Throws `InvalidOperationException` with file name and actual size in MB.
+
 **Build result:** `dotnet build` — 0 errors, 0 warnings.
+

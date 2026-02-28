@@ -9,6 +9,23 @@
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
 
+### Phase 4 Security & Async Tests (SEC-002, SEC-007, SEC-009, PERF-04/05)
+
+**Key findings:**
+
+- **SEC-002 (`ModelDownloader()` default ctor):** Guard test only checks that construction succeeds and `GetCacheDirectory()` returns a non-empty string — private `SocketsHttpHandler` fields are not introspectable. Appended to `ModelDownloaderSecurityTests.cs`.
+
+- **SEC-009 (`ClipTokenizer` file size guard):** Implementation was NOT present in the production code at time of writing; the guard (`>50MB → InvalidOperationException`) has not yet been added to `ClipTokenizer.cs`. Test `ClipTokenizer_OversizedVocabFile_ThrowsInvalidOperationException` is a TDD test that will fail until Ash adds the guard. Test `ClipTokenizer_ValidSizeVocabFile_DoesNotThrowOnSizeCheck` is forward-compatible: it checks that the size guard message doesn't appear, without asserting on unrelated parse exceptions.
+
+- **SEC-007 / PERF-04 (async factory + DI):** `LocalEmbeddingGenerator.CreateAsync` already has three overloads. Reflection approach uses `GetMethods` (not `GetMethod`) to avoid `AmbiguousMatchException`. DI test checks service registration in `IServiceCollection` without calling `BuildServiceProvider`, so no model files are needed.
+
+- **Build validation:** `dotnet build --no-incremental` passes with 0 errors and 0 warnings for all three new/modified test files.
+
+**Test files added/modified:**
+- `ModelDownloaderSecurityTests.cs` — appended 1 test for SEC-002
+- `tests/ElBruno.LocalEmbeddings.ImageEmbeddings.Tests/ClipTokenizerFileSizeTests.cs` — 2 new tests for SEC-009
+- `tests/ElBruno.LocalEmbeddings.Tests/AsyncPatternTests.cs` — 2 new tests for SEC-007/PERF-04
+
 ### 2026-02-12: Test Suite Created
 - Created comprehensive unit tests in `tests/LocalEmbeddings.Tests/`
 - Test files: `ModelDownloaderTests.cs`, `TokenizerTests.cs`, `LocalEmbeddingGeneratorTests.cs`

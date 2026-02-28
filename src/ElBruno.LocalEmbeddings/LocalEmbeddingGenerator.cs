@@ -53,6 +53,10 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
     /// In UI/ASP.NET request contexts, prefer <see cref="CreateAsync(CancellationToken)"/>
     /// or <see cref="CreateAsync(LocalEmbeddingsOptions, CancellationToken)"/>.
     /// </para>
+    /// <para>
+    /// This constructor performs synchronous model loading. In ASP.NET Core or other
+    /// async-first environments, use <see cref="CreateAsync(LocalEmbeddingsOptions, CancellationToken)"/> to avoid potential deadlocks.
+    /// </para>
     /// </remarks>
     public LocalEmbeddingGenerator(LocalEmbeddingsOptions options)
         : this(ResolveModelDirectory(options), options)
@@ -135,18 +139,27 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
     /// <remarks>
     /// <para>
     /// This factory method performs model download asynchronously and then initializes the generator.
-    /// Use this in async contexts instead of the constructor.
+    /// Prefer this over the constructor in async contexts (ASP.NET Core, hosted services, console apps
+    /// with async entry points) to avoid blocking threads during model download.
     /// </para>
     /// <para>
-    /// The constructor remains available for backwards compatibility.
+    /// The constructor remains available for backwards compatibility and for use cases where
+    /// synchronous initialization is acceptable (e.g., console tools, test setup).
+    /// </para>
+    /// <para>
+    /// <strong>Recommended DI pattern:</strong> Call <c>CreateAsync</c> before building the host and
+    /// register the pre-built instance as a singleton so the DI container never blocks:
     /// </para>
     /// </remarks>
     /// <example>
     /// <code>
+    /// // Fully async DI registration — no thread-pool blocking during startup:
     /// var generator = await LocalEmbeddingGenerator.CreateAsync(new LocalEmbeddingsOptions
     /// {
     ///     ModelName = "sentence-transformers/all-MiniLM-L6-v2"
     /// });
+    /// builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;float&gt;&gt;&gt;(generator);
+    /// var app = builder.Build();
     /// </code>
     /// </example>
     public static Task<LocalEmbeddingGenerator> CreateAsync(
@@ -177,7 +190,7 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(values);
 
-        var valuesList = values.ToList();
+        IList<string> valuesList = values as IList<string> ?? values.ToList();
         if (valuesList.Count == 0)
         {
             return Task.FromResult(new GeneratedEmbeddings<Embedding<float>>());
@@ -268,6 +281,7 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
         }
 
         var downloader = new ModelDownloader(SharedModelDownloadHttpClient, options.CacheDirectory);
+        // Sync-over-async: safe in console/desktop apps. Use CreateAsync() in async contexts.
         return downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized, null, options.ExpectedHash).GetAwaiter().GetResult();
     }
 

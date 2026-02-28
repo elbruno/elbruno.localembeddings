@@ -43,7 +43,14 @@ public sealed class ModelDownloader : IModelDownloader
     /// <summary>
     /// Creates a new ModelDownloader with default settings.
     /// </summary>
-    public ModelDownloader() : this(new HttpClient(), null)
+    /// <remarks>
+    /// For production or long-running processes, prefer the constructor overload that accepts an
+    /// <see cref="System.Net.Http.IHttpClientFactory"/>-managed <see cref="System.Net.Http.HttpClient"/>
+    /// (via DI / <c>AddModelDownloader()</c>) to benefit from connection pooling and lifecycle management.
+    /// </remarks>
+    public ModelDownloader() : this(
+        new HttpClient(new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(2) }),
+        null)
     {
     }
 

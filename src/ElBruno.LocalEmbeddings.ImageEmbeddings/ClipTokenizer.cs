@@ -25,6 +25,12 @@ public sealed class ClipTokenizer
     /// <exception cref="FileNotFoundException">Thrown when the merge rules file is not found.</exception>
     public ClipTokenizer(string vocabJsonPath, string mergesTxtPath)
     {
+        const long MaxVocabFileSizeBytes = 50 * 1024 * 1024; // 50 MB
+
+        var vocabFileInfo = new FileInfo(vocabJsonPath);
+        if (vocabFileInfo.Length > MaxVocabFileSizeBytes)
+            throw new InvalidOperationException($"Vocab file '{vocabJsonPath}' exceeds the 50 MB size limit ({vocabFileInfo.Length / 1024 / 1024} MB).");
+
         var json = File.ReadAllText(vocabJsonPath);
         _vocabulary = JsonSerializer.Deserialize<Dictionary<string, int>>(json)
             ?? throw new InvalidOperationException("Failed to parse vocabulary");
@@ -33,6 +39,10 @@ public sealed class ClipTokenizer
         {
             throw new FileNotFoundException($"Merge rules file not found: {mergesTxtPath}");
         }
+
+        var mergesFileInfo = new FileInfo(mergesTxtPath);
+        if (mergesFileInfo.Length > MaxVocabFileSizeBytes)
+            throw new InvalidOperationException($"Merges file '{mergesTxtPath}' exceeds the 50 MB size limit ({mergesFileInfo.Length / 1024 / 1024} MB).");
     }
 
     /// <summary>

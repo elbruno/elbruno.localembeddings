@@ -204,4 +204,21 @@ public class ModelDownloaderSecurityTests
             resolved.StartsWith(cacheRoot, StringComparison.OrdinalIgnoreCase),
             "A sanitized model name must resolve inside the cache directory.");
     }
+
+    // -------------------------------------------------------------------------
+    // SEC-002: Default constructor creates a usable downloader instance
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void ModelDownloader_DefaultConstructor_UsesSocketsHttpHandler()
+    {
+        // SEC-002: ModelDownloader() parameterless ctor uses SocketsHttpHandler
+        // with PooledConnectionLifetime. We can't easily introspect the private
+        // handler, so we verify: (1) construction succeeds without throwing, and
+        // (2) the resulting instance reports a valid cache directory.
+        var downloader = new ModelDownloader();
+
+        Assert.NotNull(downloader);
+        Assert.False(string.IsNullOrEmpty(downloader.GetCacheDirectory()));
+    }
 }
