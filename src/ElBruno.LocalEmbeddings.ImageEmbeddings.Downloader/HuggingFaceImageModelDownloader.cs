@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using ElBruno.HuggingFace;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -12,6 +13,11 @@ public class HuggingFaceImageModelDownloader : IImageModelDownloader
     private readonly HuggingFaceDownloader _downloader;
     private readonly ILogger<HuggingFaceImageModelDownloader> _logger;
     private const string DefaultRepoId = "Xenova/clip-vit-base-patch32";
+
+    /// <summary>
+    /// ONNX model files that live in the output directory root after download.
+    /// </summary>
+    private static readonly string[] OnnxModelFileNames = ["text_model.onnx", "vision_model.onnx"];
 
     /// <summary>
     /// Files required for the CLIP model.
@@ -52,6 +58,17 @@ public class HuggingFaceImageModelDownloader : IImageModelDownloader
 
         try
         {
+            // SEC-001: verify sidecar hash integrity for any cached ONNX files; delete if corrupted
+            foreach (var onnxFile in OnnxModelFileNames)
+            {
+                var filePath = Path.Combine(outputDirectory, onnxFile);
+                if (File.Exists(filePath) && !SidecarHashValid(filePath))
+                {
+                    _logger.LogWarning("Integrity check failed for {File}; re-downloading.", onnxFile);
+                    File.Delete(filePath);
+                }
+            }
+
             await _downloader.DownloadFilesAsync(new DownloadRequest
             {
                 RepoId = DefaultRepoId,
@@ -74,6 +91,16 @@ public class HuggingFaceImageModelDownloader : IImageModelDownloader
                 }
             }
 
+            // SEC-001: write (or refresh) sidecar SHA-256 hashes for ONNX files
+            foreach (var onnxFile in OnnxModelFileNames)
+            {
+                var filePath = Path.Combine(outputDirectory, onnxFile);
+                if (File.Exists(filePath))
+                {
+                    WriteSidecarHash(filePath);
+                }
+            }
+
             _logger.LogInformation("Successfully ensured all CLIP model files are present in {Directory}", outputDirectory);
         }
         catch (Exception ex)
@@ -81,5 +108,32 @@ public class HuggingFaceImageModelDownloader : IImageModelDownloader
             _logger.LogError(ex, "Failed to download CLIP model files to {Directory}", outputDirectory);
             throw new InvalidOperationException($"Failed to download CLIP model files from {DefaultRepoId}.", ex);
         }
+    }
+
+    private static string ComputeSha256(string filePath)
+    {
+        using var stream = File.OpenRead(filePath);
+        var hash = SHA256.HashData(stream);
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static void WriteSidecarHash(string filePath)
+    {
+        var hash = ComputeSha256(filePath);
+        File.WriteAllText(filePath + ".sha256", hash);
+    }
+
+    /// <summary>Returns true when the sidecar is absent (legacy) or its hash matches the file.</summary>
+    private static bool SidecarHashValid(string filePath)
+    {
+        var sidecarPath = filePath + ".sha256";
+        if (!File.Exists(sidecarPath))
+        {
+            return true; // no sidecar — legacy cached file, treat as valid
+        }
+
+        var expected = File.ReadAllText(sidecarPath).Trim();
+        var actual = ComputeSha256(filePath);
+        return string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase);
     }
 }

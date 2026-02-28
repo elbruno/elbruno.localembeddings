@@ -143,12 +143,28 @@ public static class EmbeddingExtensions
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(query);
 
-        return items
-            .Select(item => (item.Item, Score: query.CosineSimilarity(item.Embedding)))
-            .Where(result => result.Score >= minScore)
-            .OrderByDescending(result => result.Score)
-            .Take(topK)
-            .ToList();
+        // O(n log k) partial sort using a min-heap of size topK
+        var heap = new PriorityQueue<T, float>(topK);
+        foreach (var (item, embedding) in items)
+        {
+            float score = query.CosineSimilarity(embedding);
+            if (score < minScore) continue;
+
+            if (heap.Count < topK)
+            {
+                heap.Enqueue(item, score);
+            }
+            else if (heap.TryPeek(out _, out float lowestScore) && score > lowestScore)
+            {
+                heap.DequeueEnqueue(item, score);
+            }
+        }
+
+        var results = new List<(T Item, float Score)>(heap.Count);
+        while (heap.TryDequeue(out var item2, out float score2))
+            results.Add((item2, score2));
+        results.Reverse(); // min-heap gives ascending order; we want descending
+        return results;
     }
 
     /// <summary>
@@ -185,18 +201,33 @@ public static class EmbeddingExtensions
             return [];
         }
 
-        var results = corpusEmbeddings
-            .Select((embedding, index) => (Index: index, Score: queryEmbedding.CosineSimilarity(embedding)));
-
-        if (minScore is not null)
+        // O(n log k) partial sort using a min-heap of size topK
+        var heap = new PriorityQueue<int, float>(topK);
+        for (int i = 0; i < corpusEmbeddings.Count; i++)
         {
-            results = results.Where(result => result.Score >= minScore.Value);
+            float score = queryEmbedding.CosineSimilarity(corpusEmbeddings[i]);
+            if (minScore is not null && score < minScore.Value) continue;
+
+            if (heap.Count < topK)
+            {
+                heap.Enqueue(i, score);
+            }
+            else if (heap.TryPeek(out _, out float lowestScore) && score > lowestScore)
+            {
+                heap.DequeueEnqueue(i, score);
+            }
         }
 
-        return results
-            .OrderByDescending(result => result.Score)
-            .ThenBy(result => result.Index)
-            .Take(topK)
-            .ToList();
+        var results = new List<(int Index, float Score)>(heap.Count);
+        while (heap.TryDequeue(out int idx, out float s))
+            results.Add((idx, s));
+
+        // Sort topK results by descending score then ascending index (matches original behavior)
+        results.Sort((x, y) =>
+        {
+            int cmp = y.Score.CompareTo(x.Score);
+            return cmp != 0 ? cmp : x.Index.CompareTo(y.Index);
+        });
+        return results;
     }
 }

@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Runtime.InteropServices;
 using TensorPrimitives = System.Numerics.Tensors.TensorPrimitives;
 using Microsoft.ML.OnnxRuntime;
@@ -76,31 +77,19 @@ public sealed class OnnxEmbeddingModel : IDisposable
         var resolvedInterOpNumThreads = interOpNumThreads ?? defaultThreadCount;
         var resolvedIntraOpNumThreads = intraOpNumThreads ?? defaultThreadCount;
 
-        SessionOptions sessionOptions;
         try
         {
-            sessionOptions = new SessionOptions
+            using var sessionOptions = new SessionOptions
             {
                 GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
                 ExecutionMode = useParallelExecution ? ExecutionMode.ORT_PARALLEL : ExecutionMode.ORT_SEQUENTIAL,
                 InterOpNumThreads = resolvedInterOpNumThreads,
                 IntraOpNumThreads = resolvedIntraOpNumThreads
             };
-        }
-        catch (Exception ex) when (ex is DllNotFoundException or TypeInitializationException)
-        {
-            throw new InvalidOperationException(
-                BuildOnnxNativeLoadErrorMessage(modelPath),
-                ex);
-        }
-
-        try
-        {
             _session = new InferenceSession(modelPath, sessionOptions);
         }
         catch (Exception ex) when (ex is DllNotFoundException or TypeInitializationException)
         {
-            sessionOptions.Dispose();
             throw new InvalidOperationException(
                 BuildOnnxNativeLoadErrorMessage(modelPath),
                 ex);
@@ -316,59 +305,69 @@ public sealed class OnnxEmbeddingModel : IDisposable
             }
         }
 
-        // Flatten arrays for tensor creation
-        var flatInputIds = new long[batchSize * sequenceLength];
-        var flatAttentionMask = new long[batchSize * sequenceLength];
-        var flatTokenTypeIds = new long[batchSize * sequenceLength]; // All zeros
-
-        for (int i = 0; i < batchSize; i++)
+        // Flatten arrays for tensor creation — use ArrayPool to avoid per-call heap allocations
+        int totalSize = batchSize * sequenceLength;
+        var flatInputIds = ArrayPool<long>.Shared.Rent(totalSize);
+        var flatAttentionMask = ArrayPool<long>.Shared.Rent(totalSize);
+        var flatTokenTypeIds = ArrayPool<long>.Shared.Rent(totalSize);
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            Array.Copy(inputIds[i], 0, flatInputIds, i * sequenceLength, sequenceLength);
-            Array.Copy(attentionMasks[i], 0, flatAttentionMask, i * sequenceLength, sequenceLength);
-        }
+            // Rented arrays are not zero-initialized; token_type_ids must be all zeros
+            flatTokenTypeIds.AsSpan(0, totalSize).Clear();
 
-        // Create tensors
-        var shape = new long[] { batchSize, sequenceLength };
-
-        var inputIdsTensor = new DenseTensor<long>(flatInputIds, [batchSize, sequenceLength]);
-        var attentionMaskTensor = new DenseTensor<long>(flatAttentionMask, [batchSize, sequenceLength]);
-        var tokenTypeIdsTensor = new DenseTensor<long>(flatTokenTypeIds, [batchSize, sequenceLength]);
-
-        // Create input container
-        var inputs = new List<NamedOnnxValue>
-        {
-            NamedOnnxValue.CreateFromTensor("input_ids", inputIdsTensor),
-            NamedOnnxValue.CreateFromTensor("attention_mask", attentionMaskTensor)
-        };
-
-        // Add token_type_ids if the model expects it
-        if (_session.InputMetadata.ContainsKey("token_type_ids"))
-        {
-            inputs.Add(NamedOnnxValue.CreateFromTensor("token_type_ids", tokenTypeIdsTensor));
-        }
-
-        // Run inference
-        using var results = _session.Run(inputs, _outputNames);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        // Get output tensor - typically "last_hidden_state" with shape [batch, seq, hidden]
-        var outputTensor = results.First().AsTensor<float>();
-
-        // Apply mean pooling over the sequence dimension
-        var embeddings = ApplyMeanPooling(outputTensor, attentionMasks, batchSize, sequenceLength);
-
-        // Apply L2 normalization if enabled
-        if (_normalizeEmbeddings)
-        {
-            for (int i = 0; i < embeddings.Length; i++)
+            for (int i = 0; i < batchSize; i++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                L2Normalize(embeddings[i]);
+                Array.Copy(inputIds[i], 0, flatInputIds, i * sequenceLength, sequenceLength);
+                Array.Copy(attentionMasks[i], 0, flatAttentionMask, i * sequenceLength, sequenceLength);
             }
-        }
 
-        return embeddings;
+            // Create tensors — slice to exact size since rented arrays may be larger than requested
+            var inputIdsTensor = new DenseTensor<long>(flatInputIds.AsMemory(0, totalSize), [batchSize, sequenceLength]);
+            var attentionMaskTensor = new DenseTensor<long>(flatAttentionMask.AsMemory(0, totalSize), [batchSize, sequenceLength]);
+            var tokenTypeIdsTensor = new DenseTensor<long>(flatTokenTypeIds.AsMemory(0, totalSize), [batchSize, sequenceLength]);
+
+            // Create input container
+            var inputs = new List<NamedOnnxValue>
+            {
+                NamedOnnxValue.CreateFromTensor("input_ids", inputIdsTensor),
+                NamedOnnxValue.CreateFromTensor("attention_mask", attentionMaskTensor)
+            };
+
+            // Add token_type_ids if the model expects it
+            if (_session.InputMetadata.ContainsKey("token_type_ids"))
+            {
+                inputs.Add(NamedOnnxValue.CreateFromTensor("token_type_ids", tokenTypeIdsTensor));
+            }
+
+            // Run inference
+            using var results = _session.Run(inputs, _outputNames);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Get output tensor - typically "last_hidden_state" with shape [batch, seq, hidden]
+            var outputTensor = results.First().AsTensor<float>();
+
+            // Apply mean pooling over the sequence dimension
+            var embeddings = ApplyMeanPooling(outputTensor, attentionMasks, batchSize, sequenceLength);
+
+            // Apply L2 normalization if enabled
+            if (_normalizeEmbeddings)
+            {
+                for (int i = 0; i < embeddings.Length; i++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    L2Normalize(embeddings[i]);
+                }
+            }
+
+            return embeddings;
+        }
+        finally
+        {
+            ArrayPool<long>.Shared.Return(flatInputIds);
+            ArrayPool<long>.Shared.Return(flatAttentionMask);
+            ArrayPool<long>.Shared.Return(flatTokenTypeIds);
+        }
     }
 
     /// <summary>
@@ -386,39 +385,39 @@ public sealed class OnnxEmbeddingModel : IDisposable
 
     /// <summary>
     /// Applies mean pooling over the sequence dimension, weighted by attention mask.
+    /// Uses SIMD-accelerated TensorPrimitives for the hidden-dimension accumulation.
     /// </summary>
-    private static float[][] ApplyMeanPooling(Tensor<float> outputTensor, long[][] attentionMasks, int batchSize, int sequenceLength)
+    internal static float[][] ApplyMeanPooling(Tensor<float> outputTensor, long[][] attentionMasks, int batchSize, int sequenceLength)
     {
         var dimensions = outputTensor.Dimensions.ToArray();
         var hiddenSize = dimensions[^1];
 
         var embeddings = new float[batchSize][];
 
+        // ORT always returns DenseTensor; cast once to get a flat Span for SIMD access
+        var denseTensor = (DenseTensor<float>)outputTensor;
+        var tensorSpan = denseTensor.Buffer.Span;
+
         for (int batch = 0; batch < batchSize; batch++)
         {
             var embedding = new float[hiddenSize];
-            var tokenCount = 0L;
+            int tokenCount = 0;
+            var masks = attentionMasks[batch];
 
-            // Sum over the sequence dimension, weighted by attention mask
+            // Accumulate masked token hidden states using SIMD Add
             for (int seq = 0; seq < sequenceLength; seq++)
             {
-                var mask = attentionMasks[batch][seq];
-                if (mask == 0) continue;
+                if (masks[seq] == 0) continue;
 
-                tokenCount += mask;
-                for (int hidden = 0; hidden < hiddenSize; hidden++)
-                {
-                    embedding[hidden] += outputTensor[batch, seq, hidden] * mask;
-                }
+                tokenCount++;
+                int offset = (batch * sequenceLength + seq) * hiddenSize;
+                TensorPrimitives.Add(embedding, tensorSpan.Slice(offset, hiddenSize), embedding);
             }
 
-            // Normalize by the number of tokens
+            // Divide by token count using SIMD
             if (tokenCount > 0)
             {
-                for (int hidden = 0; hidden < hiddenSize; hidden++)
-                {
-                    embedding[hidden] /= tokenCount;
-                }
+                TensorPrimitives.Divide(embedding, (float)tokenCount, embedding);
             }
 
             embeddings[batch] = embedding;

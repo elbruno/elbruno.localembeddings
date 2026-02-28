@@ -22,8 +22,11 @@ public sealed class ImageSearchEngine
     /// </summary>
     /// <param name="imageEncoder">The CLIP image encoder for computing image embeddings.</param>
     /// <param name="textEncoder">The CLIP text encoder for computing text query embeddings.</param>
+    /// <exception cref="ArgumentNullException">Thrown when either encoder argument is null.</exception>
     public ImageSearchEngine(ClipImageEncoder imageEncoder, ClipTextEncoder textEncoder)
     {
+        ArgumentNullException.ThrowIfNull(imageEncoder, nameof(imageEncoder));
+        ArgumentNullException.ThrowIfNull(textEncoder, nameof(textEncoder));
         _imageEncoder = imageEncoder;
         _textEncoder = textEncoder;
         _imageIndex = [];
@@ -84,8 +87,11 @@ public sealed class ImageSearchEngine
     /// <param name="query">The natural language text query.</param>
     /// <param name="topK">The maximum number of results to return. Default is 5.</param>
     /// <returns>A list of image paths with their similarity scores, ordered by descending score.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="query"/> is null or empty.</exception>
     public List<(string ImagePath, float Score)> SearchByText(string query, int topK = 5)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(query, nameof(query));
+
         if (_imageIndex.Count == 0)
         {
             return [];
@@ -101,8 +107,11 @@ public sealed class ImageSearchEngine
     /// <param name="imagePath">Path to the query image file.</param>
     /// <param name="topK">The maximum number of results to return. Default is 5.</param>
     /// <returns>A list of image paths with their similarity scores, ordered by descending score.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="imagePath"/> is null or empty.</exception>
     public List<(string ImagePath, float Score)> SearchByImage(string imagePath, int topK = 5)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(imagePath, nameof(imagePath));
+
         if (_imageIndex.Count == 0)
         {
             return [];
@@ -114,19 +123,29 @@ public sealed class ImageSearchEngine
 
     private List<(string ImagePath, float Score)> RankResults(float[] queryEmbedding, int topK)
     {
-        var results = new List<(string Path, float Score)>();
+        // O(n log k) partial sort using a min-heap of size topK
+        var heap = new PriorityQueue<string, float>(topK);
         foreach (var (path, imageEmbedding) in _imageIndex)
         {
             float similarity = TensorPrimitives.CosineSimilarity(
                 queryEmbedding.AsSpan(),
                 imageEmbedding.AsSpan());
-            results.Add((path, similarity));
+
+            if (heap.Count < topK)
+            {
+                heap.Enqueue(path, similarity);
+            }
+            else if (heap.TryPeek(out _, out float lowestScore) && similarity > lowestScore)
+            {
+                heap.DequeueEnqueue(path, similarity);
+            }
         }
 
-        return results
-            .OrderByDescending(r => r.Score)
-            .Take(topK)
-            .ToList();
+        var results = new List<(string ImagePath, float Score)>(heap.Count);
+        while (heap.TryDequeue(out string? imagePath, out float score))
+            results.Add((imagePath, score));
+        results.Reverse(); // min-heap gives ascending order; we want descending
+        return results;
     }
 
     internal static string GetProgressFileName(string imagePath) => Path.GetFileName(imagePath);

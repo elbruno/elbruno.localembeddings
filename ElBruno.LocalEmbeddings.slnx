@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/ElBruno.LocalEmbeddings.Benchmarks/ElBruno.LocalEmbeddings.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/BenchmarkSample/BenchmarkSample.csproj" />
     <Project Path="samples/ConsoleApp/ConsoleApp.csproj" />

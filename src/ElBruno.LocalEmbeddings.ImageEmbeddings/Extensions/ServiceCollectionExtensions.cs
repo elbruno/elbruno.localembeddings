@@ -22,6 +22,13 @@ public static class ServiceCollectionExtensions
     /// and <see cref="ImageSearchEngine"/> as singletons in the service collection.
     /// The <see cref="ImageEmbeddingsOptions.ModelDirectory"/> must point to a directory
     /// containing the CLIP ONNX model files.
+    /// <para>
+    /// <strong>Async-Safety Note:</strong> When <see cref="ImageEmbeddingsOptions.EnsureModelDownloaded"/>
+    /// is <see langword="true"/>, the singleton factory performs a synchronous model download
+    /// (sync-over-async) on the first service resolution. This is acceptable for most host
+    /// startup scenarios but can block thread-pool threads in UI or request contexts. Ensure
+    /// singletons are resolved early (e.g., at application startup) rather than on hot paths.
+    /// </para>
     /// </remarks>
     /// <example>
     /// <code>
@@ -85,7 +92,8 @@ public static class ServiceCollectionExtensions
         if (options.EnsureModelDownloaded)
         {
             var downloader = services.GetRequiredService<IImageModelDownloader>();
-            // Synchronously ensure models are downloaded to prevent startup errors
+            // Sync-over-async: blocks the singleton factory thread during first resolution.
+            // Acceptable at app startup; avoid resolving these singletons on hot request paths.
             downloader.EnsureModelDownloadedAsync(options.ModelDirectory).GetAwaiter().GetResult();
         }
         else
