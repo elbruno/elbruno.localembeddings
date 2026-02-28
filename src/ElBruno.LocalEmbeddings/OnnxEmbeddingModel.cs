@@ -77,31 +77,19 @@ public sealed class OnnxEmbeddingModel : IDisposable
         var resolvedInterOpNumThreads = interOpNumThreads ?? defaultThreadCount;
         var resolvedIntraOpNumThreads = intraOpNumThreads ?? defaultThreadCount;
 
-        SessionOptions sessionOptions;
         try
         {
-            sessionOptions = new SessionOptions
+            using var sessionOptions = new SessionOptions
             {
                 GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
                 ExecutionMode = useParallelExecution ? ExecutionMode.ORT_PARALLEL : ExecutionMode.ORT_SEQUENTIAL,
                 InterOpNumThreads = resolvedInterOpNumThreads,
                 IntraOpNumThreads = resolvedIntraOpNumThreads
             };
-        }
-        catch (Exception ex) when (ex is DllNotFoundException or TypeInitializationException)
-        {
-            throw new InvalidOperationException(
-                BuildOnnxNativeLoadErrorMessage(modelPath),
-                ex);
-        }
-
-        try
-        {
             _session = new InferenceSession(modelPath, sessionOptions);
         }
         catch (Exception ex) when (ex is DllNotFoundException or TypeInitializationException)
         {
-            sessionOptions.Dispose();
             throw new InvalidOperationException(
                 BuildOnnxNativeLoadErrorMessage(modelPath),
                 ex);

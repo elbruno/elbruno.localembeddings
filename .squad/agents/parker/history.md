@@ -21,6 +21,19 @@
 
 <!-- Append new learnings here as work progresses -->
 
+### 2025-07-16: Phase 2 Performance Fixes Implemented
+
+**PERF-03 — SessionOptions disposal on success path (OnnxEmbeddingModel):**
+- The original code had two separate try/catch blocks: one to create `SessionOptions`, one to create `InferenceSession`. The `sessionOptions.Dispose()` was only called in the `InferenceSession` catch block — the success path leaked the object.
+- Fix: collapsed both try blocks into a single `try` wrapping a `using var sessionOptions`, so disposal is guaranteed in all paths. ORT copies session options during `InferenceSession` construction, making post-construction disposal safe.
+
+**PERF-15/16 — Optimized SessionOptions for CLIP encoders (ClipImageEncoder, ClipTextEncoder):**
+- Both CLIP encoders previously called `new InferenceSession(modelPath)` with no options — using ORT defaults (no graph optimization, default threading).
+- Applied the same optimized pattern used in `OnnxEmbeddingModel`: `GraphOptimizationLevel.ORT_ENABLE_ALL`, `ExecutionMode.ORT_SEQUENTIAL` (CLIP models are used per-input, not in large batches), `InterOpNumThreads = 1`, `IntraOpNumThreads = Environment.ProcessorCount`.
+- Used `using var sessionOptions` to ensure disposal after `InferenceSession` is constructed.
+
+**Build result:** `dotnet build` succeeded with no errors or new warnings.
+
 ### 2025-07-16: Phase 1 Performance Fixes Implemented
 
 Implemented the two HIGH-impact fixes from the audit directly in `src/ElBruno.LocalEmbeddings/OnnxEmbeddingModel.cs`.

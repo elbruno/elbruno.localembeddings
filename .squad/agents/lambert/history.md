@@ -38,3 +38,23 @@
 - `MeanPoolingTests.cs` — PERF-02 SIMD correctness + PERF-01 regression (8 tests)
 - Total: 31 new tests, all passing on net8.0 and net10.0
 
+### Phase 2 Security Tests (SEC-003, SEC-004, SEC-005)
+
+**All Phase 2 implementations (Ash) were complete** before tests were written; tests verified them immediately.
+
+**Key insights:**
+
+- **SEC-003 (`ImageEmbeddingsOptions` filename validation):** `ValidateFileName` checks: (1) not null/whitespace, (2) no `..` sequence, (3) no chars in `Path.GetInvalidFileNameChars()`. Tests use `[Theory]` with representative bad inputs; `..evil` (no slash) is a good minimal traversal test case. Invalid-char tests use `<`, `>`, `|`, `?`, `*` — all invalid on Windows.
+
+- **SEC-004 (CLIP encoder constructors):** `ArgumentException.ThrowIfNullOrWhiteSpace` throws `ArgumentNullException` for null and `ArgumentException` for empty/whitespace. Use `Assert.ThrowsAny<ArgumentException>` to cover both. `FileNotFoundException` tests need a path whose parent directory does not exist (guaranteed non-existent). Verify `ClipTextEncoder` vocabPath check by creating a real zero-byte model file so modelPath passes, then provide a missing vocabPath.
+
+- **SEC-005 (`ImageSearchEngine` null guards):** Constructor null check for `imageEncoder` is testable without ONNX files (pass `null!`; check fires before any I/O). `textEncoder` null check and all `SearchByText` guard tests require a live engine, which needs real ONNX model files → use `SkippableFact` + env vars `CLIP_VISION_MODEL_PATH`, `CLIP_TEXT_MODEL_PATH`, `CLIP_VOCAB_PATH`, `CLIP_MERGES_PATH`.
+
+- **PERF-03/15/16 (Parker):** No direct tests needed; verified by running full build and existing test suite with 0 failures.
+
+**Test files added (ImageEmbeddings test project):**
+- `ImageEmbeddingsOptionsValidationTests.cs` — SEC-003, 18 tests (all pass)
+- `ClipEncoderConstructorTests.cs` — SEC-004, 10 tests (all pass)
+- `ImageSearchEngineNullGuardTests.cs` — SEC-005, 6 tests (1 passes, 5 skipped pending real ONNX files)
+- **Total new tests: 34 — 29 pass, 5 skip on both net8.0 and net10.0 (0 failures)**
+

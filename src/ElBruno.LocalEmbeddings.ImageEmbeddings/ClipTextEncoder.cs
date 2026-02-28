@@ -25,9 +25,28 @@ public sealed class ClipTextEncoder : IDisposable
     /// <param name="modelPath">Path to the CLIP text encoder ONNX model file.</param>
     /// <param name="vocabPath">Path to the vocabulary JSON file.</param>
     /// <param name="mergesPath">Path to the BPE merge rules file.</param>
+    /// <exception cref="ArgumentException">Thrown when any path argument is null or empty.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when a model or vocabulary file does not exist.</exception>
     public ClipTextEncoder(string modelPath, string vocabPath, string mergesPath)
     {
-        _session = new InferenceSession(modelPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(modelPath, nameof(modelPath));
+        ArgumentException.ThrowIfNullOrWhiteSpace(vocabPath, nameof(vocabPath));
+        ArgumentException.ThrowIfNullOrWhiteSpace(mergesPath, nameof(mergesPath));
+        if (!File.Exists(modelPath))
+            throw new FileNotFoundException($"CLIP text model file not found: {modelPath}", modelPath);
+        if (!File.Exists(vocabPath))
+            throw new FileNotFoundException($"Vocabulary file not found: {vocabPath}", vocabPath);
+        if (!File.Exists(mergesPath))
+            throw new FileNotFoundException($"Merge rules file not found: {mergesPath}", mergesPath);
+
+        using var sessionOptions = new SessionOptions
+        {
+            GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
+            ExecutionMode = ExecutionMode.ORT_SEQUENTIAL,
+            InterOpNumThreads = 1,
+            IntraOpNumThreads = Environment.ProcessorCount
+        };
+        _session = new InferenceSession(modelPath, sessionOptions);
         _tokenizer = new ClipTokenizer(vocabPath, mergesPath);
 
         var inputKeys = _session.InputMetadata.Keys.ToArray();

@@ -5,6 +5,11 @@ namespace ElBruno.LocalEmbeddings.ImageEmbeddings.Options;
 /// </summary>
 public sealed class ImageEmbeddingsOptions
 {
+    private string _textModelFileName = "text_model.onnx";
+    private string _visionModelFileName = "vision_model.onnx";
+    private string _vocabFileName = "vocab.json";
+    private string _mergesFileName = "merges.txt";
+
     /// <summary>
     /// Gets or sets the directory containing the CLIP ONNX model files.
     /// Must contain the text model, vision model, vocabulary, and merge files.
@@ -15,25 +20,51 @@ public sealed class ImageEmbeddingsOptions
     /// Gets or sets the filename of the CLIP text encoder ONNX model.
     /// Default is "text_model.onnx".
     /// </summary>
-    public string TextModelFileName { get; set; } = "text_model.onnx";
+    public string TextModelFileName
+    {
+        get => _textModelFileName;
+        set => _textModelFileName = ValidateFileName(value, nameof(TextModelFileName));
+    }
 
     /// <summary>
     /// Gets or sets the filename of the CLIP vision encoder ONNX model.
     /// Default is "vision_model.onnx".
     /// </summary>
-    public string VisionModelFileName { get; set; } = "vision_model.onnx";
+    public string VisionModelFileName
+    {
+        get => _visionModelFileName;
+        set => _visionModelFileName = ValidateFileName(value, nameof(VisionModelFileName));
+    }
 
     /// <summary>
     /// Gets or sets the filename of the CLIP vocabulary file.
     /// Default is "vocab.json".
     /// </summary>
-    public string VocabFileName { get; set; } = "vocab.json";
+    public string VocabFileName
+    {
+        get => _vocabFileName;
+        set => _vocabFileName = ValidateFileName(value, nameof(VocabFileName));
+    }
 
     /// <summary>
     /// Gets or sets the filename of the CLIP BPE merge rules file.
     /// Default is "merges.txt".
     /// </summary>
-    public string MergesFileName { get; set; } = "merges.txt";
+    public string MergesFileName
+    {
+        get => _mergesFileName;
+        set => _mergesFileName = ValidateFileName(value, nameof(MergesFileName));
+    }
+
+    private static string ValidateFileName(string value, string paramName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, paramName);
+        if (value.Contains("..", StringComparison.Ordinal))
+            throw new ArgumentException("File name must not contain path traversal sequences ('..').", paramName);
+        if (value.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            throw new ArgumentException("File name contains invalid characters.", paramName);
+        return value;
+    }
 
     /// <summary>
     /// Gets the full path to the text model ONNX file.

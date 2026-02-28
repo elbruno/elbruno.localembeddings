@@ -53,3 +53,24 @@
 - Nullable reference types and warnings-as-errors enforced globally.
 
 **Report written to:** `.squad/decisions/inbox/ash-security-audit-findings.md`
+
+### 2026-06-XX: Phase 2 Security Fixes — Input Validation
+
+**SEC-003 (ImageEmbeddingsOptions path traversal):**
+- `TextModelFileName`, `VisionModelFileName`, `VocabFileName`, and `MergesFileName` properties converted from auto-properties to full properties with backing fields.
+- A shared `ValidateFileName` static helper runs on every setter: `ArgumentException.ThrowIfNullOrWhiteSpace`, `..` segment check, and `Path.GetInvalidFileNameChars()` check.
+- Defaults still set on backing fields, so no behavior change for consumers using defaults.
+
+**SEC-004 (ClipImageEncoder / ClipTextEncoder null/existence guards):**
+- `ClipImageEncoder(string modelPath)`: Added `ArgumentException.ThrowIfNullOrWhiteSpace` + `File.Exists` guard before `InferenceSession` is created. Throws `FileNotFoundException` with a descriptive message.
+- `ClipTextEncoder(string modelPath, string vocabPath, string mergesPath)`: Added the same guards for all three paths before any ONNX or tokenizer initialization.
+- Guards placed before `new InferenceSession(...)` so that the ONNX Runtime never sees invalid input.
+
+**SEC-005 (ImageSearchEngine null guards):**
+- Constructor: `ArgumentNullException.ThrowIfNull` for both `imageEncoder` and `textEncoder`.
+- `SearchByText`: `ArgumentException.ThrowIfNullOrWhiteSpace(query)` added before the index count check.
+- `SearchByImage`: `ArgumentException.ThrowIfNullOrWhiteSpace(imagePath)` added before the index count check.
+
+**Pattern note:** `ArgumentException.ThrowIfNullOrWhiteSpace` and `ArgumentNullException.ThrowIfNull` are both available from .NET 8, consistent with the project's minimum target.
+
+**Build result:** `dotnet build` — 0 errors, 0 warnings.

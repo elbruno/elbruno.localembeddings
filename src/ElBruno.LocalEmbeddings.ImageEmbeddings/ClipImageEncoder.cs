@@ -30,9 +30,22 @@ public sealed class ClipImageEncoder : IDisposable
     /// Initializes a new instance of the <see cref="ClipImageEncoder"/> class.
     /// </summary>
     /// <param name="modelPath">Path to the CLIP vision encoder ONNX model file.</param>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="modelPath"/> is null or empty.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the model file does not exist.</exception>
     public ClipImageEncoder(string modelPath)
     {
-        _session = new InferenceSession(modelPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(modelPath, nameof(modelPath));
+        if (!File.Exists(modelPath))
+            throw new FileNotFoundException($"CLIP vision model file not found: {modelPath}", modelPath);
+
+        using var sessionOptions = new SessionOptions
+        {
+            GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
+            ExecutionMode = ExecutionMode.ORT_SEQUENTIAL,
+            InterOpNumThreads = 1,
+            IntraOpNumThreads = Environment.ProcessorCount
+        };
+        _session = new InferenceSession(modelPath, sessionOptions);
         _inputName = _session.InputMetadata.Keys.First();
         _outputName = _session.OutputMetadata.Keys.First();
     }
