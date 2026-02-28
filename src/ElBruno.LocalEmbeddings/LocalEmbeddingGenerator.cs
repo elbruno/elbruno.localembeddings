@@ -268,7 +268,7 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
         }
 
         var downloader = new ModelDownloader(SharedModelDownloadHttpClient, options.CacheDirectory);
-        return downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized).GetAwaiter().GetResult();
+        return downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized, null, options.ExpectedHash).GetAwaiter().GetResult();
     }
 
     private static async Task<string> ResolveModelDirectoryAsync(LocalEmbeddingsOptions options, IProgress<double>? progress, CancellationToken cancellationToken)
@@ -287,7 +287,7 @@ public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
         }
 
         var downloader = new ModelDownloader(SharedModelDownloadHttpClient, options.CacheDirectory);
-        return await downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized, progress, cancellationToken).ConfigureAwait(false);
+        return await downloader.EnsureModelAsync(options.ModelName, options.PreferQuantized, progress, options.ExpectedHash, cancellationToken).ConfigureAwait(false);
     }
 
     private static string ResolveModelPath(string modelDirectory, bool preferQuantized)

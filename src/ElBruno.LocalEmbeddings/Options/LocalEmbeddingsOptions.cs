@@ -81,4 +81,14 @@ public sealed class LocalEmbeddingsOptions
     /// If null, defaults to <see cref="Environment.ProcessorCount"/>.
     /// </summary>
     public int? IntraOpNumThreads { get; set; }
+
+    /// <summary>
+    /// Gets or sets the expected SHA-256 hash (lowercase hex string) of the primary ONNX model file.
+    /// When set, the downloaded model file is verified against this hash after download.
+    /// </summary>
+    /// <remarks>
+    /// If the hash does not match, an <see cref="InvalidOperationException"/> is thrown.
+    /// Leave <see langword="null"/> to skip hash verification (default behavior).
+    /// </remarks>
+    public string? ExpectedHash { get; set; }
 }

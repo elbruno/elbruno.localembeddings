@@ -20,3 +20,52 @@
 ## Learnings
 
 <!-- Append new learnings here as work progresses -->
+
+### 2025-07-16: Phase 1 Performance Fixes Implemented
+
+Implemented the two HIGH-impact fixes from the audit directly in `src/ElBruno.LocalEmbeddings/OnnxEmbeddingModel.cs`.
+
+**PERF-02 — Mean pooling SIMD (TensorPrimitives):**
+- Replaced the triple nested scalar loop (`batch × seq × hidden`) with a two-level loop that uses `TensorPrimitives.Add` for the hidden-dimension accumulation and `TensorPrimitives.Divide` for the final normalization.
+- Key technique: cast `Tensor<float>` to `DenseTensor<float>` (safe — ORT always returns DenseTensor), take `.Buffer.Span`, then compute the flat offset as `(batch * sequenceLength + seq) * hiddenSize` to get a contiguous `hiddenSize`-length slice per token.
+- Attention mask handled by skipping (`continue`) zero-mask tokens rather than multiplying — avoids a wasted SIMD add of zeros and keeps the token count simple as `int`.
+
+**PERF-01 — ArrayPool for flattening arrays:**
+- Replaced `new long[batchSize * sequenceLength]` for `flatInputIds`, `flatAttentionMask`, and `flatTokenTypeIds` with `ArrayPool<long>.Shared.Rent(totalSize)` / `Return` in a `try/finally`.
+- Rented arrays sliced to exact size via `.AsMemory(0, totalSize)` when constructing `DenseTensor<long>` — required because rented arrays may be larger than requested.
+- `flatTokenTypeIds` explicitly cleared with `.AsSpan(0, totalSize).Clear()` since `ArrayPool` does not zero-initialize.
+- Removed the unused `shape` variable that preceded tensor construction.
+
+**Build result:** `dotnet build` succeeded with no errors or new warnings.
+
+### 2025-07-16: Comprehensive Performance Audit Completed
+
+Performed full-codebase performance audit covering all 5 source projects. Key findings:
+
+**What's working well:**
+- ONNX sessions are reused (singleton pattern), thread-safe for concurrent inference
+- TensorPrimitives used for cosine similarity and L2 normalization (SIMD-accelerated)
+- Batched inference is supported in OnnxEmbeddingModel.GenerateEmbeddings
+- ConfigureAwait(false) used consistently across all async methods
+- Graph optimization level set to ORT_ENABLE_ALL
+- Benchmark project exists (samples/BenchmarkSample) with 3 benchmark classes
+
+**Critical findings (17 total, 2 HIGH, 12 MEDIUM, 3 LOW):**
+1. HIGH: Mean pooling in OnnxEmbeddingModel uses scalar element-by-element loop instead of SIMD/TensorPrimitives — biggest throughput improvement opportunity
+2. HIGH: 3 large long[] arrays allocated per GenerateEmbeddings call without ArrayPool — 1.2MB GC pressure for batch=100, seq=512
+3. MEDIUM: SessionOptions not disposed on success path in OnnxEmbeddingModel.Load
+4. MEDIUM: Sync-over-async (.GetAwaiter().GetResult()) in constructor and ImageEmbeddings DI registration
+5. MEDIUM: CLIP encoders (ClipImageEncoder, ClipTextEncoder) use default InferenceSession with no graph optimization or thread configuration
+6. MEDIUM: LINQ chains in FindClosest/RankResults allocate iterators and intermediate collections — should use min-heap
+7. MEDIUM: Tokenizer creates intermediate int[] via .ToArray() that could be iterated directly
+8. MEDIUM: CLIP output extraction uses AsEnumerable<float>().ToArray() instead of direct tensor buffer access
+9. LOW: Unnecessary .ToList() in GenerateAsync and TokenizeBatch when callers already pass lists
+
+**Benchmark gaps identified:**
+- No cold-start / model loading benchmark
+- No mean pooling isolation benchmark
+- No CLIP image/text encoder benchmarks
+- No quantized vs. non-quantized comparison
+- No VectorStore search at-scale benchmark
+
+Full findings written to `.squad/decisions/inbox/parker-performance-audit-findings.md`.

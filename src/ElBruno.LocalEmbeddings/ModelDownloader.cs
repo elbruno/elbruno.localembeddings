@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Security.Cryptography;
 using ElBruno.HuggingFace;
 
 namespace ElBruno.LocalEmbeddings;
@@ -13,9 +15,10 @@ public interface IModelDownloader
     /// <param name="modelName">The HuggingFace model name (e.g., "sentence-transformers/all-MiniLM-L6-v2").</param>
     /// <param name="preferQuantized">Whether to prefer quantized model files when available.</param>
     /// <param name="progress">Optional progress reporter (0.0 to 1.0).</param>
+    /// <param name="expectedHash">Optional expected SHA-256 hash (hex string) of the primary ONNX model file.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The local path to the model directory.</returns>
-    Task<string> EnsureModelAsync(string modelName, bool preferQuantized = false, IProgress<double>? progress = null, CancellationToken cancellationToken = default);
+    Task<string> EnsureModelAsync(string modelName, bool preferQuantized = false, IProgress<double>? progress = null, string? expectedHash = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the local cache directory for models.
@@ -32,6 +35,7 @@ public sealed class ModelDownloader : IModelDownloader
     private const string DefaultModel = "sentence-transformers/all-MiniLM-L6-v2";
     private static readonly string[] QuantizedModelFiles = ["model_quantized.onnx", "model_int8.onnx"];
     private static readonly string[] TokenizerFiles = ["tokenizer.json", "tokenizer_config.json", "vocab.txt"];
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> _downloadLocks = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly HuggingFaceDownloader _downloader;
     private readonly string _cacheDirectory;
@@ -67,40 +71,71 @@ public sealed class ModelDownloader : IModelDownloader
     public static string DefaultModelName => DefaultModel;
 
     /// <inheritdoc />
-    public async Task<string> EnsureModelAsync(string modelName, bool preferQuantized = false, IProgress<double>? progress = null, CancellationToken cancellationToken = default)
+    public async Task<string> EnsureModelAsync(string modelName, bool preferQuantized = false, IProgress<double>? progress = null, string? expectedHash = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(modelName))
         {
             throw new ArgumentException("Model name cannot be null or empty.", nameof(modelName));
         }
 
+        // SEC-006: defense-in-depth path traversal guard
         var sanitizedName = DefaultPathHelper.SanitizeModelName(modelName);
-        var modelDirectory = Path.Combine(_cacheDirectory, sanitizedName);
+        var modelDirectory = Path.GetFullPath(Path.Combine(_cacheDirectory, sanitizedName));
+        var cacheRoot = Path.GetFullPath(_cacheDirectory);
+        if (!modelDirectory.StartsWith(cacheRoot, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                $"Model name '{modelName}' resolves to a path outside the cache directory.",
+                nameof(modelName));
+        }
 
-        // Build the list of required and optional files
+        // Serialize concurrent downloads for the same model directory to avoid .tmp file conflicts.
+        var sem = _downloadLocks.GetOrAdd(modelDirectory, _ => new SemaphoreSlim(1, 1));
+        await sem.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return await EnsureModelCoreAsync(modelDirectory, modelName, preferQuantized, progress, expectedHash, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            sem.Release();
+        }
+    }
+
+    private async Task<string> EnsureModelCoreAsync(string modelDirectory, string modelName, bool preferQuantized, IProgress<double>? progress, string? expectedHash, CancellationToken cancellationToken)
+    {
         var requiredFiles = new List<string>();
         var optionalFiles = new List<string>(TokenizerFiles.Select(f => f));
 
         // Determine which ONNX model file to download
         // Check if any model already exists locally
-        var existingDefaultModel = File.Exists(Path.Combine(modelDirectory, "model.onnx"));
+        bool existingDefaultModel = File.Exists(Path.Combine(modelDirectory, "model.onnx"));
         var existingQuantizedModel = QuantizedModelFiles
             .FirstOrDefault(f => File.Exists(Path.Combine(modelDirectory, f)));
 
-        if (existingDefaultModel || existingQuantizedModel != null)
+        // SEC-001: verify sidecar hash integrity for any cached ONNX files; delete if corrupted
+        if (existingDefaultModel)
         {
-            // Files already exist, no need to download
-            // Still check for tokenizer files
-            if (preferQuantized && existingQuantizedModel != null)
+            var path = Path.Combine(modelDirectory, "model.onnx");
+            if (!SidecarHashValid(path))
             {
-                // Use existing quantized model
-            }
-            else if (existingDefaultModel)
-            {
-                // Use existing default model
+                File.Delete(path);
+                existingDefaultModel = false;
             }
         }
-        else
+
+        if (existingQuantizedModel != null)
+        {
+            var path = Path.Combine(modelDirectory, existingQuantizedModel);
+            if (!SidecarHashValid(path))
+            {
+                File.Delete(path);
+                existingQuantizedModel = null;
+            }
+        }
+
+        bool hasExistingModel = existingDefaultModel || existingQuantizedModel != null;
+        if (!hasExistingModel)
         {
             // Need to download - decide what to request
             if (preferQuantized)
@@ -164,9 +199,76 @@ public sealed class ModelDownloader : IModelDownloader
             throw new InvalidOperationException($"Model file was not downloaded successfully in {modelDirectory}");
         }
 
+        // SEC-001: write (or refresh) sidecar SHA-256 hashes for all ONNX files present
+        var defaultModelPath = Path.Combine(modelDirectory, "model.onnx");
+        if (File.Exists(defaultModelPath))
+        {
+            WriteSidecarHash(defaultModelPath);
+        }
+
+        foreach (var qf in QuantizedModelFiles)
+        {
+            var qPath = Path.Combine(modelDirectory, qf);
+            if (File.Exists(qPath))
+            {
+                WriteSidecarHash(qPath);
+            }
+        }
+
+        // SEC-001: verify against caller-supplied expected hash if provided
+        if (expectedHash != null)
+        {
+            string? primaryModelPath = null;
+            if (preferQuantized)
+            {
+                primaryModelPath = QuantizedModelFiles
+                    .Select(f => Path.Combine(modelDirectory, f))
+                    .FirstOrDefault(File.Exists);
+            }
+
+            primaryModelPath ??= defaultModelPath;
+
+            if (File.Exists(primaryModelPath))
+            {
+                var actualHash = ComputeSha256(primaryModelPath);
+                if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(
+                        $"Model file hash verification failed. Expected: {expectedHash}, Actual: {actualHash}.");
+                }
+            }
+        }
+
         return modelDirectory;
     }
 
     /// <inheritdoc />
     public string GetCacheDirectory() => _cacheDirectory;
+
+    private static string ComputeSha256(string filePath)
+    {
+        using var stream = File.OpenRead(filePath);
+        var hash = SHA256.HashData(stream);
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static void WriteSidecarHash(string filePath)
+    {
+        var hash = ComputeSha256(filePath);
+        File.WriteAllText(filePath + ".sha256", hash);
+    }
+
+    /// <summary>Returns true when the sidecar is absent (legacy) or its hash matches the file.</summary>
+    private static bool SidecarHashValid(string filePath)
+    {
+        var sidecarPath = filePath + ".sha256";
+        if (!File.Exists(sidecarPath))
+        {
+            return true; // no sidecar — legacy cached file, treat as valid
+        }
+
+        var expected = File.ReadAllText(sidecarPath).Trim();
+        var actual = ComputeSha256(filePath);
+        return string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase);
+    }
 }
