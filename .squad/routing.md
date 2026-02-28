@@ -12,6 +12,7 @@ How to decide who handles what.
 | Tests, edge cases, quality | Lambert | Unit tests, integration tests, model loading tests |
 | Code review | Ripley | Review PRs, check quality, suggest improvements |
 | Scope & priorities | Ripley | What to build next, trade-offs, decisions |
+| Security audit, vulnerability scan, dependency advisories | Ash | NuGet CVEs, model download safety, path traversal, input validation |
 | Session logging | Scribe | Automatic — never needs routing |
 
 ## Issue Routing
