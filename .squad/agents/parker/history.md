@@ -41,6 +41,33 @@ Full codebase audit covering all 5 source projects. 17 findings (2 HIGH, 12 MEDI
 
 ## Learnings
 
+### 2025-07-16: Phase 5 Benchmark Infrastructure Expansion Implemented
+
+**New project: `benchmarks/ElBruno.LocalEmbeddings.Benchmarks/`**
+
+Created a dedicated benchmark project targeting `net8.0;net10.0` (matching library targets), separate from the existing `samples/BenchmarkSample` which only targets `net10.0`. Registered in the `/benchmarks/` solution folder in `ElBruno.LocalEmbeddings.slnx`.
+
+**Decision: New project in `benchmarks/` rather than extending `samples/BenchmarkSample`**
+- Maintains clean separation between samples (demo code) and engineered performance benchmarks
+- Enables dual-framework targeting (`net8.0;net10.0`) without changing an existing sample
+- Follows repo structure convention: `src/`, `tests/`, `samples/`, `benchmarks/`
+
+**8 new benchmark classes:**
+1. `ModelLoadingBenchmarks` — cold vs warm load timing; skips gracefully when model not cached
+2. `MeanPoolingBenchmarks` — SIMD mean pooling on synthetic data; no ONNX session required
+3. `EmbeddingGenerationBenchmarks` — end-to-end single + batch-10 + batch-100 throughput
+4. `TokenizerBenchmarks` — short/long text tokenization; returns `long[]` (library's actual output)
+5. `FindClosestBenchmarks` — min-heap `FindClosest` with `[Params]` on CorpusSize and TopK; fully synthetic
+6. `L2NormalizationBenchmarks` — `TensorPrimitives.Norm` + `TensorPrimitives.Divide`; no model required
+7. `SingleVsBatchBenchmarks` — 10 individual calls vs 1 batch call with 10 items
+8. `QuantizedVsFullBenchmarks` — FP32 vs INT8 throughput comparison
+
+**Shared helper:** `BenchmarkHelpers.TryResolveModelDirectory()` avoids duplicating the cache-path resolution across 5 model-dependent benchmark classes.
+
+**CI safety pattern:** All model-dependent benchmarks use `LocalEmbeddingGenerator?` (nullable), set in `[GlobalSetup]` with try/catch, and guard each `[Benchmark]` method with `if (_generator is null) return;`. Benchmarks compile and "run" cleanly in CI; they simply no-op when no model is cached.
+
+**Build result:** `dotnet build` succeeded with 0 warnings, 0 errors across net8.0 + net10.0 for all projects.
+
 ### 2026-02-28: Cross-Agent Update — Lambert Test Coverage Summary
 
 **From:** Scribe (cross-agent propagation)
