@@ -56,12 +56,18 @@ public sealed class ImageEmbeddingsOptions
         set => _mergesFileName = ValidateFileName(value, nameof(MergesFileName));
     }
 
+    // Use a fixed set that covers Windows-invalid chars and common shell-dangerous chars.
+    // Path.GetInvalidFileNameChars() is OS-specific (Linux omits <, >, |, ?, *), so we
+    // define a cross-platform superset to ensure consistent security validation everywhere.
+    private static readonly char[] _invalidFileNameChars =
+        ['<', '>', ':', '"', '|', '?', '*', '\\', '/', '\0'];
+
     private static string ValidateFileName(string value, string paramName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value, paramName);
         if (value.Contains("..", StringComparison.Ordinal))
             throw new ArgumentException("File name must not contain path traversal sequences ('..').", paramName);
-        if (value.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+        if (value.IndexOfAny(_invalidFileNameChars) >= 0)
             throw new ArgumentException("File name contains invalid characters.", paramName);
         return value;
     }
