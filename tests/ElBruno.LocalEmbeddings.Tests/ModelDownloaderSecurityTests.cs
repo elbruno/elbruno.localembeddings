@@ -44,7 +44,7 @@ public class ModelDownloaderSecurityTests
     // Guard fires: Windows absolute path (no slash conversion possible for drive letter)
     // -------------------------------------------------------------------------
 
-    [Fact]
+    [SkippableFact]
     public async Task EnsureModelAsync_WindowsAbsolutePath_ThrowsArgumentException()
     {
         Skip.IfNot(OperatingSystem.IsWindows(), "Windows-only path traversal scenario");
