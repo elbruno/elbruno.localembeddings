@@ -17,6 +17,7 @@
 | Kane | Integration | `.ai-team/agents/kane/charter.md` | ✅ Active |
 | Lambert | Tester | `.ai-team/agents/lambert/charter.md` | ✅ Active |
 | Ash | Security Engineer | `.squad/agents/ash/charter.md` | ✅ Active |
+| Parker | Performance Engineer | `.squad/agents/parker/charter.md` | ✅ Active |
 | Scribe | Session Logger | `.ai-team/agents/scribe/charter.md` | 📋 Silent |
 | Ralph | Work Monitor | — | 🔄 Monitor |
 
