@@ -107,6 +107,17 @@ public sealed class IntelOnnxEmbeddingModel : IDisposable
             IsOpenVinoActive = true;
             return session;
         }
+        catch (EntryPointNotFoundException)
+        {
+            // OpenVINO entry point doesn't exist in this ORT version — likely a version conflict
+            FallbackReason = "OpenVINO EP not found in loaded ORT runtime. " +
+                "This typically happens when another package (e.g., Microsoft.ML.OnnxRuntime.DirectML) " +
+                "loads ORT 1.24+ which doesn't include the OpenVINO EP entry point. " +
+                "Run the Intel NPU project standalone (without DirectML) to avoid this conflict.";
+
+            if (!fallbackToCpu)
+                throw new InvalidOperationException(FallbackReason);
+        }
         catch (Exception ex) when (fallbackToCpu)
         {
             // OpenVINO not available — fall back to CPU

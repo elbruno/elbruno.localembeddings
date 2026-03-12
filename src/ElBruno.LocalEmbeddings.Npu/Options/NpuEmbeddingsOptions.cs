@@ -64,6 +64,14 @@ public sealed class NpuEmbeddingsOptions
     public int DeviceId { get; set; } = 0;
 
     /// <summary>
+    /// Gets or sets whether to automatically detect and target NPU hardware via DXGI adapter enumeration.
+    /// When true, the library enumerates DXGI adapters and selects an NPU device if available,
+    /// overriding <see cref="DeviceId"/>. When false, <see cref="DeviceId"/> is used directly.
+    /// Default is true.
+    /// </summary>
+    public bool AutoDetectNpu { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the expected SHA-256 hash (lowercase hex string) of the primary ONNX model file.
     /// When set, the downloaded model file is verified against this hash after download.
     /// </summary>

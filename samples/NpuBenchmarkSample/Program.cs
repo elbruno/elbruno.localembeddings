@@ -14,6 +14,37 @@ Console.WriteLine("║          NPU Embedding Benchmark — ElBruno.LocalEmbeddi
 Console.WriteLine("╚══════════════════════════════════════════════════════════════╝");
 Console.WriteLine();
 
+// --- Enumerate DXGI adapters to show available hardware ---
+var adapters = DxgiDeviceHelper.EnumerateAdapters();
+if (adapters.Count > 0)
+{
+    Console.WriteLine("🔍 Detected DXGI adapters:");
+    foreach (var adapter in adapters)
+    {
+        string tag = adapter.IsLikelyNpu ? " ← NPU detected!" : "";
+        string mem = adapter.DedicatedVideoMemoryBytes > 0
+            ? $" ({adapter.DedicatedVideoMemoryBytes / (1024 * 1024)} MB)"
+            : " (shared memory)";
+        Console.WriteLine($"   [{adapter.Index}] {adapter.Description}{mem}{tag}");
+    }
+    Console.WriteLine();
+
+    int? npuIndex = DxgiDeviceHelper.FindNpuDeviceIndex();
+    if (npuIndex.HasValue)
+    {
+        Console.WriteLine($"✅ NPU found at device index {npuIndex.Value} — DirectML will target it automatically.");
+    }
+    else
+    {
+        Console.WriteLine("⚠️  No NPU adapter detected. DirectML will use device 0 (likely GPU).");
+    }
+    Console.WriteLine();
+}
+else
+{
+    Console.WriteLine("⚠️  Could not enumerate DXGI adapters (non-Windows or DXGI unavailable).\n");
+}
+
 // --- Select provider ---
 Console.WriteLine("Select execution provider:");
 Console.WriteLine("  [1] CPU (baseline)");
@@ -94,11 +125,28 @@ static async Task<BenchmarkResult> RunDirectMLBenchmark(IList<string> texts)
         var generator = await NpuEmbeddingGenerator.CreateAsync(new NpuEmbeddingsOptions
         {
             PreferQuantized = true,
-            DeviceId = 0
+            AutoDetectNpu = true
         });
-        // DirectML doesn't expose an IsActive flag — DeviceId 0 may target GPU rather than NPU.
-        // Report honestly that we cannot verify NPU placement.
-        return await RunBenchmark("DirectML", generator, texts, npuActive: false, npuStatus: "DML (device 0, likely GPU)");
+
+        bool npuActive = generator.IsNpuActive;
+        string status;
+        if (npuActive)
+        {
+            status = $"NPU Active (device {generator.ActiveDeviceId}: {generator.DeviceDescription})";
+        }
+        else
+        {
+            status = $"DML device {generator.ActiveDeviceId}";
+            if (generator.DeviceDescription != null)
+                status += $" ({generator.DeviceDescription})";
+            if (generator.FallbackReason != null)
+            {
+                Console.WriteLine($"⚠️  {generator.FallbackReason}");
+                Console.Write("    ");
+            }
+        }
+
+        return await RunBenchmark("DirectML", generator, texts, npuActive, status);
     }
     catch (Exception ex)
     {

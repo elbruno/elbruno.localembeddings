@@ -37,18 +37,41 @@ public sealed class NpuOnnxEmbeddingModel : IDisposable
     public bool IsLoaded => _session is not null;
 
     /// <summary>
+    /// Gets a value indicating whether the model is running on an NPU device.
+    /// </summary>
+    public bool IsNpuActive { get; private set; }
+
+    /// <summary>
+    /// Gets the reason why NPU hardware was not selected,
+    /// or <c>null</c> if an NPU was found. Useful for diagnosing setup issues.
+    /// </summary>
+    public string? FallbackReason { get; private set; }
+
+    /// <summary>
+    /// Gets the description of the selected DirectML device.
+    /// </summary>
+    public string? DeviceDescription { get; private set; }
+
+    /// <summary>
+    /// Gets the DirectML device ID actually used for inference.
+    /// </summary>
+    public int ActiveDeviceId { get; private set; }
+
+    /// <summary>
     /// Loads the model from the specified path with DirectML NPU acceleration.
     /// </summary>
     /// <param name="modelPath">The path to the ONNX model file.</param>
     /// <param name="normalizeEmbeddings">Whether to L2-normalize embeddings to unit length.</param>
-    /// <param name="deviceId">The DirectML device ID (0 = default device).</param>
+    /// <param name="deviceId">The DirectML device ID (0 = default device). Overridden when <paramref name="autoDetectNpu"/> finds an NPU.</param>
+    /// <param name="autoDetectNpu">When true, enumerates DXGI adapters to find and target NPU hardware instead of using <paramref name="deviceId"/>.</param>
     /// <exception cref="ArgumentException">Thrown when the model path is null or empty.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the model file does not exist.</exception>
     /// <exception cref="InvalidOperationException">Thrown when a model is already loaded.</exception>
     public void Load(
         string modelPath,
         bool normalizeEmbeddings = false,
-        int deviceId = 0)
+        int deviceId = 0,
+        bool autoDetectNpu = false)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -72,6 +95,39 @@ public sealed class NpuOnnxEmbeddingModel : IDisposable
             throw new ArgumentOutOfRangeException(nameof(deviceId), "Device ID must be non-negative.");
         }
 
+        int effectiveDeviceId = deviceId;
+
+        if (autoDetectNpu && OperatingSystem.IsWindows())
+        {
+            try
+            {
+                var adapters = DxgiDeviceHelper.EnumerateAdapters();
+                var npuAdapter = adapters.FirstOrDefault(a => a.IsLikelyNpu);
+
+                if (npuAdapter is not null)
+                {
+                    effectiveDeviceId = npuAdapter.Index;
+                    DeviceDescription = npuAdapter.Description;
+                    IsNpuActive = true;
+                }
+                else
+                {
+                    var selectedAdapter = adapters.FirstOrDefault(a => a.Index == deviceId);
+                    DeviceDescription = selectedAdapter?.Description;
+                    var adapterNames = string.Join(", ", adapters.Select(a => $"[{a.Index}] {a.Description}"));
+                    FallbackReason = adapters.Count == 0
+                        ? "No DXGI adapters found. Ensure GPU/NPU drivers are installed."
+                        : $"No NPU adapter detected. Available: {adapterNames}";
+                    IsNpuActive = false;
+                }
+            }
+            catch (Exception)
+            {
+                FallbackReason = "DXGI adapter enumeration failed. Using specified device ID.";
+                IsNpuActive = false;
+            }
+        }
+
         try
         {
             var sessionOptions = new SessionOptions
@@ -79,10 +135,7 @@ public sealed class NpuOnnxEmbeddingModel : IDisposable
                 GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL
             };
 
-            // Append DirectML execution provider for NPU/GPU acceleration.
-            // Falls back to CPU if DirectML device is not available.
-            sessionOptions.AppendExecutionProvider_DML(deviceId);
-
+            sessionOptions.AppendExecutionProvider_DML(effectiveDeviceId);
             _session = new InferenceSession(modelPath, sessionOptions);
         }
         catch (Exception ex) when (ex is DllNotFoundException or TypeInitializationException)
@@ -90,14 +143,14 @@ public sealed class NpuOnnxEmbeddingModel : IDisposable
             throw new InvalidOperationException(
                 $"Failed to initialize ONNX Runtime with DirectML execution provider. " +
                 $"Ensure Microsoft.ML.OnnxRuntime.DirectML native binaries are available. " +
-                $"Model path: '{modelPath}'; Device ID: {deviceId}.",
+                $"Model path: '{modelPath}'; Device ID: {effectiveDeviceId}.",
                 ex);
         }
 
+        ActiveDeviceId = effectiveDeviceId;
         _outputNames = _session.OutputMetadata.Keys.ToArray();
         _normalizeEmbeddings = normalizeEmbeddings;
 
-        // Determine embedding dimension from model output
         var outputMeta = _session.OutputMetadata.Values.First();
         EmbeddingDimension = outputMeta.Dimensions.Length > 2 ? outputMeta.Dimensions[2] : outputMeta.Dimensions[^1];
     }

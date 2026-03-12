@@ -57,7 +57,8 @@ public sealed class NpuEmbeddingGenerator : IEmbeddingGenerator<string, Embeddin
         _model.Load(
             modelPath,
             options.NormalizeEmbeddings,
-            options.DeviceId);
+            options.DeviceId,
+            options.AutoDetectNpu);
 
         _tokenizer = new Tokenizer(modelDirectory, options.MaxSequenceLength);
 
@@ -70,6 +71,26 @@ public sealed class NpuEmbeddingGenerator : IEmbeddingGenerator<string, Embeddin
 
     /// <inheritdoc />
     public EmbeddingGeneratorMetadata Metadata => _metadata;
+
+    /// <summary>
+    /// Gets a value indicating whether DirectML is targeting an NPU device.
+    /// </summary>
+    public bool IsNpuActive => _model.IsNpuActive;
+
+    /// <summary>
+    /// Gets the reason why NPU was not selected, or <c>null</c> if NPU is active.
+    /// </summary>
+    public string? FallbackReason => _model.FallbackReason;
+
+    /// <summary>
+    /// Gets the description of the selected DirectML device.
+    /// </summary>
+    public string? DeviceDescription => _model.DeviceDescription;
+
+    /// <summary>
+    /// Gets the DirectML device ID used for inference.
+    /// </summary>
+    public int ActiveDeviceId => _model.ActiveDeviceId;
 
     /// <summary>
     /// Creates a new instance of <see cref="NpuEmbeddingGenerator"/> asynchronously.

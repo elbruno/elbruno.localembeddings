@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Runtime.InteropServices;
 using TensorPrimitives = System.Numerics.Tensors.TensorPrimitives;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -83,6 +84,25 @@ public sealed class QualcommOnnxEmbeddingModel : IDisposable
             throw new InvalidOperationException("A model is already loaded. Dispose this instance and create a new one to load a different model.");
         }
 
+        // QNN is ARM64-only — skip QNN entirely on x64 to avoid confusing DLL-not-found errors
+        if (RuntimeInformation.ProcessArchitecture != Architecture.Arm64)
+        {
+            FallbackReason = $"QNN requires ARM64 but running on {RuntimeInformation.ProcessArchitecture}. " +
+                             "QNN is only available on Qualcomm Snapdragon X (ARM64) devices.";
+
+            if (!fallbackToCpu)
+            {
+                throw new InvalidOperationException(FallbackReason);
+            }
+
+            _session = CreateCpuSession(modelPath);
+            _outputNames = _session.OutputMetadata.Keys.ToArray();
+            _normalizeEmbeddings = normalizeEmbeddings;
+            var meta = _session.OutputMetadata.Values.First();
+            EmbeddingDimension = meta.Dimensions.Length > 2 ? meta.Dimensions[2] : meta.Dimensions[^1];
+            return;
+        }
+
         _session = CreateSession(modelPath, qnnBackendPath, fallbackToCpu);
         _outputNames = _session.OutputMetadata.Keys.ToArray();
         _normalizeEmbeddings = normalizeEmbeddings;
@@ -139,6 +159,20 @@ public sealed class QualcommOnnxEmbeddingModel : IDisposable
                 $"Ensure ONNX Runtime native binaries are available. Model path: '{modelPath}'.",
                 ex);
         }
+    }
+
+    private InferenceSession CreateCpuSession(string modelPath)
+    {
+        var cpuOptions = new SessionOptions
+        {
+            GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
+            ExecutionMode = ExecutionMode.ORT_PARALLEL,
+            InterOpNumThreads = Environment.ProcessorCount,
+            IntraOpNumThreads = Environment.ProcessorCount
+        };
+
+        IsQnnActive = false;
+        return new InferenceSession(modelPath, cpuOptions);
     }
 
     /// <summary>
