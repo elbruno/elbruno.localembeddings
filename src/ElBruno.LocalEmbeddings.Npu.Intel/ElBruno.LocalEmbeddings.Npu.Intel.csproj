@@ -18,12 +18,13 @@
   </PropertyGroup>
 
   <!-- Standalone library — does NOT reference the base ElBruno.LocalEmbeddings project
-       to avoid OnnxRuntime version conflicts (Intel OpenVINO 1.21.x vs base 1.24.x).
-       Instead, it directly references the tokenizer and downloader packages. -->
+       because Intel.ML.OnnxRuntime.OpenVino ships its own onnxruntime.dll (with OpenVINO EP
+       compiled in), which conflicts with the one from Microsoft.ML.OnnxRuntime.DirectML.
+       Only one native DLL can load per process, so Intel NPU benchmarks run in a separate process. -->
 
   <ItemGroup>
     <PackageReference Include="ElBruno.HuggingFace.Downloader" Version="0.5.0" />
-    <PackageReference Include="Intel.ML.OnnxRuntime.OpenVino" Version="1.21.0" />
+    <PackageReference Include="Intel.ML.OnnxRuntime.OpenVino" Version="1.24.1" />
     <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.3.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />

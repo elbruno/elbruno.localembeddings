@@ -100,8 +100,13 @@ public sealed class IntelOnnxEmbeddingModel : IDisposable
                 GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL
             };
 
-            // Use the generic AppendExecutionProvider API for OpenVINO
-            sessionOptions.AppendExecutionProvider_OpenVINO(deviceType);
+            // Use the dictionary-based API (recommended for ORT 1.24+) to avoid
+            // the enable_opencl_throttling parsing bug in the legacy string-based API.
+            var providerOptions = new Dictionary<string, string>
+            {
+                ["device_type"] = deviceType
+            };
+            sessionOptions.AppendExecutionProvider("OpenVINO", providerOptions);
 
             var session = new InferenceSession(modelPath, sessionOptions);
             IsOpenVinoActive = true;
