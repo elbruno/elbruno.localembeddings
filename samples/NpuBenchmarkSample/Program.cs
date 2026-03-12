@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Management;
+using System.Text.Json;
 using Microsoft.Extensions.AI;
 using ElBruno.LocalEmbeddings;
 using ElBruno.LocalEmbeddings.Options;
@@ -6,19 +8,58 @@ using ElBruno.LocalEmbeddings.Npu;
 using ElBruno.LocalEmbeddings.Npu.Options;
 using ElBruno.LocalEmbeddings.Npu.Qualcomm;
 using ElBruno.LocalEmbeddings.Npu.Qualcomm.Options;
-using ElBruno.LocalEmbeddings.Npu.Intel;
-using ElBruno.LocalEmbeddings.Npu.Intel.Options;
 
 Console.WriteLine("╔══════════════════════════════════════════════════════════════╗");
 Console.WriteLine("║          NPU Embedding Benchmark — ElBruno.LocalEmbeddings  ║");
 Console.WriteLine("╚══════════════════════════════════════════════════════════════╝");
 Console.WriteLine();
 
-// --- Enumerate DXGI adapters to show available hardware ---
+// --- Detect NPU hardware via WMI (ComputeAccelerator class) ---
+// Intel NPUs do NOT appear as DXGI adapters — they are PCI ComputeAccelerator devices.
+bool hasIntelNpuHardware = false;
+if (OperatingSystem.IsWindows())
+{
+    try
+    {
+        using var searcher = new ManagementObjectSearcher(
+            "SELECT Name, Manufacturer, PNPDeviceID FROM Win32_PnPEntity WHERE PNPClass = 'ComputeAccelerator'");
+        var npuDevices = searcher.Get().Cast<ManagementObject>().ToList();
+        if (npuDevices.Count > 0)
+        {
+            Console.WriteLine("🧠 NPU hardware detected (ComputeAccelerator devices):");
+            foreach (var dev in npuDevices)
+            {
+                string name = dev["Name"]?.ToString() ?? "Unknown";
+                string mfg = dev["Manufacturer"]?.ToString() ?? "";
+                string pnpId = dev["PNPDeviceID"]?.ToString() ?? "";
+                Console.WriteLine($"   • {name} ({mfg})");
+                Console.WriteLine($"     PnP: {pnpId}");
+                if (name.Contains("Intel", StringComparison.OrdinalIgnoreCase) ||
+                    pnpId.Contains("VEN_8086", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasIntelNpuHardware = true;
+                }
+            }
+            Console.WriteLine();
+            if (hasIntelNpuHardware)
+            {
+                Console.WriteLine("ℹ️  Intel NPU detected — OpenVINO benchmark runs in a separate process");
+                Console.WriteLine("   (DirectML + OpenVINO use different ORT versions, can't coexist in one process)");
+                Console.WriteLine();
+            }
+        }
+    }
+    catch
+    {
+        // WMI may not be available in all environments
+    }
+}
+
+// --- Enumerate DXGI adapters (GPUs only — NPU won't appear here) ---
 var adapters = DxgiDeviceHelper.EnumerateAdapters();
 if (adapters.Count > 0)
 {
-    Console.WriteLine("🔍 Detected DXGI adapters:");
+    Console.WriteLine("🔍 DXGI display adapters (GPUs):");
     foreach (var adapter in adapters)
     {
         string tag = adapter.IsLikelyNpu ? " ← NPU detected!" : "";
@@ -32,11 +73,11 @@ if (adapters.Count > 0)
     int? npuIndex = DxgiDeviceHelper.FindNpuDeviceIndex();
     if (npuIndex.HasValue)
     {
-        Console.WriteLine($"✅ NPU found at device index {npuIndex.Value} — DirectML will target it automatically.");
+        Console.WriteLine($"✅ NPU found at DXGI device index {npuIndex.Value} — DirectML will target it.");
     }
     else
     {
-        Console.WriteLine("⚠️  No NPU adapter detected. DirectML will use device 0 (likely GPU).");
+        Console.WriteLine("   (Intel NPUs are not DXGI adapters — use OpenVINO EP instead)");
     }
     Console.WriteLine();
 }
@@ -186,19 +227,94 @@ static async Task<BenchmarkResult> RunIntelBenchmark(IList<string> texts)
     Console.Write("⏳ Intel OpenVINO... ");
     try
     {
-        var generator = await IntelEmbeddingGenerator.CreateAsync(new IntelEmbeddingsOptions
+        // Intel OpenVINO uses ORT 1.21.0 which conflicts with DirectML's ORT 1.24.x.
+        // Run in a separate process (IntelNpuWorker) so each loads its own ORT version.
+        string workerDir = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "IntelNpuWorker"));
+        if (!Directory.Exists(workerDir))
         {
-            PreferQuantized = true,
-            FallbackToCpu = true
-        });
-        bool ovinoActive = generator.IsOpenVinoActive;
-        string status = ovinoActive ? "OpenVINO NPU Active" : $"CPU Fallback";
-        if (!ovinoActive && generator.FallbackReason != null)
-        {
-            Console.WriteLine($"⚠️  OpenVINO unavailable: {generator.FallbackReason}");
-            Console.Write("    ");
+            Console.WriteLine("⚠️  IntelNpuWorker project not found");
+            return new BenchmarkResult("Intel OpenVINO", 0, 0, 0, false,
+                $"Worker not found at {workerDir}");
         }
-        return await RunBenchmark("Intel OpenVINO", generator, texts, ovinoActive, status);
+
+        // Build the worker project first
+        var buildPsi = new ProcessStartInfo("dotnet", $"build \"{workerDir}\" -c Release --nologo -v q")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        using var buildProc = Process.Start(buildPsi)!;
+        await buildProc.WaitForExitAsync();
+        if (buildProc.ExitCode != 0)
+        {
+            string buildErr = await buildProc.StandardError.ReadToEndAsync();
+            Console.WriteLine($"⚠️  Worker build failed");
+            return new BenchmarkResult("Intel OpenVINO", 0, 0, 0, false,
+                $"Build failed: {buildErr.Split('\n').FirstOrDefault()?.Trim()}");
+        }
+
+        // Run the worker with --json flag
+        var runPsi = new ProcessStartInfo("dotnet",
+            $"run --project \"{workerDir}\" -c Release --no-build -- --texts {texts.Count} --json")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        using var runProc = Process.Start(runPsi)!;
+        string stdout = await runProc.StandardOutput.ReadToEndAsync();
+        await runProc.WaitForExitAsync();
+
+        // Parse the JSON output (last non-empty line)
+        string? jsonLine = stdout
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .LastOrDefault()?.Trim();
+
+        if (string.IsNullOrEmpty(jsonLine))
+        {
+            string stderr = await runProc.StandardError.ReadToEndAsync();
+            Console.WriteLine($"⚠️  No output from worker");
+            return new BenchmarkResult("Intel OpenVINO", 0, 0, 0, false,
+                $"No output: {stderr.Split('\n').FirstOrDefault()?.Trim()}");
+        }
+
+        using var doc = JsonDocument.Parse(jsonLine);
+        var root = doc.RootElement;
+
+        double totalMs = root.GetProperty("TotalMs").GetDouble();
+        double textsPerSecond = root.GetProperty("TextsPerSecond").GetDouble();
+        int dimension = root.GetProperty("Dimension").GetInt32();
+        bool npuActive = root.GetProperty("NpuActive").GetBoolean();
+        string status = root.GetProperty("Status").GetString() ?? "Unknown";
+
+        if (root.TryGetProperty("Error", out var errProp) && errProp.ValueKind == JsonValueKind.String)
+        {
+            string? error = errProp.GetString();
+            if (error != null)
+            {
+                Console.WriteLine($"⚠️  {error}");
+                Console.Write("    ");
+            }
+        }
+
+        if (!npuActive && root.TryGetProperty("FallbackReason", out var fbProp)
+            && fbProp.ValueKind == JsonValueKind.String)
+        {
+            string? reason = fbProp.GetString();
+            if (reason != null)
+            {
+                Console.WriteLine($"⚠️  OpenVINO: {reason}");
+                Console.Write("    ");
+            }
+        }
+
+        Console.WriteLine($"✅ {totalMs:F1}ms ({textsPerSecond:F1} texts/sec, dim={dimension})");
+        return new BenchmarkResult("Intel OpenVINO", totalMs, textsPerSecond, dimension,
+            npuActive, status + " [isolated process]");
     }
     catch (Exception ex)
     {

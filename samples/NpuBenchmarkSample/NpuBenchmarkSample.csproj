@@ -11,7 +11,10 @@
     <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings\ElBruno.LocalEmbeddings.csproj" />
     <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings.Npu\ElBruno.LocalEmbeddings.Npu.csproj" />
     <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings.Npu.Qualcomm\ElBruno.LocalEmbeddings.Npu.Qualcomm.csproj" />
-    <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings.Npu.Intel\ElBruno.LocalEmbeddings.Npu.Intel.csproj" />
+    <!-- Intel OpenVINO runs in a separate process (IntelNpuWorker) to avoid
+         ORT version conflicts: DirectML uses ORT 1.24.x, OpenVINO uses ORT 1.21.x.
+         Only one onnxruntime.dll can load per process. -->
+    <PackageReference Include="System.Management" Version="9.0.3" />
   </ItemGroup>
 
 </Project>
