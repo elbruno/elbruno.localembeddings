@@ -96,7 +96,9 @@ static async Task<BenchmarkResult> RunDirectMLBenchmark(IList<string> texts)
             PreferQuantized = true,
             DeviceId = 0
         });
-        return await RunBenchmark("DirectML", generator, texts, npuActive: true, npuStatus: "DirectML Active");
+        // DirectML doesn't expose an IsActive flag — DeviceId 0 may target GPU rather than NPU.
+        // Report honestly that we cannot verify NPU placement.
+        return await RunBenchmark("DirectML", generator, texts, npuActive: false, npuStatus: "DML (device 0, likely GPU)");
     }
     catch (Exception ex)
     {
@@ -116,7 +118,12 @@ static async Task<BenchmarkResult> RunQualcommBenchmark(IList<string> texts)
             FallbackToCpu = true
         });
         bool qnnActive = generator.IsQnnActive;
-        string status = qnnActive ? "QNN HTP Active" : "CPU Fallback";
+        string status = qnnActive ? "QNN HTP Active" : $"CPU Fallback";
+        if (!qnnActive && generator.FallbackReason != null)
+        {
+            Console.WriteLine($"⚠️  QNN unavailable: {generator.FallbackReason}");
+            Console.Write("    ");
+        }
         return await RunBenchmark("Qualcomm QNN", generator, texts, qnnActive, status);
     }
     catch (Exception ex)
@@ -137,7 +144,12 @@ static async Task<BenchmarkResult> RunIntelBenchmark(IList<string> texts)
             FallbackToCpu = true
         });
         bool ovinoActive = generator.IsOpenVinoActive;
-        string status = ovinoActive ? "OpenVINO NPU Active" : "CPU Fallback";
+        string status = ovinoActive ? "OpenVINO NPU Active" : $"CPU Fallback";
+        if (!ovinoActive && generator.FallbackReason != null)
+        {
+            Console.WriteLine($"⚠️  OpenVINO unavailable: {generator.FallbackReason}");
+            Console.Write("    ");
+        }
         return await RunBenchmark("Intel OpenVINO", generator, texts, ovinoActive, status);
     }
     catch (Exception ex)

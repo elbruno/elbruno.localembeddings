@@ -77,6 +77,12 @@ public sealed class QualcommEmbeddingGenerator : IEmbeddingGenerator<string, Emb
     public bool IsQnnActive => _model.IsQnnActive;
 
     /// <summary>
+    /// Gets the reason why the QNN execution provider could not be loaded,
+    /// or <c>null</c> if QNN is active.
+    /// </summary>
+    public string? FallbackReason => _model.FallbackReason;
+
+    /// <summary>
     /// Creates a new instance of <see cref="QualcommEmbeddingGenerator"/> asynchronously.
     /// </summary>
     public static Task<QualcommEmbeddingGenerator> CreateAsync(

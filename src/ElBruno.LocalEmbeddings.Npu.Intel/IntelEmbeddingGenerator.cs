@@ -81,6 +81,12 @@ public sealed class IntelEmbeddingGenerator : IEmbeddingGenerator<string, Embedd
     public bool IsOpenVinoActive => _model.IsOpenVinoActive;
 
     /// <summary>
+    /// Gets the reason why the OpenVINO execution provider could not be loaded,
+    /// or <c>null</c> if OpenVINO is active.
+    /// </summary>
+    public string? FallbackReason => _model.FallbackReason;
+
+    /// <summary>
     /// Creates a new instance of <see cref="IntelEmbeddingGenerator"/> asynchronously.
     /// </summary>
     public static Task<IntelEmbeddingGenerator> CreateAsync(

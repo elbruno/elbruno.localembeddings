@@ -47,6 +47,12 @@ public sealed class IntelOnnxEmbeddingModel : IDisposable
     public bool IsOpenVinoActive { get; private set; }
 
     /// <summary>
+    /// Gets the reason why the OpenVINO execution provider could not be loaded,
+    /// or <c>null</c> if OpenVINO is active. Useful for diagnosing NPU setup issues.
+    /// </summary>
+    public string? FallbackReason { get; private set; }
+
+    /// <summary>
     /// Loads the model from the specified path with Intel OpenVINO NPU acceleration.
     /// </summary>
     /// <param name="modelPath">The path to the ONNX model file.</param>
@@ -101,9 +107,10 @@ public sealed class IntelOnnxEmbeddingModel : IDisposable
             IsOpenVinoActive = true;
             return session;
         }
-        catch (Exception) when (fallbackToCpu)
+        catch (Exception ex) when (fallbackToCpu)
         {
             // OpenVINO not available — fall back to CPU
+            FallbackReason = ex.Message;
         }
 
         // CPU fallback

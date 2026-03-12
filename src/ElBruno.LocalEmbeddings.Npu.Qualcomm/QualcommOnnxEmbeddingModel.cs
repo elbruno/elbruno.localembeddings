@@ -45,6 +45,12 @@ public sealed class QualcommOnnxEmbeddingModel : IDisposable
     public bool IsQnnActive { get; private set; }
 
     /// <summary>
+    /// Gets the reason why the QNN execution provider could not be loaded,
+    /// or <c>null</c> if QNN is active. Useful for diagnosing NPU setup issues.
+    /// </summary>
+    public string? FallbackReason { get; private set; }
+
+    /// <summary>
     /// Loads the model from the specified path with Qualcomm QNN NPU acceleration.
     /// </summary>
     /// <param name="modelPath">The path to the ONNX model file.</param>
@@ -104,9 +110,10 @@ public sealed class QualcommOnnxEmbeddingModel : IDisposable
             IsQnnActive = true;
             return session;
         }
-        catch (Exception) when (fallbackToCpu)
+        catch (Exception ex) when (fallbackToCpu)
         {
             // QNN not available — fall back to CPU
+            FallbackReason = ex.Message;
         }
 
         // CPU fallback
