@@ -15,6 +15,7 @@
     <Project Path="samples/RagOllama/RagOllama.csproj" />
     <Project Path="samples/NpuBenchmarkSample/NpuBenchmarkSample.csproj" />
     <Project Path="samples/IntelNpuWorker/IntelNpuWorker.csproj" />
+    <Project Path="samples/DirectMLNpuWorker/DirectMLNpuWorker.csproj" />
     <Project Path="samples/VisionMemoryAgentSample/VisionMemoryAgentSample.csproj" />
   </Folder>
   <Folder Name="/src/">

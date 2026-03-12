@@ -9,7 +9,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings\ElBruno.LocalEmbeddings.csproj" />
-    <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings.Npu\ElBruno.LocalEmbeddings.Npu.csproj" />
+    <!-- DirectML NPU runs in a separate process (DirectMLNpuWorker) to avoid
+         native onnxruntime.dll conflicts: DirectML ORT ships a DML-enabled DLL,
+         base ORT ships a vanilla DLL — only one can load per process. -->
     <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings.Npu.Qualcomm\ElBruno.LocalEmbeddings.Npu.Qualcomm.csproj" />
     <!-- Intel OpenVINO runs in a separate process (IntelNpuWorker) to avoid
          ORT version conflicts: DirectML uses ORT 1.24.x, OpenVINO uses ORT 1.21.x.

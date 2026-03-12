@@ -4,8 +4,6 @@ using System.Text.Json;
 using Microsoft.Extensions.AI;
 using ElBruno.LocalEmbeddings;
 using ElBruno.LocalEmbeddings.Options;
-using ElBruno.LocalEmbeddings.Npu;
-using ElBruno.LocalEmbeddings.Npu.Options;
 using ElBruno.LocalEmbeddings.Npu.Qualcomm;
 using ElBruno.LocalEmbeddings.Npu.Qualcomm.Options;
 
@@ -43,8 +41,8 @@ if (OperatingSystem.IsWindows())
             Console.WriteLine();
             if (hasIntelNpuHardware)
             {
-                Console.WriteLine("ℹ️  Intel NPU detected — OpenVINO benchmark runs in a separate process");
-                Console.WriteLine("   (DirectML + OpenVINO use different ORT versions, can't coexist in one process)");
+                Console.WriteLine("ℹ️  Intel NPU detected — OpenVINO & DirectML benchmarks run in separate processes");
+                Console.WriteLine("   (Each ORT variant ships its own onnxruntime.dll — only one can load per process)");
                 Console.WriteLine();
             }
         }
@@ -55,36 +53,9 @@ if (OperatingSystem.IsWindows())
     }
 }
 
-// --- Enumerate DXGI adapters (GPUs only — NPU won't appear here) ---
-var adapters = DxgiDeviceHelper.EnumerateAdapters();
-if (adapters.Count > 0)
-{
-    Console.WriteLine("🔍 DXGI display adapters (GPUs):");
-    foreach (var adapter in adapters)
-    {
-        string tag = adapter.IsLikelyNpu ? " ← NPU detected!" : "";
-        string mem = adapter.DedicatedVideoMemoryBytes > 0
-            ? $" ({adapter.DedicatedVideoMemoryBytes / (1024 * 1024)} MB)"
-            : " (shared memory)";
-        Console.WriteLine($"   [{adapter.Index}] {adapter.Description}{mem}{tag}");
-    }
-    Console.WriteLine();
-
-    int? npuIndex = DxgiDeviceHelper.FindNpuDeviceIndex();
-    if (npuIndex.HasValue)
-    {
-        Console.WriteLine($"✅ NPU found at DXGI device index {npuIndex.Value} — DirectML will target it.");
-    }
-    else
-    {
-        Console.WriteLine("   (Intel NPUs are not DXGI adapters — use OpenVINO EP instead)");
-    }
-    Console.WriteLine();
-}
-else
-{
-    Console.WriteLine("⚠️  Could not enumerate DXGI adapters (non-Windows or DXGI unavailable).\n");
-}
+Console.WriteLine("ℹ️  DirectML and Intel OpenVINO benchmarks run in isolated worker processes");
+Console.WriteLine("   (each ORT variant ships its own native DLL — only one can load per process)");
+Console.WriteLine();
 
 // --- Select provider ---
 Console.WriteLine("Select execution provider:");
@@ -163,31 +134,95 @@ static async Task<BenchmarkResult> RunDirectMLBenchmark(IList<string> texts)
     Console.Write("⏳ DirectML NPU... ");
     try
     {
-        var generator = await NpuEmbeddingGenerator.CreateAsync(new NpuEmbeddingsOptions
+        // DirectML uses Microsoft.ML.OnnxRuntime.DirectML which ships its own
+        // onnxruntime.dll (with DML entry points). This conflicts with the base
+        // Microsoft.ML.OnnxRuntime DLL. Run in a separate process to isolate.
+        string workerDir = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "DirectMLNpuWorker"));
+        if (!Directory.Exists(workerDir))
         {
-            PreferQuantized = true,
-            AutoDetectNpu = true
-        });
-
-        bool npuActive = generator.IsNpuActive;
-        string status;
-        if (npuActive)
-        {
-            status = $"NPU Active (device {generator.ActiveDeviceId}: {generator.DeviceDescription})";
+            Console.WriteLine("⚠️  DirectMLNpuWorker project not found");
+            return new BenchmarkResult("DirectML", 0, 0, 0, false,
+                $"Worker not found at {workerDir}");
         }
-        else
+
+        // Build the worker project first
+        var buildPsi = new ProcessStartInfo("dotnet", $"build \"{workerDir}\" -c Release --nologo -v q")
         {
-            status = $"DML device {generator.ActiveDeviceId}";
-            if (generator.DeviceDescription != null)
-                status += $" ({generator.DeviceDescription})";
-            if (generator.FallbackReason != null)
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        using var buildProc = Process.Start(buildPsi)!;
+        await buildProc.WaitForExitAsync();
+        if (buildProc.ExitCode != 0)
+        {
+            string buildErr = await buildProc.StandardError.ReadToEndAsync();
+            Console.WriteLine($"⚠️  Worker build failed");
+            return new BenchmarkResult("DirectML", 0, 0, 0, false,
+                $"Build failed: {buildErr.Split('\n').FirstOrDefault()?.Trim()}");
+        }
+
+        // Run the worker with --json flag
+        var runPsi = new ProcessStartInfo("dotnet",
+            $"run --project \"{workerDir}\" -c Release --no-build -- --texts {texts.Count} --json")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        using var runProc = Process.Start(runPsi)!;
+        string stdout = await runProc.StandardOutput.ReadToEndAsync();
+        await runProc.WaitForExitAsync();
+
+        // Parse the JSON output (last non-empty line)
+        string? jsonLine = stdout
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .LastOrDefault()?.Trim();
+
+        if (string.IsNullOrEmpty(jsonLine))
+        {
+            string stderr = await runProc.StandardError.ReadToEndAsync();
+            Console.WriteLine($"⚠️  No output from worker");
+            return new BenchmarkResult("DirectML", 0, 0, 0, false,
+                $"No output: {stderr.Split('\n').FirstOrDefault()?.Trim()}");
+        }
+
+        using var doc = JsonDocument.Parse(jsonLine);
+        var root = doc.RootElement;
+
+        double totalMs = root.GetProperty("TotalMs").GetDouble();
+        double textsPerSecond = root.GetProperty("TextsPerSecond").GetDouble();
+        int dimension = root.GetProperty("Dimension").GetInt32();
+        bool npuActive = root.GetProperty("NpuActive").GetBoolean();
+        string status = root.GetProperty("Status").GetString() ?? "Unknown";
+
+        if (root.TryGetProperty("Error", out var errProp) && errProp.ValueKind == JsonValueKind.String)
+        {
+            string? error = errProp.GetString();
+            if (error != null)
             {
-                Console.WriteLine($"⚠️  {generator.FallbackReason}");
+                Console.WriteLine($"⚠️  {error}");
                 Console.Write("    ");
             }
         }
 
-        return await RunBenchmark("DirectML", generator, texts, npuActive, status);
+        if (!npuActive && root.TryGetProperty("FallbackReason", out var fbProp)
+            && fbProp.ValueKind == JsonValueKind.String)
+        {
+            string? reason = fbProp.GetString();
+            if (reason != null)
+            {
+                Console.WriteLine($"⚠️  DirectML: {reason}");
+                Console.Write("    ");
+            }
+        }
+
+        Console.WriteLine($"✅ {totalMs:F1}ms ({textsPerSecond:F1} texts/sec, dim={dimension})");
+        return new BenchmarkResult("DirectML", totalMs, textsPerSecond, dimension,
+            npuActive, status + " [isolated process]");
     }
     catch (Exception ex)
     {
