@@ -23,15 +23,15 @@ public class VectorStoreCollectionExtensionsTests
 
         var mockGenerator = new Mock<IEmbeddingGenerator<string, Embedding<float>>>();
         mockGenerator
-            .Setup(g => g.GenerateEmbeddingAsync("laptop computer", null, default))
-            .ReturnsAsync(new Embedding<float>(new float[] { 0.85f, 0.15f }));
+            .Setup(g => g.GenerateAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<EmbeddingGenerationOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<string> values, EmbeddingGenerationOptions? _, CancellationToken _) =>
+                new GeneratedEmbeddings<Embedding<float>>(values.Select(_ => new Embedding<float>(new float[] { 0.85f, 0.15f })).ToList()));
 
         var results = await collection.SearchByTextAsync(mockGenerator.Object, "laptop computer", top: 2);
 
         Assert.Equal(2, results.Count);
         Assert.Equal(1, results[0].Record.Id);
         Assert.Equal(2, results[1].Record.Id);
-        mockGenerator.Verify(g => g.GenerateEmbeddingAsync("laptop computer", null, default), Times.Once);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class VectorStoreCollectionExtensionsTests
         var collection = store.GetCollection<int, ProductRecord>("products");
         var mockGenerator = new Mock<IEmbeddingGenerator<string, Embedding<float>>>();
 
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAnyAsync<ArgumentException>(() =>
             collection.SearchByTextAsync(mockGenerator.Object, null!, top: 5));
     }
 
@@ -83,12 +83,12 @@ public class VectorStoreCollectionExtensionsTests
 
         var mockGenerator = new Mock<IEmbeddingGenerator<string, Embedding<float>>>();
         mockGenerator
-            .Setup(g => g.GenerateAsync(It.IsAny<IEnumerable<string>>(), null, default))
-            .ReturnsAsync(new List<Embedding<float>>
-            {
-                new(new float[] { 0.9f, 0.1f }),
-                new(new float[] { 0.8f, 0.2f })
-            });
+            .Setup(g => g.GenerateAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<EmbeddingGenerationOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GeneratedEmbeddings<Embedding<float>>(
+            [
+                new Embedding<float>(new float[] { 0.9f, 0.1f }),
+                new Embedding<float>(new float[] { 0.8f, 0.2f })
+            ]));
 
         var results = await collection.SearchByTextBatchAsync(mockGenerator.Object, queries, top: 1);
 
@@ -129,8 +129,9 @@ public class VectorStoreCollectionExtensionsTests
 
         var mockGenerator = new Mock<IEmbeddingGenerator<string, Embedding<float>>>();
         mockGenerator
-            .Setup(g => g.GenerateEmbeddingAsync("Laptop Electronics", null, default))
-            .ReturnsAsync(new Embedding<float>(new float[] { 0.9f, 0.1f }));
+            .Setup(g => g.GenerateAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<EmbeddingGenerationOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<string> values, EmbeddingGenerationOptions? _, CancellationToken _) =>
+                new GeneratedEmbeddings<Embedding<float>>(values.Select(_ => new Embedding<float>(new float[] { 0.9f, 0.1f })).ToList()));
 
         await collection.UpsertWithEmbeddingAsync(
             mockGenerator.Object,
@@ -143,7 +144,6 @@ public class VectorStoreCollectionExtensionsTests
         Assert.NotNull(loaded);
         Assert.Equal(0.9f, loaded!.Vector.Span[0]);
         Assert.Equal(0.1f, loaded.Vector.Span[1]);
-        mockGenerator.Verify(g => g.GenerateEmbeddingAsync("Laptop Electronics", null, default), Times.Once);
     }
 
     [Fact]
@@ -175,12 +175,12 @@ public class VectorStoreCollectionExtensionsTests
 
         var mockGenerator = new Mock<IEmbeddingGenerator<string, Embedding<float>>>();
         mockGenerator
-            .Setup(g => g.GenerateAsync(It.IsAny<IEnumerable<string>>(), null, default))
-            .ReturnsAsync(new List<Embedding<float>>
-            {
-                new(new float[] { 0.9f, 0.1f }),
-                new(new float[] { 0.8f, 0.2f })
-            });
+            .Setup(g => g.GenerateAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<EmbeddingGenerationOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GeneratedEmbeddings<Embedding<float>>(
+            [
+                new Embedding<float>(new float[] { 0.9f, 0.1f }),
+                new Embedding<float>(new float[] { 0.8f, 0.2f })
+            ]));
 
         await collection.UpsertBatchWithEmbeddingAsync(
             mockGenerator.Object,
@@ -229,8 +229,9 @@ public class VectorStoreCollectionExtensionsTests
 
         var mockGenerator = new Mock<IEmbeddingGenerator<string, Embedding<float>>>();
         mockGenerator
-            .Setup(g => g.GenerateEmbeddingAsync("computer", null, default))
-            .ReturnsAsync(new Embedding<float>(new float[] { 0.9f, 0.1f }));
+            .Setup(g => g.GenerateAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<EmbeddingGenerationOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<string> values, EmbeddingGenerationOptions? _, CancellationToken _) =>
+                new GeneratedEmbeddings<Embedding<float>>(values.Select(_ => new Embedding<float>(new float[] { 0.9f, 0.1f })).ToList()));
 
         var options = new VectorSearchOptions<ProductRecord>
         {

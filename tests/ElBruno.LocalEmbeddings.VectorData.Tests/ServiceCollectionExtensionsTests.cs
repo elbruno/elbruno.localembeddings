@@ -122,5 +122,12 @@ public class ServiceCollectionExtensionsTests
             services.AddVectorStoreCollectionWithEmbeddings<int, SampleVectorRecord>(""));
     }
 
-    private sealed class SampleVectorRecord;
+    private sealed class SampleVectorRecord
+    {
+        [VectorStoreKey]
+        public int Id { get; set; }
+
+        [VectorStoreVector(4)]
+        public ReadOnlyMemory<float> Vector { get; set; }
+    }
 }
