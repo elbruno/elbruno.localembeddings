@@ -9,6 +9,21 @@
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
 
+### 2026-04-04: VectorData Embedding Generation Integration
+
+- Implemented `VectorStoreCollectionExtensions` providing text-to-vector search capabilities
+- Four key extension methods on `VectorStoreCollection<TKey, TRecord>`:
+  1. `SearchByTextAsync` — single text query with automatic embedding generation
+  2. `SearchByTextBatchAsync` — batch text queries for efficiency
+  3. `UpsertWithEmbeddingAsync` — upsert single record with automatic embedding from text
+  4. `UpsertBatchWithEmbeddingAsync` — batch upsert with automatic embeddings
+- Added `AddVectorStoreCollectionWithEmbeddings` DI method that wires `IEmbeddingGenerator` into `VectorStoreCollectionDefinition.EmbeddingGenerator` property
+- All methods accept `IEmbeddingGenerator<string, Embedding<float>>` for flexibility — can use cached/decorated generators
+- Pattern: `textSelector` extracts text from record, `vectorSetter` assigns embedding back — decouples from specific property names
+- Microsoft.Extensions.VectorData.Abstractions 10.1.0 provides `EmbeddingGenerator` property on collection definition for provider-level integration
+- Our implementation provides convenience methods that work with any VectorData provider, not just InMemoryVectorStore
+- 22 tests cover all methods, edge cases, null guards, batch operations, and filter integration
+
 ### 2026-02-12: LocalEmbeddingGenerator Implementation
 - Implemented `LocalEmbeddingGenerator` integrating with M.E.AI's `IEmbeddingGenerator<string, Embedding<float>>`
 - The generator coordinates three internal components: `ModelDownloader`, `OnnxEmbeddingModel`, and `Tokenizer`
