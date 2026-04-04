@@ -117,27 +117,46 @@ var results = await collection.SearchAsync(
 
 ### 2.3 Model Context Protocol (MCP) Integration
 
-**What:** Create `ElBruno.LocalEmbeddings.Mcp` package that exposes embeddings as MCP tools/resources for AI agent interoperability.
+**What:** Enhance API surface for MCP server integration and coordinate with **ElBruno.ModelContextProtocol** library.
 
-```csharp
-// Expose as MCP resource
-services.AddMcpServer()
-    .AddLocalEmbeddingsTool(); // Agents can request embeddings via MCP
-```
+**Context:**
+- Bruno owns **ElBruno.ModelContextProtocol** (NuGet: `ElBruno.ModelContextProtocol.MCPToolRouter` v0.1.0)
+- Currently provides: semantic tool routing using `LocalEmbeddings`, `ToolRouter`/`ToolIndex` for semantic tool search, cosine similarity over embeddings
+- Does NOT yet expose: MCP server endpoints/tools like `embed_text`, `search_embeddings`, `get_embedding_model_status`
 
-**Why:** **Model Context Protocol** is becoming the standard for composable AI skills. Allows local embeddings to be used by any MCP-compatible agent framework.
+**Work in THIS repo:**
+- Ensure API is clean for MCP server integration
+- Add convenience methods for MCP scenarios if needed
+- Integration testing with ElBruno.ModelContextProtocol
 
-**Effort:** M  
-**Dependencies:** Requires MCP NuGet packages; new companion package
+**Work in ElBruno.ModelContextProtocol:**
+- Add MCP server tools for embedding generation (tracked via GitHub issue on that repo)
+
+**Why:** **Model Context Protocol** is becoming the standard for composable AI skills. ElBruno.ModelContextProtocol already uses LocalEmbeddings for semantic routing; extending it to expose embeddings as MCP tools enables broader agent interoperability.
+
+**Effort:** S (for LocalEmbeddings API review)  
+**Dependencies:** Coordination with ElBruno.ModelContextProtocol repo
 
 ### 2.4 Small Language Model (SLM) Integration Sample
 
-**What:** Create sample showing local SLM (Phi-3 via ONNX) + local embeddings for classification/ranking tasks without cloud LLM.
+**What:** Create sample combining **ElBruno.LocalLLMs** + **ElBruno.LocalEmbeddings** for RAG with zero cloud dependencies.
 
-**Why:** Community trend toward **edge SLMs** (Phi-3, Llama 3) running via ONNX. Showcases "zero-cloud" AI stack: local embeddings + local LLM.
+**Context:**
+- Bruno owns **ElBruno.LocalLLMs** (NuGet: `ElBruno.LocalLLMs` v0.9.0 + `ElBruno.LocalLLMs.Rag` v0.1.0)
+- `LocalChatClient` implements `IChatClient` via ONNX Runtime GenAI
+- Supports: Phi-3.5 mini, Phi-4, Llama 3.x, Qwen2.5, Mistral, Gemma, DeepSeek-R1
+- CPU/CUDA/DirectML execution providers, streaming, tool calls
+- **LocalLLMs.Rag** package provides `IRagPipeline`, `LocalRagPipeline` that already supports `IEmbeddingGenerator<string, Embedding<float>>`
 
-**Effort:** M  
-**Dependencies:** Requires Phi-3 ONNX model and Microsoft.ML.OnnxRuntimeGenAI integration
+**Sample Goals:**
+- Zero-cloud RAG stack: ElBruno.LocalEmbeddings → ElBruno.LocalLLMs → fully offline AI
+- Show DI registration pattern combining both libraries
+- Demonstrate RAG pipeline with local embeddings + local LLM generation
+
+**Why:** Community trend toward **edge SLMs** running via ONNX. ElBruno.LocalLLMs.Rag already integrates with IEmbeddingGenerator, showcasing the full ElBruno "zero-cloud" stack.
+
+**Effort:** S  
+**Dependencies:** ElBruno.LocalLLMs packages (already published)
 
 ### 2.5 Multi-Modal Embedding Abstraction
 
@@ -163,10 +182,15 @@ var similarity = textEmb.CosineSimilarity(imageEmb);
 
 **What:** Sample using **Microsoft Agent Framework** with local embeddings for document retrieval agent + summarization agent orchestration.
 
-**Why:** **Microsoft Agent Framework** is the .NET standard for multi-agent orchestration. Showcases local embeddings in agent handoff workflows (retrieve → summarize → answer).
+**Implementation:**
+- Use **ElBruno.LocalEmbeddings** for semantic document retrieval
+- Use **ElBruno.LocalLLMs** (`LocalChatClient`) as the local chat client for agent responses
+- Multi-agent handoff: retrieve → summarize → answer
+
+**Why:** **Microsoft Agent Framework** is the .NET standard for multi-agent orchestration. Showcases local embeddings + local LLM in agent workflows — fully offline, no cloud dependencies.
 
 **Effort:** M  
-**Dependencies:** Requires Microsoft.Extensions.AI.Agents (or Semantic Kernel multi-agent APIs)
+**Dependencies:** Microsoft.Extensions.AI.Agents, ElBruno.LocalLLMs
 
 ### 3.2 Blazor WebAssembly Edge RAG
 
@@ -186,16 +210,45 @@ var similarity = textEmb.CosineSimilarity(imageEmb);
 **Effort:** M  
 **Dependencies:** Requires AG-UI NuGet packages
 
-### 3.4 Semantic Memory + Persistent Vector Store
+### 3.4 Persistent Vector Store Sample
 
-**What:** Sample using **Semantic Kernel Semantic Memory** with persistent vector store (e.g., SQLite-Vec) for long-term context across sessions.
+**What:** Sample using persistent vector store (e.g., SQLite-Vec, Qdrant) with local embeddings for long-term context across sessions.
 
-**Why:** **Semantic Memory** is standard for persistent context in multi-turn LLM interactions. Community demand for persistent vector stores beyond in-memory.
+**Why:** Community demand for persistent vector stores beyond in-memory. Demonstrates RAG with durable storage — embeddings survive application restarts.
 
 **Effort:** M  
 **Dependencies:** Requires persistent vector store (Qdrant, SQLite-Vec, or custom)
 
-### 3.5 ARM64 / Raspberry Pi 5 Optimized Sample
+### 3.5 Zero-Cloud RAG with ElBruno Stack
+
+**What:** Sample combining **ElBruno.LocalEmbeddings** + **ElBruno.LocalLLMs** + **ElBruno.LocalEmbeddings.VectorData** for a complete offline RAG pipeline.
+
+**Components:**
+- Local embeddings via all-MiniLM (or similar) for document vectorization
+- In-memory vector store from ElBruno.LocalEmbeddings.VectorData
+- Local LLM generation via Phi-4 or Llama 3.x using ElBruno.LocalLLMs
+- Full DI registration pattern showing integration of all three libraries
+
+**Why:** Showcases the full ElBruno ecosystem for zero-cloud AI: no internet required, no cloud APIs, fully offline RAG stack. Target models: all-MiniLM (embeddings) + Phi-4 (generation).
+
+**Effort:** S  
+**Dependencies:** ElBruno.LocalLLMs, ElBruno.LocalEmbeddings.VectorData
+
+### 3.6 MCP Tool Router Sample
+
+**What:** Sample demonstrating **ElBruno.ModelContextProtocol.MCPToolRouter** with LocalEmbeddings for semantic tool discovery and routing.
+
+**Implementation:**
+- Index MCP tools using LocalEmbeddings
+- Natural language tool queries → semantic routing to the right tool
+- Show `ToolRouter`, `ToolIndex` integration with AI agents
+
+**Why:** ElBruno.ModelContextProtocol already depends on LocalEmbeddings for semantic routing. Sample showcases how AI agents can discover and invoke the right tools using natural language.
+
+**Effort:** S  
+**Dependencies:** ElBruno.ModelContextProtocol.MCPToolRouter
+
+### 3.7 ARM64 / Raspberry Pi 5 Optimized Sample
 
 **What:** Sample optimized for **Raspberry Pi 5 / ARM64** with quantized models, reduced batch sizes, and telemetry for edge performance analysis.
 
@@ -238,23 +291,16 @@ services.AddVectorStore<InMemoryVectorStore>()
 **Effort:** M  
 **Dependencies:** Requires VectorData package upgrade and API surface changes
 
-### 4.3 Semantic Kernel v2 Memory Connector
+### 4.3 Azure AI Foundry Local Agent Integration (Enhanced)
 
-**What:** Create native Semantic Kernel v2 memory connector for `InMemoryVectorStore` (or as SK Memory abstraction).
+**What:** Enhanced sample showing Azure AI Foundry local agent with local embeddings (no Foundry-hosted embeddings). Agent-focused version of existing `RagFoundryLocal`.
 
-**Why:** Semantic Kernel is the standard .NET AI orchestration framework. Current KernelMemory integration is separate; SK v2 needs first-class support.
-
-**Effort:** M  
-**Dependencies:** Requires Semantic Kernel v2 Memory abstractions
-
-### 4.4 Azure AI Foundry Local Agent Integration
-
-**What:** Sample showing Azure AI Foundry local agent with local embeddings (no Foundry-hosted embeddings).
-
-**Why:** Developers want to use Foundry orchestration but keep embeddings local (data privacy, cost). Existing `RagFoundryLocal` sample, but needs agent-focused version.
+**Why:** Developers want to use Foundry orchestration but keep embeddings local (data privacy, cost). Current `RagFoundryLocal` sample exists; enhance with agent-specific scenarios.
 
 **Effort:** S  
 **Dependencies:** Builds on existing RagFoundryLocal
+
+
 
 ---
 
@@ -321,9 +367,9 @@ Based on roadmap scope and current team composition (Lead/Architect, Core Dev, I
 **Priorities:** 1.3, 2.1, 3.2, 3.5, 5.2, 5.3, 5.5
 
 ### 2. **AI Framework Specialist** (new role)
-**Expertise:** Microsoft Agent Framework, Semantic Kernel, Model Context Protocol, AG-UI, multi-agent orchestration  
-**Justification:** Multiple ecosystem integration items require deep knowledge of emerging .NET AI frameworks. Current Integration role is broad; need focused AI framework expertise.  
-**Priorities:** 2.3, 2.4, 3.1, 3.3, 4.3, 4.4
+**Expertise:** Microsoft Agent Framework, Model Context Protocol, AG-UI, multi-agent orchestration, ElBruno ecosystem integration  
+**Justification:** Multiple ecosystem integration items require deep knowledge of emerging .NET AI frameworks and the ElBruno library ecosystem. Current Integration role is broad; need focused AI framework expertise.  
+**Priorities:** 2.3, 2.4, 3.1, 3.3, 3.5, 3.6, 4.3
 
 ### 3. **Data/Search Engineer** (new role)
 **Expertise:** Hybrid search (BM25), vector databases, search relevance, embedding evaluation, caching strategies  
@@ -341,10 +387,10 @@ Based on roadmap scope and current team composition (Lead/Architect, Core Dev, I
 → 2.1, 2.2, 1.4, 1.5
 
 **Phase 3 (Q4 2026):** Advanced scenarios and emerging protocols  
-→ 2.3, 2.4, 3.1, 3.3
+→ 2.3, 2.4, 3.1, 3.3, 3.5, 3.6
 
 **Phase 4 (Q1 2027):** Edge optimization and long-tail samples  
-→ 1.3, 3.2, 3.5, 5.2, 5.3, 5.5
+→ 1.3, 3.2, 3.4, 3.7, 5.2, 5.3, 5.5
 
 ---
 
