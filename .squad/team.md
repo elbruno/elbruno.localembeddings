@@ -18,6 +18,8 @@
 | Lambert | Tester | `.ai-team/agents/lambert/charter.md` | ✅ Active |
 | Ash | Security Engineer | `.squad/agents/ash/charter.md` | ✅ Active |
 | Parker | Performance Engineer | `.squad/agents/parker/charter.md` | ✅ Active |
+| Brett | Edge/IoT Specialist | `.squad/agents/brett/charter.md` | ✅ Active |
+| Bishop | AI Framework Specialist | `.squad/agents/bishop/charter.md` | ✅ Active |
 | Scribe | Session Logger | `.ai-team/agents/scribe/charter.md` | 📋 Silent |
 | Ralph | Work Monitor | — | 🔄 Monitor |
 
