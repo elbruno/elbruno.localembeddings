@@ -106,3 +106,50 @@ Analyzed current library capabilities against .NET AI ecosystem trends and creat
 **File Paths:**
 - Roadmap: `docs/roadmap.md`
 - Current packages: ElBruno.LocalEmbeddings (core), .ImageEmbeddings, .VectorData, .KernelMemory, .Npu, .Npu.Intel, .Npu.Qualcomm
+
+### 2026-04-04: Roadmap Updated — ElBruno Ecosystem Integration
+
+**Commit:** 35d2daa — `docs: update roadmap — integrate ElBruno libraries, remove SK items`
+
+Bruno requested removal of all Semantic Kernel items from roadmap and integration of existing ElBruno ecosystem libraries.
+
+**Removed:**
+- ~~4.3 Semantic Kernel v2 Memory Connector~~ (deleted entirely)
+- ~~3.4 Semantic Memory + Persistent Vector Store~~ (now "3.4 Persistent Vector Store Sample" without SK dependency)
+- All SK references from other items (e.g., Agent Framework sample dependencies)
+
+**Updated MCP Integration (2.3):**
+- Now references **ElBruno.ModelContextProtocol** (NuGet: `ElBruno.ModelContextProtocol.MCPToolRouter` v0.1.0)
+- Work split: THIS repo ensures API is clean for MCP integration; ElBruno.ModelContextProtocol repo adds MCP server tools
+- Effort reduced M → S (just API review here)
+
+**Updated SLM Integration (2.4):**
+- Now references **ElBruno.LocalLLMs** (NuGet: `ElBruno.LocalLLMs` v0.9.0 + `ElBruno.LocalLLMs.Rag` v0.1.0)
+- `LocalChatClient` implements `IChatClient` via ONNX Runtime GenAI
+- Supports: Phi-3.5 mini, Phi-4, Llama 3.x, Qwen2.5, Mistral, Gemma, DeepSeek-R1
+- `LocalLLMs.Rag` already supports `IEmbeddingGenerator<string, Embedding<float>>`
+- Effort reduced M → S (packages already published)
+
+**New Samples Added:**
+- **3.5 Zero-Cloud RAG with ElBruno Stack** — Combines LocalEmbeddings + LocalLLMs + VectorData; full offline RAG; all-MiniLM + Phi-4
+- **3.6 MCP Tool Router Sample** — Shows `ElBruno.ModelContextProtocol.MCPToolRouter` with LocalEmbeddings for semantic tool discovery
+
+**Updated Agent Framework Sample (3.1):**
+- Now uses ElBruno.LocalLLMs (`LocalChatClient`) instead of generic SK references
+- Full offline multi-agent: LocalEmbeddings (retrieval) + LocalLLMs (generation)
+
+**Updated Team Recommendations:**
+- AI Framework Specialist expertise changed: removed "Semantic Kernel", added "ElBruno ecosystem integration"
+
+**Renumbering:**
+- Items automatically renumbered: 3.4 (Persistent), 3.5 (Zero-Cloud), 3.6 (MCP Router), 3.7 (ARM64)
+- Former 4.4 (Foundry) → 4.3
+- Implementation phasing updated to reflect new item numbers
+
+**Key Insight:**
+Bruno owns three libraries that integrate cleanly:
+- **ElBruno.LocalEmbeddings** — Text/image embeddings via ONNX, M.E.AI `IEmbeddingGenerator`
+- **ElBruno.LocalLLMs** — Local chat via ONNX Runtime GenAI, M.E.AI `IChatClient`
+- **ElBruno.ModelContextProtocol** — Semantic tool routing using LocalEmbeddings
+
+The roadmap now emphasizes **zero-cloud AI** as a first-class scenario using the ElBruno ecosystem.
