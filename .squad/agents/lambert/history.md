@@ -88,8 +88,44 @@ Parker completed all actionable performance phases:
 - **PERF-09/10 (heap search):** Both `FindClosest` overloads and `ImageSearchEngine.RankResults` use O(n log k) `PriorityQueue` min-heaps. Lambert's `FindClosestTests.cs` parity tests (9 unit, deterministic Random(42) seed) confirm heap output is byte-for-byte identical to the LINQ reference.
 - **PERF-12/13 pattern:** `as IList<T> ?? .ToList()` is now applied in `TokenizeBatch`, `GenerateAsync`, and confirmed clean by Lambert's tokenizer regression tests.
 - **Phase 5 (benchmarks):** Parker is expanding `samples/BenchmarkSample/` with 7 missing benchmark classes (cold start, mean pooling, CLIP encoders, VectorStore search, quantized comparison). No test work needed from Lambert for benchmark infrastructure.
+
+### 2026-04-04: Wave 1 Feature Tests Complete
 
-### Phase 2 Security Tests (SEC-003, SEC-004, SEC-005)
+Wrote comprehensive tests for all Wave 1 features implemented by Dallas in the core library:
+
+**Test files added (6 files, 67 new tests):**
+- `BatchEmbeddingTests.cs` — 10 tests for batch API with progress reporting (IProgress<EmbeddingProgress>)
+- `StreamingEmbeddingTests.cs` — 10 tests for async streaming API (IAsyncEnumerable<Embedding<float>>)
+- `CachingEmbeddingDecoratorTests.cs` — 12 tests for LRU cache (hit/miss/eviction/concurrency/dispose)
+- `EmbeddingComparerTests.cs` — 12 tests for multi-model comparison (pairwise similarities, metadata)
+- `MiddlewareTests.cs` — 12 tests for OpenTelemetry and Retry middleware (decorators, extension methods)
+- `BatchSizeAutoTunerTests.cs` — 11 tests for batch size tuning (auto mode, fixed mode, edge cases)
+
+**Key testing patterns used:**
+- Moq for mocking `IEmbeddingGenerator<string, Embedding<float>>`
+- Deterministic seeded Random for reproducible embeddings
+- Thread-safe progress reporting with lock guards + Task.Delay for async propagation
+- CancellationToken verification with pre-cancelled tokens
+- Concurrent access tests using Task.WhenAll
+- Dispose/DisposeAsync propagation tests
+
+**Challenges resolved:**
+- Progress<T> is async by design - added small delays and thread-safe collections for reliable capture
+- OnnxRuntimeException constructors are internal - used IOException for retry tests instead
+- GetService<T> extension method mocking - used explicit type matching in mock setup
+
+**Test coverage:**
+- All new Wave 1 APIs have unit tests
+- Empty input edge cases covered
+- Cancellation token support verified
+- Null parameter guards tested
+- Thread safety validated for CachingDecorator
+
+**Total test count:** 211 (67 new Wave 1 tests + 144 existing)
+**Result:** All 211 tests passing on both net8.0 and net10.0
+
+**Build validation:** `dotnet test tests/ElBruno.LocalEmbeddings.Tests/ --verbosity quiet` → 0 failures, 0 warnings
+
 
 **All Phase 2 implementations (Ash) were complete** before tests were written; tests verified them immediately.
 
