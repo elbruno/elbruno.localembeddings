@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using ElBruno.LocalEmbeddings.Extensions;
 using Microsoft.Extensions.AI;
 
@@ -58,8 +59,8 @@ public static class EmbeddingGeneratorExtensions
     /// Thrown when <paramref name="generator"/> or <paramref name="value"/> is null.
     /// </exception>
     /// <remarks>
-    /// This is the simplest way to embed a single piece of text. Unlike
-    /// <see cref="GenerateAsync"/>, this method returns the <see cref="Embedding{T}"/>
+    /// This is the simplest way to embed a single piece of text. Unlike the overload
+    /// that takes a single string, this method returns the <see cref="Embedding{T}"/>
     /// directly — no collection indexing needed.
     /// </remarks>
     /// <example>
@@ -201,5 +202,140 @@ public static class EmbeddingGeneratorExtensions
             .ToList();
 
         return generator.FindClosestAsync(query, extractedCorpus, corpusEmbeddings, topK, minScore, cancellationToken);
+    }
+
+    /// <summary>
+    /// Generates embeddings for a batch of strings with progress reporting.
+    /// </summary>
+    /// <param name="generator">The embedding generator.</param>
+    /// <param name="values">The texts to generate embeddings for.</param>
+    /// <param name="progress">Progress reporter that receives updates after each batch is processed.</param>
+    /// <param name="batchSize">Number of items to process in each batch. Default is 32.</param>
+    /// <param name="options">Optional embedding generation options.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>
+    /// A <see cref="GeneratedEmbeddings{TEmbedding}"/> containing all embeddings in the same order as the input.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="generator"/>, <paramref name="values"/>, or <paramref name="progress"/> is null.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="batchSize"/> is less than 1.
+    /// </exception>
+    /// <remarks>
+    /// This method splits the input into batches and processes them sequentially,
+    /// reporting progress after each batch completes. This is useful for monitoring
+    /// long-running embedding operations on large datasets.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var progress = new Progress&lt;EmbeddingProgress&gt;(p =>
+    ///     Console.WriteLine($"{p.CompletedItems}/{p.TotalItems} items completed"));
+    /// 
+    /// var texts = new[] { "text1", "text2", ... };
+    /// var result = await generator.GenerateAsync(texts, progress, batchSize: 32);
+    /// </code>
+    /// </example>
+    public static async Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
+        this IEmbeddingGenerator<string, Embedding<float>> generator,
+        IEnumerable<string> values,
+        IProgress<EmbeddingProgress> progress,
+        int batchSize = 32,
+        EmbeddingGenerationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(generator);
+        ArgumentNullException.ThrowIfNull(values);
+        ArgumentNullException.ThrowIfNull(progress);
+
+        if (batchSize < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(batchSize), batchSize, "Batch size must be greater than zero.");
+        }
+
+        var valuesList = values.ToList();
+        var totalItems = valuesList.Count;
+
+        if (totalItems == 0)
+        {
+            return new GeneratedEmbeddings<Embedding<float>>([]);
+        }
+
+        var allEmbeddings = new List<Embedding<float>>(totalItems);
+        var completedItems = 0;
+
+        foreach (var batch in valuesList.Chunk(batchSize))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var batchResult = await generator.GenerateAsync(batch, options, cancellationToken).ConfigureAwait(false);
+            allEmbeddings.AddRange(batchResult);
+
+            completedItems += batch.Length;
+            progress.Report(new EmbeddingProgress(completedItems, totalItems, batch.Length));
+        }
+
+        return new GeneratedEmbeddings<Embedding<float>>(allEmbeddings);
+    }
+
+    /// <summary>
+    /// Generates embeddings for a batch of strings and yields them as they become available.
+    /// </summary>
+    /// <param name="generator">The embedding generator.</param>
+    /// <param name="values">The texts to generate embeddings for.</param>
+    /// <param name="batchSize">Number of items to process in each batch. Default is 32.</param>
+    /// <param name="options">Optional embedding generation options.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>
+    /// An async enumerable that yields <see cref="Embedding{T}"/> instances in the same order as the input.
+    /// Each batch is processed sequentially, and embeddings are yielded as soon as each batch completes.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="generator"/> or <paramref name="values"/> is null.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="batchSize"/> is less than 1.
+    /// </exception>
+    /// <remarks>
+    /// This method enables streaming processing of large datasets without waiting for all embeddings
+    /// to complete. Embeddings are yielded in input order as each batch is processed.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var texts = new[] { "text1", "text2", ... };
+    /// await foreach (var embedding in generator.GenerateStreamingAsync(texts, batchSize: 32))
+    /// {
+    ///     ProcessEmbedding(embedding);
+    /// }
+    /// </code>
+    /// </example>
+    public static async IAsyncEnumerable<Embedding<float>> GenerateStreamingAsync(
+        this IEmbeddingGenerator<string, Embedding<float>> generator,
+        IEnumerable<string> values,
+        int batchSize = 32,
+        EmbeddingGenerationOptions? options = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(generator);
+        ArgumentNullException.ThrowIfNull(values);
+
+        if (batchSize < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(batchSize), batchSize, "Batch size must be greater than zero.");
+        }
+
+        var valuesList = values.ToList();
+
+        foreach (var batch in valuesList.Chunk(batchSize))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var batchResult = await generator.GenerateAsync(batch, options, cancellationToken).ConfigureAwait(false);
+
+            foreach (var embedding in batchResult)
+            {
+                yield return embedding;
+            }
+        }
     }
 }
