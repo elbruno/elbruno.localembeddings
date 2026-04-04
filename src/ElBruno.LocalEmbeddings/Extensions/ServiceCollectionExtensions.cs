@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
@@ -188,6 +189,8 @@ public static class ServiceCollectionExtensions
     /// services.AddLocalEmbeddings(configuration.GetSection("LocalEmbeddings"));
     /// </code>
     /// </example>
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Binding strongly typed objects to configuration values may require unreferenced code.")]
+    [System.Diagnostics.CodeAnalysis.RequiresDynamicCode("Binding strongly typed objects to configuration values may require generating dynamic code at runtime.")]
     public static IServiceCollection AddLocalEmbeddings(
         this IServiceCollection services,
         IConfiguration configuration)
