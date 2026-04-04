@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using TensorPrimitives = System.Numerics.Tensors.TensorPrimitives;
 using Microsoft.ML.OnnxRuntime;
@@ -90,6 +91,9 @@ public sealed class QualcommOnnxEmbeddingModel : IDisposable
             FallbackReason = $"QNN requires ARM64 but running on {RuntimeInformation.ProcessArchitecture}. " +
                              "QNN is only available on Qualcomm Snapdragon X (ARM64) devices.";
 
+            // Record architecture mismatch fallback
+            QualcommNpuDiagnostics.RecordFallback(null, "QNN", "CPU", FallbackReason);
+
             if (!fallbackToCpu)
             {
                 throw new InvalidOperationException(FallbackReason);
@@ -134,6 +138,7 @@ public sealed class QualcommOnnxEmbeddingModel : IDisposable
         {
             // QNN not available — fall back to CPU
             FallbackReason = ex.Message;
+            QualcommNpuDiagnostics.RecordFallback(null, "QNN", "CPU", FallbackReason);
         }
 
         // CPU fallback
@@ -236,6 +241,9 @@ public sealed class QualcommOnnxEmbeddingModel : IDisposable
         {
             throw new InvalidOperationException("No model is loaded. Call Load() first.");
         }
+
+        var executionProvider = IsQnnActive ? "QNN" : "CPU";
+        using var activity = QualcommNpuDiagnostics.StartInference(executionProvider);
 
         cancellationToken.ThrowIfCancellationRequested();
 

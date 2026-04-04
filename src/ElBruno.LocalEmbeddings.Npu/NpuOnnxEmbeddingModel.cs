@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Diagnostics;
 using TensorPrimitives = System.Numerics.Tensors.TensorPrimitives;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -119,12 +120,16 @@ public sealed class NpuOnnxEmbeddingModel : IDisposable
                         ? "No DXGI adapters found. Ensure GPU/NPU drivers are installed."
                         : $"No NPU adapter detected. Available: {adapterNames}";
                     IsNpuActive = false;
+
+                    // Record fallback telemetry
+                    NpuDiagnostics.RecordFallback(null, "DirectML-NPU", "DirectML-GPU", FallbackReason);
                 }
             }
             catch (Exception)
             {
                 FallbackReason = "DXGI adapter enumeration failed. Using specified device ID.";
                 IsNpuActive = false;
+                NpuDiagnostics.RecordFallback(null, "DirectML-NPU", "DirectML", FallbackReason);
             }
         }
 
@@ -230,6 +235,12 @@ public sealed class NpuOnnxEmbeddingModel : IDisposable
         {
             throw new InvalidOperationException("No model is loaded. Call Load() first.");
         }
+
+        var executionProvider = IsNpuActive ? "DirectML-NPU" : "DirectML";
+        using var activity = NpuDiagnostics.StartInference(executionProvider);
+
+        // Record device selection info
+        NpuDiagnostics.RecordDeviceSelection(activity, ActiveDeviceId, DeviceDescription, IsNpuActive);
 
         cancellationToken.ThrowIfCancellationRequested();
 

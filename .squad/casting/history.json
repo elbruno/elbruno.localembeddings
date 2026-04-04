@@ -32,6 +32,15 @@
       },
       "reason": "Performance specialist added — no existing perf/benchmark coverage",
       "created_at": "2026-02-28T13:41:20.000Z"
+    },
+    "2026-04-04-brett-bishop-added": {
+      "universe": "Alien",
+      "agent_map": {
+        "brett": "Brett",
+        "bishop": "Bishop"
+      },
+      "reason": "Edge/IoT and AI Framework specialists added for roadmap execution — Native AOT, MCP, Agent Framework",
+      "created_at": "2026-04-04T12:50:30.000Z"
     }
   }
 }
