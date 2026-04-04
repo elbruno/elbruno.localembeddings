@@ -262,3 +262,109 @@ Sync-over-async patterns in `LocalEmbeddingGenerator` constructor and both `Serv
 **By:** Bruno (via Copilot)  
 **What:** If a task is simple or easy, always use a 0x (fast/cheap) model like gpt-5-mini. Never over-provision model tier for trivial work.  
 **Why:** User request — captured for team memory. Overrides default model selection for low-complexity tasks.
+
+---
+
+## 2026-04-04: Package Dependency Update Strategy
+
+**By:** Dallas (Core Dev)  
+**Date:** 2026-04-04  
+**Status:** Implemented
+
+Updated all NuGet packages across 31 projects to latest stable versions (April 2026). Established systematic approach for future dependency management.
+
+### Key Findings
+
+**Breaking Changes:**
+- `Microsoft.AI.Foundry.Local`: Version 0.9.0 introduces breaking API (`StartModelAsync` removed). Held at 0.1.0 for now; sample refactor deferred.
+- Lesson: Preview packages may have breaking changes in minor bumps — always verify sample compatibility first.
+
+**Versioning Isolation:**
+- `Intel.ML.OnnxRuntime.OpenVino` uses independent versioning (1.24.1) separate from Microsoft ORT (1.24.4) due to standalone runtime DLL. Not intentionally "aligned" — separation is by design.
+- Rationale: `Npu.Intel` is standalone to avoid `onnxruntime.dll` version conflicts.
+
+**Test Package Compatibility:**
+- Major version jumps (`coverlet.collector` 6.0.4 → 8.0.1, `Microsoft.NET.Test.Sdk` 17.14.1 → 18.3.0) — all 138 tests passing, strong backward compatibility confirmed.
+
+### Package Categories & Update Priorities
+
+**Critical:** `Microsoft.ML.OnnxRuntime*`, `System.Numerics.Tensors`, `Microsoft.Extensions.*`  
+**Important:** `Microsoft.Extensions.AI.*`, test packages, `ElBruno.HuggingFace.Downloader`  
+**Cautious:** `Microsoft.AI.Foundry.Local`, `Microsoft.Extensions.AI.Ollama`, `Intel.ML.OnnxRuntime.OpenVino`
+
+### Update Workflow (Recommended)
+
+```bash
+dotnet list package --outdated
+# Update .csproj files (use exact versions)
+dotnet clean && dotnet restore
+dotnet build && dotnet test
+# For preview packages: verify sample compatibility manually
+```
+
+### Impact
+
+- Solution now uses latest stable packages (bug fixes, perf improvements, .NET 10 features)
+- All 138 tests passing — backward compatibility maintained
+- Breaking changes handled appropriately
+
+---
+
+## 2026-04-04: ElBruno.LocalEmbeddings Improvement Roadmap
+
+**By:** Ripley (Lead/Architect)  
+**Date:** 2026-04-04  
+**Status:** Proposed — Pending stakeholder review
+
+Analyzed .NET AI ecosystem trends (April 2026) and identified 25 strategic improvements across 5 priority tiers. Recommended hiring 3 new specialists.
+
+### Ecosystem Context
+
+- Microsoft.Extensions.AI 10.4.1 — Unified AI abstractions with middleware patterns
+- Microsoft.Extensions.VectorData 10.1.0 — Hybrid search (vector + keyword) now GA
+- Microsoft Agent Framework — Multi-agent orchestration standard
+- Model Context Protocol (MCP) — Standard for composable AI skills
+- Native AOT in .NET 10 — Critical for edge AI and serverless
+- Edge SLMs (Phi-3, Llama 3) running locally via ONNX
+- AG-UI Protocol — Real-time streaming interactive agent UIs
+
+### Roadmap Priorities (5 Tiers)
+
+1. **Core Improvements** — Streaming APIs, batch progress, embedding cache, dimension reduction
+2. **New Features** — Native AOT, hybrid search, MCP integration, multi-modal abstraction
+3. **New Samples** — Agent Framework, Blazor WASM, Semantic Memory, ARM64 optimization
+4. **Ecosystem Integration** — M.E.AI middleware, VectorData 10.1.0, SK v2 connector
+5. **Performance/Edge** — ORT 1.24.4, FP16, auto-quantization, WASM deployment
+
+### Recommended Team Expansion
+
+1. **Edge/IoT Specialist** — ARM64, WASM, Native AOT, quantization expertise
+2. **AI Framework Specialist** — Agent Framework, Semantic Kernel, MCP orchestration
+3. **Data/Search Engineer** — Hybrid search, BM25, vector databases, embedding evaluation
+
+### Impact on Current Team
+
+- **Parker (Performance):** ORT upgrades, FP16 precision, batch tuning
+- **Dallas (Core Dev):** Streaming APIs, batch progress, embedding cache
+- **Kane (Integration):** M.E.AI middleware, VectorData integration
+- **Ash (Security):** Native AOT security validation, MCP trust boundaries
+- **New Specialists:** Own edge, framework, and data/search domains respectively
+
+### Phase 1 (Q2 2026)
+
+Streaming APIs, M.E.AI middleware, ORT upgrade
+
+### Open Questions for Stakeholder Review
+
+- Native AOT vs. hybrid search prioritization for Phase 2?
+- Persistent embedding cache: SQLite vs. custom binary format?
+- Multi-modal abstraction: core library or separate package?
+- Breaking change policy for roadmap items affecting API surface?
+
+### Next Actions
+
+1. Review roadmap with Bruno Capuano (project owner)
+2. Prioritize Phase 1 items
+3. Create tracking issues for each roadmap item
+4. Begin recruiting new specialists
+5. Establish quarterly milestones and community engagement metrics
