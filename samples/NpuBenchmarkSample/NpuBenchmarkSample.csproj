@@ -16,7 +16,7 @@
     <!-- Intel OpenVINO runs in a separate process (IntelNpuWorker) to avoid
          ORT version conflicts: DirectML uses ORT 1.24.x, OpenVINO uses ORT 1.21.x.
          Only one onnxruntime.dll can load per process. -->
-    <PackageReference Include="System.Management" Version="9.0.3" />
+    <PackageReference Include="System.Management" Version="10.0.5" />
   </ItemGroup>
 
 </Project>

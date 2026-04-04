@@ -50,3 +50,59 @@ After completing the v1.1.0 security & performance audit, consolidated 9 securit
 - Squad rule: use gpt-5-mini for simple tasks
 
 **Decision:** Recorded lessons in `.squad/decisions.md` under "Security Audit Findings" and "Performance Audit Findings" sections; CI lessons in `.squad/skills/ci-linux-test-failures/SKILL.md`.
+
+### 2026-02-28: Improvement Roadmap Created
+
+**Document:** `docs/roadmap.md`  
+**Based on:** .NET community trends analysis (April 2026)
+
+Analyzed current library capabilities against .NET AI ecosystem trends and created comprehensive roadmap with 5 priority tiers:
+
+**Priority 1 — Core Library Improvements:**
+- Batch embedding API with progress reporting
+- Streaming embeddings API (`IAsyncEnumerable`)
+- Embedding dimension reduction (PCA/truncation for edge)
+- Embedding cache/persistence layer (LRU + optional SQLite)
+- Multi-model embedding comparison tool
+
+**Priority 2 — New Features:**
+- Native AOT support for edge/serverless
+- Hybrid search (vector + BM25) in InMemoryVectorStore
+- Model Context Protocol (MCP) integration
+- SLM integration sample (Phi-3 ONNX)
+- Multi-modal embedding abstraction (text + image in shared space)
+
+**Priority 3 — New Sample Scenarios:**
+- Microsoft Agent Framework multi-agent sample
+- Blazor WebAssembly edge RAG
+- Real-time streaming agent UI (AG-UI Protocol)
+- Semantic Memory + persistent vector store
+- ARM64/Raspberry Pi 5 optimized sample
+
+**Priority 4 — Ecosystem Integration:**
+- M.E.AI middleware support (caching, telemetry, retry)
+- VectorData 10.1.0 embedding generation support
+- Semantic Kernel v2 memory connector
+- Azure AI Foundry local agent integration
+
+**Priority 5 — Performance & Edge:**
+- ONNX Runtime 1.24.4 + FP16 precision
+- Quantized model auto-selection
+- Batch size auto-tuning
+- NPU fallback telemetry
+- WebAssembly deployment guide
+
+**Key Insights:**
+- Library already has strong foundation: core embeddings, image CLIP, NPU support, VectorData/KernelMemory integration
+- Major gaps vs community: streaming APIs, hybrid search, Native AOT, MCP integration, persistent vector stores
+- Emerging .NET AI ecosystem: M.E.AI 10.4.1 middleware, VectorData 10.1.0 hybrid search, Agent Framework, MCP, AG-UI
+- Edge deployment is critical: Native AOT, WASM, Raspberry Pi, dimension reduction, quantization
+
+**New Team Member Recommendations:**
+1. **Edge/IoT Specialist** — ARM64, WASM, Native AOT, quantization expertise
+2. **AI Framework Specialist** — Agent Framework, Semantic Kernel, MCP, multi-agent orchestration
+3. **Data/Search Engineer** — Hybrid search, BM25, vector databases, embedding evaluation
+
+**File Paths:**
+- Roadmap: `docs/roadmap.md`
+- Current packages: ElBruno.LocalEmbeddings (core), .ImageEmbeddings, .VectorData, .KernelMemory, .Npu, .Npu.Intel, .Npu.Qualcomm
