@@ -1,13 +1,16 @@
 using ElBruno.LocalEmbeddings;
 using ElBruno.LocalEmbeddings.Extensions;
 using ElBruno.LocalEmbeddings.Options;
-using ElBruno.LocalLLMs;
 using Microsoft.Extensions.AI;
 
 Console.WriteLine("╔═══════════════════════════════════════════════════════════════╗");
-Console.WriteLine("║      Local LLM + Embeddings Integration Sample                ║");
-Console.WriteLine("║   Simple semantic search with local AI summarization          ║");
+Console.WriteLine("║         Local Embeddings Integration Sample                   ║");
+Console.WriteLine("║         Simple semantic search demonstration                   ║");
 Console.WriteLine("╚═══════════════════════════════════════════════════════════════╝");
+Console.WriteLine();
+
+Console.WriteLine("NOTE: This sample demonstrates local embeddings only.");
+Console.WriteLine("      For LLM integration, install ElBruno.LocalLLMs separately.");
 Console.WriteLine();
 
 // =============================================================================
@@ -69,26 +72,9 @@ Console.WriteLine($"  Average: {embeddingTime.TotalMilliseconds / documents.Coun
 Console.WriteLine();
 
 // =============================================================================
-// Step 4: Initialize local LLM
+// Step 4: Perform semantic search
 // =============================================================================
-Console.WriteLine("Step 4: Initializing local LLM...");
-Console.WriteLine("  Model: microsoft/phi-4");
-Console.WriteLine();
-
-var llmOptions = new LocalLLMOptions
-{
-    ModelId = "microsoft/phi-4",
-    EnsureModelDownloaded = true
-};
-
-var chatClient = await LocalChatClient.CreateAsync(llmOptions);
-Console.WriteLine($"✓ Local LLM ready");
-Console.WriteLine();
-
-// =============================================================================
-// Step 5: Perform semantic search and summarize with LLM
-// =============================================================================
-Console.WriteLine("Step 5: Testing semantic search + LLM summarization...");
+Console.WriteLine("Step 4: Testing semantic search...");
 Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 Console.WriteLine();
 
@@ -111,39 +97,7 @@ for (var i = 0; i < results.Count; i++)
 Console.WriteLine();
 
 // =============================================================================
-// Step 6: Use LLM to summarize the findings
-// =============================================================================
-Console.WriteLine("Step 6: Generating summary with local LLM...");
-Console.WriteLine();
-
-// Combine the retrieved documents
-var context = string.Join("\n", results.Select(r => $"- {r.Text}"));
-
-// Create a simple prompt
-var prompt = $"""
-Based on the following information about Seattle, answer this question: {query}
-
-Information:
-{context}
-
-Provide a concise answer in 1-2 sentences.
-""";
-
-// Get response from local LLM (streaming)
-Console.WriteLine("Answer:");
-Console.Write("  ");
-
-var responseText = "";
-await foreach (var chunk in chatClient.CompleteStreamingAsync(prompt))
-{
-    Console.Write(chunk.Text);
-    responseText += chunk.Text;
-}
-Console.WriteLine();
-Console.WriteLine();
-
-// =============================================================================
-// Step 7: Additional example - different query
+// Step 5: Additional example - different query
 // =============================================================================
 Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 Console.WriteLine();
@@ -164,32 +118,12 @@ for (var i = 0; i < results2.Count; i++)
 }
 Console.WriteLine();
 
-var context2 = string.Join("\n", results2.Select(r => $"- {r.Text}"));
-var prompt2 = $"""
-Based on the following information about Seattle, answer this question: {query2}
-
-Information:
-{context2}
-
-Provide a concise answer in 1-2 sentences.
-""";
-
-Console.WriteLine("Answer:");
-Console.Write("  ");
-
-await foreach (var chunk in chatClient.CompleteStreamingAsync(prompt2))
-{
-    Console.Write(chunk.Text);
-}
-Console.WriteLine();
-Console.WriteLine();
-
 // =============================================================================
-// Step 8: Show direct embedding comparison
+// Step 6: Show direct embedding comparison
 // =============================================================================
 Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 Console.WriteLine();
-Console.WriteLine("Step 8: Direct embedding similarity comparison...");
+Console.WriteLine("Step 6: Direct embedding similarity comparison...");
 Console.WriteLine();
 
 var sentences = new[]
@@ -224,13 +158,13 @@ Console.WriteLine();
 Console.WriteLine("═══════════════════════════════════════════════════════════════");
 Console.WriteLine();
 Console.WriteLine("╔═══════════════════════════════════════════════════════════════╗");
-Console.WriteLine("║          Local LLM + Embeddings Sample Complete!               ║");
+Console.WriteLine("║          Local Embeddings Integration Complete!               ║");
 Console.WriteLine("║                                                                ║");
 Console.WriteLine("║  This sample demonstrated:                                     ║");
 Console.WriteLine("║  ✓ LocalEmbeddingGenerator for semantic search                 ║");
-Console.WriteLine("║  ✓ LocalChatClient for text generation                         ║");
 Console.WriteLine("║  ✓ FindClosest extension method for top-K retrieval            ║");
-Console.WriteLine("║  ✓ Combining embeddings + LLM for basic RAG                    ║");
 Console.WriteLine("║  ✓ Cosine similarity for comparing embeddings                  ║");
 Console.WriteLine("║  ✓ 100% offline - no cloud dependencies                        ║");
+Console.WriteLine("║                                                                ║");
+Console.WriteLine("║  For LLM integration, install ElBruno.LocalLLMs package        ║");
 Console.WriteLine("╚═══════════════════════════════════════════════════════════════╝");

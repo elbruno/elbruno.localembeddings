@@ -1,46 +1,44 @@
+using ElBruno.LocalEmbeddings;
 using ElBruno.LocalEmbeddings.Extensions;
-using ElBruno.LocalEmbeddings.VectorData;
-using ElBruno.LocalLLMs;
+using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.VectorData;
 
 Console.WriteLine("╔═══════════════════════════════════════════════════════════════╗");
-Console.WriteLine("║            Zero-Cloud RAG Sample Application                   ║");
-Console.WriteLine("║   Complete offline RAG pipeline - No cloud services needed    ║");
+Console.WriteLine("║         Zero-Cloud RAG Foundation Sample                       ║");
+Console.WriteLine("║   Semantic search with local embeddings - No cloud needed     ║");
 Console.WriteLine("╚═══════════════════════════════════════════════════════════════╝");
 Console.WriteLine();
 
-// =============================================================================
-// Step 1: Setup Dependency Injection with Local Embeddings and Local LLM
-// =============================================================================
-Console.WriteLine("Step 1: Setting up dependency injection...");
-Console.WriteLine("  • Registering LocalEmbeddings (sentence-transformers/all-MiniLM-L6-v2)");
-Console.WriteLine("  • Registering LocalLLMs (Phi-4)");
-Console.WriteLine("  • Registering InMemoryVectorStore");
+Console.WriteLine("This sample demonstrates the foundation of a RAG system:");
+Console.WriteLine("  1. Local embedding generation");
+Console.WriteLine("  2. Document knowledge base");
+Console.WriteLine("  3. Semantic search and retrieval");
+Console.WriteLine();
+Console.WriteLine("NOTE: For a complete RAG sample with local LLM integration,");
+Console.WriteLine("      see the LocalLlmRag sample.");
 Console.WriteLine();
 
-var builder = Host.CreateApplicationBuilder();
+// =============================================================================
+// Step 1: Initialize local embedding generator
+// =============================================================================
+Console.WriteLine("Step 1: Initializing local embedding generator...");
+Console.WriteLine("  Model: sentence-transformers/all-MiniLM-L6-v2");
+Console.WriteLine("  (Model will auto-download on first run)");
+Console.WriteLine();
 
-// Register local embeddings with default model
-builder.Services.AddLocalEmbeddings(opts =>
+var embeddingOptions = new LocalEmbeddingsOptions
 {
-    opts.ModelName = "sentence-transformers/all-MiniLM-L6-v2";
-    opts.EnsureModelDownloaded = true;
-});
+    ModelName = "sentence-transformers/all-MiniLM-L6-v2",
+    EnsureModelDownloaded = true
+};
 
-// Register local LLM (Phi-4)
-builder.Services.AddLocalLLMs(opts =>
-{
-    opts.ModelId = "microsoft/phi-4";
-    opts.EnsureModelDownloaded = true;
-});
+var startTime = DateTime.Now;
+var embedder = await LocalEmbeddingGenerator.CreateAsync(embeddingOptions);
+var loadTime = DateTime.Now - startTime;
 
-// Register InMemoryVectorStore for document storage
-builder.Services.AddInMemoryVectorStore();
-
-var host = builder.Build();
+Console.WriteLine($"✓ Embedding generator ready in {loadTime.TotalSeconds:F2} seconds");
+Console.WriteLine($"  Embedding dimensions: {embedder.Metadata.DefaultModelDimensions}");
+Console.WriteLine();
 
 // =============================================================================
 // Step 2: Create sample documents about .NET topics
@@ -83,175 +81,97 @@ Console.WriteLine();
 // =============================================================================
 // Step 3: Generate embeddings for all documents
 // =============================================================================
-Console.WriteLine("Step 3: Generating embeddings for documents...");
-Console.WriteLine("  (Models will auto-download on first run)");
-Console.WriteLine();
+Console.WriteLine("Step 3: Embedding all documents...");
 
-var embedder = host.Services.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
-var startTime = DateTime.Now;
-
-// Generate embeddings for all documents in batch
-var embeddings = await embedder.GenerateAsync(documents);
-
+startTime = DateTime.Now;
+var documentEmbeddings = await embedder.GenerateAsync(documents);
 var embeddingTime = DateTime.Now - startTime;
-Console.WriteLine($"✓ Generated {embeddings.Count} embeddings in {embeddingTime.TotalSeconds:F2} seconds");
+
+Console.WriteLine($"✓ Generated {documentEmbeddings.Count} embeddings in {embeddingTime.TotalSeconds:F2} seconds");
 Console.WriteLine($"  Average: {embeddingTime.TotalMilliseconds / documents.Count:F1}ms per document");
-Console.WriteLine($"  Embedding dimensions: {embeddings[0].Vector.Length}");
 Console.WriteLine();
 
 // =============================================================================
-// Step 4: Store embeddings in InMemoryVectorStore
+// Step 4: Perform semantic search queries
 // =============================================================================
-Console.WriteLine("Step 4: Storing documents in vector store...");
+Console.WriteLine("Step 4: Demonstrating semantic search...");
+Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+Console.WriteLine();
 
-var vectorStore = host.Services.GetRequiredService<IVectorStore>();
-var collection = vectorStore.GetCollection<string, VectorStoreRecord<string>>("dotnet-docs");
-await collection.CreateCollectionIfNotExistsAsync();
-
-// Store each document with its embedding
-for (var i = 0; i < documents.Count; i++)
+var queries = new[]
 {
-    var record = new VectorStoreRecord<string>
+    "How do I build web applications with .NET?",
+    "What is LINQ and how is it used?",
+    "Tell me about mobile app development in .NET",
+    "How does dependency injection work?"
+};
+
+foreach (var query in queries)
+{
+    Console.WriteLine($"Query: \"{query}\"");
+    Console.WriteLine();
+
+    // Retrieve top-K relevant documents
+    var topK = 3;
+    var results = await embedder.FindClosestAsync(query, documents, documentEmbeddings, topK: topK, minScore: 0.2f);
+
+    Console.WriteLine($"  Retrieved {results.Count} relevant documents:");
+    for (var i = 0; i < results.Count; i++)
     {
-        Key = $"doc_{i}",
-        Vector = embeddings[i].Vector.ToArray(),
-        Data = new Dictionary<string, object?>
-        {
-            ["text"] = documents[i]
-        }
-    };
-    await collection.UpsertAsync(record);
+        var scoreBar = new string('█', (int)(results[i].Score * 15));
+        var emptyBar = new string('░', 15 - (int)(results[i].Score * 15));
+        var preview = results[i].Text.Length > 80 ? results[i].Text[..77] + "..." : results[i].Text;
+        Console.WriteLine($"    [{i + 1}] [{scoreBar}{emptyBar}] {results[i].Score:F4}");
+        Console.WriteLine($"        {preview}");
+    }
+    
+    Console.WriteLine();
+    Console.WriteLine("  → In a complete RAG system, these documents would be sent to an LLM");
+    Console.WriteLine("     for answer generation. See the LocalLlmRag sample for that.");
+    Console.WriteLine();
+    Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    Console.WriteLine();
 }
 
-Console.WriteLine($"✓ Stored {documents.Count} documents in vector store");
+// =============================================================================
+// Step 5: Show similarity comparison between documents
+// =============================================================================
+Console.WriteLine("Step 5: Document similarity matrix...");
 Console.WriteLine();
 
-// =============================================================================
-// Step 5: Accept user query and retrieve relevant documents
-// =============================================================================
-var query = "How do I build web applications with .NET?";
-Console.WriteLine("Step 5: Performing semantic search...");
-Console.WriteLine($"  Query: \"{query}\"");
-Console.WriteLine();
+Console.WriteLine("Comparing first 5 documents with each other:");
+var firstFiveDocs = documents.Take(5).ToList();
+var firstFiveEmbeddings = documentEmbeddings.Take(5).ToList();
 
-// Embed the query
-var queryEmbedding = await embedder.GenerateEmbeddingAsync(query);
-
-// Search for top-K most relevant documents
-var topK = 3;
-var searchResults = await collection.VectorizedSearchAsync(queryEmbedding.Vector, new VectorSearchOptions { Top = topK });
-
-var retrievedDocs = new List<string>();
-Console.WriteLine($"✓ Top {topK} relevant documents:");
-var rank = 1;
-await foreach (var result in searchResults.Results)
+for (var i = 0; i < firstFiveDocs.Count; i++)
 {
-    var text = result.Record.Data["text"]?.ToString() ?? "";
-    var preview = text.Length > 100 ? text[..97] + "..." : text;
-    Console.WriteLine($"  [{rank}] Score: {result.Score:F4}");
-    Console.WriteLine($"      {preview}");
-    retrievedDocs.Add(text);
-    rank++;
+    for (var j = i + 1; j < firstFiveDocs.Count; j++)
+    {
+        var similarity = firstFiveEmbeddings[i].CosineSimilarity(firstFiveEmbeddings[j]);
+        var bar = new string('█', (int)(similarity * 20));
+        var empty = new string('░', 20 - (int)(similarity * 20));
+        
+        var doc1Preview = firstFiveDocs[i].Length > 40 ? firstFiveDocs[i][..37] + "..." : firstFiveDocs[i];
+        var doc2Preview = firstFiveDocs[j].Length > 40 ? firstFiveDocs[j][..37] + "..." : firstFiveDocs[j];
+        
+        Console.WriteLine($"  [{i}] vs [{j}]: [{bar}{empty}] {similarity:F4}");
+        Console.WriteLine($"      {doc1Preview}");
+        Console.WriteLine($"      {doc2Preview}");
+        Console.WriteLine();
+    }
 }
-Console.WriteLine();
 
-// =============================================================================
-// Step 6: Send context + query to local LLM for answer generation
-// =============================================================================
-Console.WriteLine("Step 6: Generating answer with local LLM (Phi-4)...");
-Console.WriteLine();
-
-var chatClient = host.Services.GetRequiredService<IChatClient>();
-
-// Build RAG prompt with retrieved context
-var context = string.Join("\n\n", retrievedDocs.Select((doc, idx) => $"[{idx + 1}] {doc}"));
-var ragPrompt = $"""
-You are a helpful assistant answering questions about .NET development.
-Use the following context to answer the user's question. If the context doesn't contain relevant information, say so.
-
-Context:
-{context}
-
-Question: {query}
-
-Answer:
-""";
-
-// Stream the response from the local LLM
-Console.WriteLine("Answer:");
-await foreach (var chunk in chatClient.CompleteStreamingAsync(ragPrompt))
-{
-    Console.Write(chunk.Text);
-}
-Console.WriteLine();
-Console.WriteLine();
-
-// =============================================================================
-// Step 7: Interactive mode - allow multiple queries
-// =============================================================================
 Console.WriteLine("═══════════════════════════════════════════════════════════════");
-Console.WriteLine("Interactive Mode - Ask your own questions!");
-Console.WriteLine("═══════════════════════════════════════════════════════════════");
-Console.WriteLine();
-
-while (true)
-{
-    Console.Write("Your question (or 'exit' to quit): ");
-    var userQuery = Console.ReadLine();
-    
-    if (string.IsNullOrWhiteSpace(userQuery) || userQuery.Trim().ToLowerInvariant() == "exit")
-    {
-        Console.WriteLine("\nGoodbye!");
-        break;
-    }
-    
-    Console.WriteLine();
-    
-    // Embed user query
-    var userQueryEmbedding = await embedder.GenerateEmbeddingAsync(userQuery);
-    
-    // Search for relevant documents
-    var userSearchResults = await collection.VectorizedSearchAsync(userQueryEmbedding.Vector, new VectorSearchOptions { Top = topK });
-    
-    var userRetrievedDocs = new List<string>();
-    await foreach (var result in userSearchResults.Results)
-    {
-        var text = result.Record.Data["text"]?.ToString() ?? "";
-        userRetrievedDocs.Add(text);
-    }
-    
-    // Build RAG prompt
-    var userContext = string.Join("\n\n", userRetrievedDocs.Select((doc, idx) => $"[{idx + 1}] {doc}"));
-    var userRagPrompt = $"""
-You are a helpful assistant answering questions about .NET development.
-Use the following context to answer the user's question. If the context doesn't contain relevant information, say so.
-
-Context:
-{userContext}
-
-Question: {userQuery}
-
-Answer:
-""";
-    
-    // Generate answer
-    Console.WriteLine("Answer:");
-    await foreach (var chunk in chatClient.CompleteStreamingAsync(userRagPrompt))
-    {
-        Console.Write(chunk.Text);
-    }
-    Console.WriteLine();
-    Console.WriteLine();
-}
-
 Console.WriteLine();
 Console.WriteLine("╔═══════════════════════════════════════════════════════════════╗");
-Console.WriteLine("║                    Zero-Cloud RAG Complete!                    ║");
+Console.WriteLine("║           Zero-Cloud RAG Foundation Complete!                  ║");
 Console.WriteLine("║                                                                ║");
 Console.WriteLine("║  This sample demonstrated:                                     ║");
 Console.WriteLine("║  ✓ Local embedding generation (no API calls)                   ║");
-Console.WriteLine("║  ✓ In-memory vector storage                                    ║");
-Console.WriteLine("║  ✓ Semantic search with cosine similarity                      ║");
-Console.WriteLine("║  ✓ Local LLM inference (Phi-4)                                 ║");
-Console.WriteLine("║  ✓ Complete RAG pipeline without cloud dependencies            ║");
+Console.WriteLine("║  ✓ Semantic search with FindClosestAsync                       ║");
+Console.WriteLine("║  ✓ Document similarity comparison                              ║");
+Console.WriteLine("║  ✓ RAG retrieval pipeline (without LLM)                        ║");
+Console.WriteLine("║  ✓ 100% offline - all processing done locally                  ║");
+Console.WriteLine("║                                                                ║");
+Console.WriteLine("║  Next step: See LocalLlmRag sample for LLM integration!        ║");
 Console.WriteLine("╚═══════════════════════════════════════════════════════════════╝");

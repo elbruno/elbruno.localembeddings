@@ -1,21 +1,22 @@
 # MCP Tool Router Sample
 
-Demonstrates semantic tool discovery and routing using the Model Context Protocol (MCP) with local embeddings.
+Demonstrates semantic tool discovery and routing using local embeddings to implement Model Context Protocol (MCP) tool selection patterns.
 
 ## What This Sample Does
 
-This sample shows how to use `ElBruno.ModelContextProtocol.MCPToolRouter` to:
+This sample shows how to use `ElBruno.LocalEmbeddings` to build a semantic tool router:
 
-1. **Create MCP tool definitions** with names, descriptions, and parameters
+1. **Create MCP tool definitions** with names and descriptions
 2. **Index tools** using semantic embeddings (no manual keyword tagging needed)
-3. **Route natural language queries** to the most relevant tools using similarity search
+3. **Route natural language queries** to the most relevant tools using cosine similarity
 4. **Provide confidence scores** for routing decisions
 5. **Support interactive queries** to test tool discovery in real-time
+
+Note: This sample demonstrates the MCP tool routing pattern using LocalEmbeddings directly. For production use, consider dedicated routing packages.
 
 ## Technologies Used
 
 - **ElBruno.LocalEmbeddings** — Local embedding generation with ONNX Runtime
-- **ElBruno.ModelContextProtocol.MCPToolRouter** — Semantic tool routing and discovery
 
 ## Prerequisites
 
