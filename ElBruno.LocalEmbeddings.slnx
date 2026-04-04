@@ -13,10 +13,13 @@
     <Project Path="samples/RagChat/RagChat.csproj" />
     <Project Path="samples/RagFoundryLocal/RagFoundryLocal.csproj" />
     <Project Path="samples/RagOllama/RagOllama.csproj" />
+    <Project Path="samples/LocalLlmRag/LocalLlmRag.csproj" />
+    <Project Path="samples/McpToolRouter/McpToolRouter.csproj" />
     <Project Path="samples/NpuBenchmarkSample/NpuBenchmarkSample.csproj" />
     <Project Path="samples/IntelNpuWorker/IntelNpuWorker.csproj" />
     <Project Path="samples/DirectMLNpuWorker/DirectMLNpuWorker.csproj" />
     <Project Path="samples/VisionMemoryAgentSample/VisionMemoryAgentSample.csproj" />
+    <Project Path="samples/ZeroCloudRag/ZeroCloudRag.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj" />

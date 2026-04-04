@@ -5,6 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
     <PackageId>ElBruno.LocalEmbeddings</PackageId>
     <Description>Local embedding generation using Microsoft.Extensions.AI and ONNX Runtime</Description>
     <Authors>Bruno Capuano</Authors>
@@ -26,6 +28,7 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.5" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.24.4" />
     <PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.5" />
     <PackageReference Include="System.Numerics.Tensors" Version="10.0.5" />
   </ItemGroup>
 

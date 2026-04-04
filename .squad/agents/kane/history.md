@@ -37,3 +37,15 @@
 - Pattern established: `InMemoryVectorStore` takes `IEmbeddingGenerator<string, Embedding<float>>` via constructor for DI
 - Demonstrated batch embedding generation with progress callbacks
 - Used `serviceProvider.GetRequiredService<>()` to resolve both the embedding generator and vector store from DI
+
+### 2026-04-04: Embedding Cache and Multi-Model Comparison Tool
+- Implemented `CachingEmbeddingDecorator` as an `IEmbeddingGenerator<string, Embedding<float>>` decorator
+- Cache uses SHA-256 hash of input text as keys for thread-safe lookup via `ConcurrentDictionary<string, Embedding<float>>`
+- LRU eviction policy tracks insertion order using `ConcurrentQueue<string>`, evicting oldest entries when `MaxSize` is reached
+- Smart batch handling: checks cache for each input, only generates embeddings for uncached items, then merges results
+- `EmbeddingCacheOptions` controls cache behavior: `Enabled` (default: false) and `MaxSize` (default: 10,000)
+- Added `AddLocalEmbeddingsWithCache` DI extension that registers both `LocalEmbeddingGenerator` and the optional cache decorator
+- Implemented `EmbeddingComparer` for evaluating multiple embedding models on the same dataset
+- Comparer computes all pairwise cosine similarities and returns statistics (avg, min, max) per model
+- Both implementations follow existing patterns: file-scoped namespaces, XML comments, proper disposal patterns
+
