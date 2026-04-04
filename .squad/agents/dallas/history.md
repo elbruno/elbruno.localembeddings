@@ -76,3 +76,37 @@ Four high-value, low-effort improvements implemented:
 4. **Metadata via GetService**:
    - Updated `GetService<TService>()` to return `Metadata` when `TService` is `EmbeddingGeneratorMetadata`
    - Allows accessing metadata through `IEmbeddingGenerator` interface without casting
+
+### 2026-02-13: Package Dependency Updates (April 2026 Latest)
+
+Updated all NuGet package references to their latest stable versions as of April 2026:
+
+**Core Library Packages:**
+- `Microsoft.Extensions.AI.Abstractions`: 10.3.0 → 10.4.1
+- `Microsoft.ML.OnnxRuntime`: 1.24.3 → 1.24.4 (all variants: base, DirectML, QNN)
+- `System.Numerics.Tensors`: 9.0.3 → 10.0.5
+- `ElBruno.HuggingFace.Downloader`: 0.5.0 → 0.6.0
+- All `Microsoft.Extensions.*` packages: 10.0.3 → 10.0.5
+- `Microsoft.Extensions.VectorData.Abstractions`: 9.7.0 → 10.1.0
+
+**Test Packages:**
+- `Microsoft.NET.Test.Sdk`: 17.14.1 → 18.3.0
+- `coverlet.collector`: 6.0.4 → 8.0.1
+- `xunit.runner.visualstudio`: 3.1.4 → 3.1.5
+- `Xunit.SkippableFact`: 1.5.23 → 1.5.61
+
+**Sample/Benchmark Packages:**
+- `BenchmarkDotNet`: 0.14.0 → 0.15.8
+- `Spectre.Console`: 0.49.1 → 0.55.0
+- `OllamaSharp`: 5.4.16 → 5.4.25
+- `OpenAI`: 2.8.0 → 2.10.0
+- `Microsoft.Agents.AI`: 1.0.0-rc1 → 1.0.0
+- `Microsoft.Extensions.AI.OpenAI`: 10.3.0 → 10.4.1
+- `System.Management`: 9.0.3 → 10.0.5
+
+**Important Notes:**
+- `Microsoft.AI.Foundry.Local` kept at 0.1.0 (not updated to 0.9.0) due to breaking API changes — version 0.9.0 removed the `StartModelAsync` method that the RagFoundryLocal sample depends on
+- `Intel.ML.OnnxRuntime.OpenVino` kept at 1.24.1 (uses separate versioning from main ORT packages due to standalone runtime)
+- All updates verified: solution builds successfully, all 138 tests pass across both net8.0 and net10.0 targets
+- Package version updates grouped in commits with Ripley (core/test packages) and Dallas (sample/benchmark packages)
+
