@@ -130,6 +130,61 @@ public class InMemoryVectorStoreTests
         Assert.Contains("VectorStoreVector", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task ListCollectionNamesAsync_ReturnsCreatedCollections()
+    {
+        var store = new InMemoryVectorStore();
+
+        // Create some collections
+        _ = store.GetCollection<int, ProductRecord>("alpha");
+        _ = store.GetCollection<int, ProductRecord>("beta");
+        _ = store.GetCollection<int, ProductRecord>("gamma");
+
+        var names = await ToListAsync(store.ListCollectionNamesAsync());
+
+        Assert.Equal(3, names.Count);
+        Assert.Contains("alpha", names);
+        Assert.Contains("beta", names);
+        Assert.Contains("gamma", names);
+    }
+
+    [Fact]
+    public async Task CollectionExistsAsync_ReturnsTrue_AfterEnsure()
+    {
+        var store = new InMemoryVectorStore();
+
+        // Before creation
+        bool existsBefore = await store.CollectionExistsAsync("products");
+        Assert.False(existsBefore);
+
+        // Create the collection via GetCollection
+        _ = store.GetCollection<int, ProductRecord>("products");
+
+        // After creation
+        bool existsAfter = await store.CollectionExistsAsync("products");
+        Assert.True(existsAfter);
+    }
+
+    [Fact]
+    public async Task EnsureCollectionDeletedAsync_RemovesCollection()
+    {
+        var store = new InMemoryVectorStore();
+
+        // Create and verify existence
+        _ = store.GetCollection<int, ProductRecord>("products");
+        Assert.True(await store.CollectionExistsAsync("products"));
+
+        // Delete
+        await store.EnsureCollectionDeletedAsync("products");
+
+        // Verify removal
+        Assert.False(await store.CollectionExistsAsync("products"));
+
+        // Listing should not include the deleted collection
+        var names = await ToListAsync(store.ListCollectionNamesAsync());
+        Assert.DoesNotContain("products", names);
+    }
+
     private static async Task<List<T>> ToListAsync<T>(IAsyncEnumerable<T> source)
     {
         var result = new List<T>();

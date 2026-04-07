@@ -25,6 +25,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.KernelMemory.Abstractions" Version="0.98.250508.3" />
     <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.98.250508.3" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.4.1" />
   </ItemGroup>
 
   <ItemGroup>

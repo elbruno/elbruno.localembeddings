@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings\ElBruno.LocalEmbeddings.csproj" />
+    <ProjectReference Include="..\..\src\ElBruno.LocalEmbeddings.Harrier\ElBruno.LocalEmbeddings.Harrier.csproj" />
   </ItemGroup>
 
 </Project>

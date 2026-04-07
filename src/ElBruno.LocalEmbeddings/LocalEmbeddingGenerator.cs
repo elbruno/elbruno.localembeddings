@@ -21,7 +21,10 @@ namespace ElBruno.LocalEmbeddings;
 public sealed class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>, IAsyncDisposable
 {
     private static readonly string[] QuantizedModelFileNames = ["model_quantized.onnx", "model_int8.onnx"];
-    private static readonly HttpClient SharedModelDownloadHttpClient = new();
+    private static readonly HttpClient SharedModelDownloadHttpClient = new(new SocketsHttpHandler
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+    });
     private readonly OnnxEmbeddingModel _model;
     private readonly Tokenizer _tokenizer;
     private readonly EmbeddingGeneratorMetadata _metadata;

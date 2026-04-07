@@ -6,11 +6,13 @@
     <Project Path="samples/BenchmarkSample/BenchmarkSample.csproj" />
     <Project Path="samples/ConsoleApp/ConsoleApp.csproj" />
     <Project Path="samples/ConsoleAppLite/ConsoleAppLite.csproj" />
+    <Project Path="samples/HarrierConsoleApp/HarrierConsoleApp.csproj" />
     <Project Path="samples/HelloWorldAltModel/HelloWorldAltModel.csproj" />
     <Project Path="samples/ImageRagChat/ImageRagChat.csproj" />
     <Project Path="samples/ImageRagSimple/ImageRagSimple.csproj" />
     <Project Path="samples/RaspberryPiTiny/RaspberryPiTiny.csproj" />
     <Project Path="samples/RagChat/RagChat.csproj" />
+    <Project Path="samples/DocumentRagFoundry/DocumentRagFoundry.csproj" />
     <Project Path="samples/RagFoundryLocal/RagFoundryLocal.csproj" />
     <Project Path="samples/RagOllama/RagOllama.csproj" />
     <Project Path="samples/LocalLlmRag/LocalLlmRag.csproj" />
@@ -30,6 +32,7 @@
     <Project Path="src/ElBruno.LocalEmbeddings.Npu.Qualcomm/ElBruno.LocalEmbeddings.Npu.Qualcomm.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.Npu.Intel/ElBruno.LocalEmbeddings.Npu.Intel.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.VectorData/ElBruno.LocalEmbeddings.VectorData.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.Harrier/ElBruno.LocalEmbeddings.Harrier.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj" />
@@ -39,5 +42,7 @@
     <Project Path="tests/ElBruno.LocalEmbeddings.Npu.Qualcomm.Tests/ElBruno.LocalEmbeddings.Npu.Qualcomm.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.Npu.Intel.Tests/ElBruno.LocalEmbeddings.Npu.Intel.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.VectorData.Tests/ElBruno.LocalEmbeddings.VectorData.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.Harrier.Tests/ElBruno.LocalEmbeddings.Harrier.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.SharedModelTests/ElBruno.LocalEmbeddings.SharedModelTests.csproj" />
   </Folder>
 </Solution>

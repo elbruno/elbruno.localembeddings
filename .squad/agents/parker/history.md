@@ -101,6 +101,71 @@ Lambert provided comprehensive test coverage for all performance work across Pha
 
 Key cross-agent note: Lambert's Phase 3 parity tests use the public extension method API (`using ElBruno.LocalEmbeddings.Extensions`). Signature is `FindClosest(Embedding<float> query, IReadOnlyList<Embedding<float>> corpus, int topK, float? minScore)`. Any future signature change will break these tests.
 
+### 2025-07-17: Harrier Package Performance Analysis (Analysis Only)
+
+**Scope:** Full performance review of `src/ElBruno.LocalEmbeddings.Harrier/` — 4 source files, 1 csproj, compared against base library patterns.
+
+**Key findings (23 total: 2 HIGH, 10 MEDIUM, 2 LOW, 9 GOOD):**
+
+**HIGH:**
+1. Default `MaxSequenceLength = 8192` causes ~128 KB allocation per text in `Tokenize()` (vs. 8 KB in base library with 512). At batch=100, this is ~12.8 MB of `long[]` GC pressure per call. Dynamic sequence-length padding or ArrayPool for tokenizer output would fix this.
+2. Zero benchmarks exist for Harrier in `benchmarks/`. Five benchmark classes recommended: HarrierTokenizerBenchmarks, HarrierEmbeddingGenerationBenchmarks, HarrierModelLoadingBenchmarks, HarrierExtractEmbeddingsBenchmarks, HarrierVsBaseBenchmarks.
+
+**Notable MEDIUM findings:**
+- Instruction prefix string concatenation allocates ~500 bytes per Tokenize call
+- `CountTokens` wastes 64 KB (unused `inputIds` array) per call
+- SHA-256 computed twice when `ExpectedHash` is set (double-reads 500 MB for FP32)
+- No `SemaphoreSlim` download lock (race on concurrent `EnsureModelAsync`)
+- Static `SharedModelDownloadHttpClient` missing `SocketsHttpHandler` (SEC-002 gap)
+- `outputTensor.Dimensions.ToArray()` allocates unnecessarily in `ExtractEmbeddings`
+
+**What's well-optimized:**
+- ArrayPool usage matches base library (PERF-01 pattern)
+- Session options follow PERF-03/15/16 patterns
+- Tokenizer parsed once, singleton reuse
+- `IList<string>` pattern from PERF-12/13
+- Async `CreateAsync` pattern correct
+- ExtractEmbeddings uses Span slicing (no mean pooling needed — baked into ONNX graph)
+
+**Report:** `.squad/decisions/inbox/parker-perf-review.md`
+
+### 2025-07-17: Harrier Benchmarks + Cleanup (4-Item Sprint)
+
+**Scope:** 4 items — Harrier benchmarks, slnx cleanup, NPU dir cleanup, OnnxRuntime bump.
+
+**1. Harrier Benchmarks Created (perf-harrier-benchmarks)**
+
+3 new benchmark classes added to `benchmarks/ElBruno.LocalEmbeddings.Benchmarks/`:
+
+- `HarrierTokenizerBenchmarks` — 6 benchmarks: short/long text, batch-10, with/without prefix, CountTokens. Measures the 128 KB allocation per Tokenize() call (PERF-HIGH-1 from review) and instruction prefix concatenation overhead (PERF-MEDIUM).
+- `HarrierEmbeddingBenchmarks` — 3 benchmarks: single, batch-10, batch-100. End-to-end throughput through HarrierEmbeddingGenerator.
+- `HarrierVsBaseBenchmarks` — 2 benchmarks: base MiniLM vs Harrier single-embed head-to-head.
+
+`BenchmarkHelpers.TryResolveHarrierModelDirectory()` added — resolves Harrier cache at `%LOCALAPPDATA%\ElBruno\LocalEmbeddings\models\onnx-community_harrier-oss-v1-270m-ONNX`. CI-safe: all benchmarks no-op when model not cached.
+
+Harrier project reference added to benchmark csproj.
+
+**2. slnx Cleanup (cleanup-slnx)**
+
+Added `samples/DocumentRagFoundry/DocumentRagFoundry.csproj` to `/samples/` folder in slnx. `NpuBenchmarkSample` skipped — no .csproj file present.
+
+**3. NPU Directory Cleanup (cleanup-npu-dirs)**
+
+All 6 NPU directories removed entirely (contained only bin/obj artifacts, zero .cs or .csproj files):
+- `src/ElBruno.LocalEmbeddings.Npu/`, `.Npu.Intel/`, `.Npu.Qualcomm/`
+- `tests/ElBruno.LocalEmbeddings.Npu.Tests/`, `.Npu.Intel.Tests/`, `.Npu.Qualcomm.Tests/`
+
+No slnx references existed for these — clean removal.
+
+**4. OnnxRuntime Bump 1.24.2 → 1.24.4 (cleanup-onnxruntime-bump)**
+
+Updated 4 csproj files:
+- `src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj`
+- `src/ElBruno.LocalEmbeddings.ImageEmbeddings/ElBruno.LocalEmbeddings.ImageEmbeddings.csproj`
+- `tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj`
+- `tests/ElBruno.LocalEmbeddings.Harrier.Tests/ElBruno.LocalEmbeddings.Harrier.Tests.csproj`
+
+**Build result:** `dotnet build` — 0 warnings, 0 errors. `dotnet test` — 0 failures across all test projects.
 ### 2026-04-04: M.E.AI Middleware Extensions + Batch Size Auto-Tuning Implemented
 
 **Features 4.1 and 5.3 from roadmap delivered**

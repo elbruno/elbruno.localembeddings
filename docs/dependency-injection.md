@@ -80,7 +80,113 @@ public sealed class MyService
 
 ---
 
-## Kernel Memory Integration
+## Multi-Model Scenarios: DI Registration Conflicts
+
+### Registration conflict when using both base and Harrier
+
+Both `AddLocalEmbeddings()` and `AddHarrierEmbeddings()` register the same interface: `IEmbeddingGenerator<string, Embedding<float>>`.
+
+```csharp
+// ⚠️ Only ONE of these registrations will "win"
+services.AddLocalEmbeddings();                // Registers base (MiniLM)
+services.AddHarrierEmbeddings();              // Tries to register Harrier — SKIPPED
+
+// Result: IEmbeddingGenerator resolves to LocalEmbeddingGenerator (MiniLM)
+// Harrier is NOT registered.
+```
+
+Both extensions use `TryAddSingleton`, which means **the first registration wins** — subsequent registrations are silently ignored.
+
+### Solutions for multi-model scenarios
+
+#### Option 1: Use keyed services (recommended for .NET 8+)
+
+```csharp
+services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>(
+    "miniLm",
+    (sp, _) => new LocalEmbeddingGenerator(new LocalEmbeddingsOptions()));
+
+services.AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>(
+    "harrier",
+    async (sp, _) => await HarrierEmbeddingGenerator.CreateAsync());
+
+// Resolve explicitly:
+var miniLm = sp.GetRequiredKeyedService<IEmbeddingGenerator<string, Embedding<float>>>("miniLm");
+var harrier = sp.GetRequiredKeyedService<IEmbeddingGenerator<string, Embedding<float>>>("harrier");
+```
+
+#### Option 2: Register one via DI, create the other explicitly
+
+```csharp
+// Register the primary model via DI
+services.AddLocalEmbeddings();
+
+// Create the secondary model manually when needed
+var harrier = await HarrierEmbeddingGenerator.CreateAsync();
+```
+
+#### Option 3: Use wrapper service
+
+```csharp
+// Register a custom service that holds both
+public sealed class EmbeddingService
+{
+    public EmbeddingService(
+        IEmbeddingGenerator<string, Embedding<float>> miniLm,
+        HarrierEmbeddingGenerator harrier)
+    {
+        MiniLm = miniLm;
+        Harrier = harrier;
+    }
+
+    public IEmbeddingGenerator<string, Embedding<float>> MiniLm { get; }
+    public HarrierEmbeddingGenerator Harrier { get; }
+}
+
+services.AddLocalEmbeddings();
+services.AddSingleton(async sp => 
+    await HarrierEmbeddingGenerator.CreateAsync());
+services.AddSingleton<EmbeddingService>();
+```
+
+Inject `EmbeddingService` to access both generators.
+
+---
+
+### Harrier Integration
+
+The companion package `ElBruno.LocalEmbeddings.Harrier` adds support for Microsoft Harrier-OSS-v1, the #1-ranked embedding model on MTEB-v2.
+
+```bash
+dotnet add package ElBruno.LocalEmbeddings.Harrier
+```
+
+`AddHarrierEmbeddings()` provides the same DI overloads as the base library:
+
+```csharp
+using ElBruno.LocalEmbeddings.Harrier.Extensions;
+
+// 1) Basic
+services.AddHarrierEmbeddings();
+
+// 2) Configure with delegate
+services.AddHarrierEmbeddings(options =>
+{
+    options.ModelVariant = HarrierModelVariant.Q4;
+});
+
+// 3) Pre-built options
+services.AddHarrierEmbeddings(new HarrierEmbeddingsOptions { /* ... */ });
+
+// 4) IConfiguration binding
+services.AddHarrierEmbeddings(configuration.GetSection("HarrierEmbeddings"));
+```
+
+Harrier generates **640-dimensional** embeddings (vs. 384-dim for MiniLM) and is instruction-tuned for better quality. See [Harrier Integration](harrier-integration.md) for the full guide.
+
+**⚠️ Important:** If you switch from MiniLM to Harrier, **vector stores must be re-indexed** due to dimension mismatch. See [Migration from MiniLM to Harrier](harrier-integration.md#migrating-from-minilm-to-harrier).
+
+---
 
 The companion package `ElBruno.LocalEmbeddings.KernelMemory` adds DI extensions that register both the M.E.AI `IEmbeddingGenerator` and Kernel Memory's `ITextEmbeddingGenerator` from a single call.
 

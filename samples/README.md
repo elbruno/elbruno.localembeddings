@@ -1,6 +1,6 @@
 # Samples — ElBruno.LocalEmbeddings
 
-Eight sample projects demonstrating LocalEmbeddings from basic usage to full RAG with a local LLM.
+Sixteen sample projects demonstrating LocalEmbeddings from basic usage to full RAG with a local LLM, including multilingual support with Harrier and image-based retrieval with CLIP.
 
 ## Overview
 
@@ -10,10 +10,17 @@ Eight sample projects demonstrating LocalEmbeddings from basic usage to full RAG
 | [RaspberryPiTiny](#raspberrypitiny) | Ultra-small sample for Raspberry Pi and low-memory devices | No |
 | [ConsoleAppLite](#consoleapplite) | Lightweight menu sample for low-resource devices | No |
 | [ConsoleApp](#consoleapp) | Embedding basics: generation, similarity, search, DI | No |
+| [HarrierConsoleApp](#harrierconsoleapp) | Harrier model: basic usage, batching, similarity, token counting | No |
 | [BenchmarkSample](#benchmarksample) | BenchmarkDotNet performance suite with cross-platform baselines | No |
 | [RagChat](#ragchat) | Semantic search Q&A over an in-memory FAQ dataset | No |
 | [RagOllama](#ragollama) | Full RAG chat using Ollama with phi4-mini + Kernel Memory | Yes (Ollama) |
 | [RagFoundryLocal](#ragfoundrylocal) | Full RAG chat using Foundry Local with phi4-mini | Yes (Foundry Local) |
+| [DocumentRagFoundry](#documentragfoundry) | Document RAG with Foundry Local for retrieval and generation | Yes (Foundry Local) |
+| [ImageRagSimple](#imageragsimple) | Minimal image RAG: index images → search by text | No |
+| [ImageRagChat](#imageragchat) | Interactive image RAG chat with text and image-to-image search | No |
+| [VisionMemoryAgentSample](#visionmemoryagentsample) | Agentic image search with memory persistence | No |
+| [BenchmarkSample](#benchmarksample) | Cross-platform embedding & tokenizer benchmarks | No |
+| [NpuBenchmarkSample](#npubenchmarksample) | Performance benchmarking for NPU (Neural Processing Unit) hardware | No |
 
 ---
 
@@ -116,6 +123,32 @@ dotnet run --project samples/RaspberryPiTiny -- sim
 
 ```bash
 dotnet run --project samples/ConsoleApp
+```
+
+---
+
+## HarrierConsoleApp
+
+Demonstrates **Microsoft Harrier-OSS-v1**, the higher-quality multilingual alternative to the default MiniLM model.
+
+Walks through 6 progressive examples:
+
+1. Load the Harrier model (640-dimensional embeddings)
+2. Generate embeddings for multilingual texts
+3. Batch-embed with progress reporting
+4. Compare texts with cosine similarity
+5. Semantic search with instruction prefixes
+6. Count tokens with the Harrier tokenizer
+
+### Prerequisites
+
+- .NET 10 SDK
+- Internet access (model downloads on first run; ~270 MB)
+
+### Run
+
+```bash
+dotnet run --project samples/HarrierConsoleApp
 ```
 
 ---
@@ -306,6 +339,29 @@ This approach gives you **full control** over the retrieval and prompt-building 
 
 ```bash
 dotnet run --project samples/RagFoundryLocal
+```
+
+---
+
+## DocumentRagFoundry
+
+Document-based **Retrieval-Augmented Generation** using **Foundry Local** with `LocalEmbeddingGenerator` for semantic search over a document corpus.
+
+- **Embeddings:** `LocalEmbeddingGenerator` (all-MiniLM-L6-v2, local ONNX)
+- **LLM:** Foundry Local phi4-mini for document-aware answer generation
+- **Flow:** Index a collection of documents → search by query → retrieve relevant chunks → generate answers with LLM context
+- **Use case:** Q&A system over knowledge bases, technical docs, FAQs, etc.
+
+### Prerequisites
+
+1. .NET 10 SDK
+2. [Foundry Local](https://learn.microsoft.com/en-us/azure/ai-foundry/foundry-local/overview) installed
+3. Sample documents (included in the project)
+
+### Run
+
+```bash
+dotnet run --project samples/DocumentRagFoundry
 ```
 
 ---
