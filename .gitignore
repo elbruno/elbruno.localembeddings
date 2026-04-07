@@ -122,3 +122,6 @@ BenchmarkDotNet.Artifacts/
 
 # Publish output
 publish/
+
+# Language server / IDE cache files
+*.lscache
