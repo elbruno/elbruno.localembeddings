@@ -1,0 +1,63 @@
+name: Auto Release on Library Change
+
+# Fires when any library source is pushed to main.
+# Computes the next patch version from the latest tag and creates a GitHub
+# release, which in turn triggers publish.yml to push all NuGet packages.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+
+permissions:
+  contents: write
+
+jobs:
+  auto-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (full history for tag detection)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if HEAD is already tagged
+        id: check_tag
+        run: |
+          TAG=$(git tag --points-at HEAD | head -n1)
+          if [[ -n "$TAG" ]]; then
+            echo "HEAD is already tagged as '$TAG' — skipping auto-release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compute next patch version
+        if: steps.check_tag.outputs.skip == 'false'
+        id: next_version
+        run: |
+          # Find the highest semver tag of the form v<major>.<minor>.<patch>
+          LATEST=$(git tag --list 'v[0-9]*' --sort=-version:refname | head -n1)
+          if [[ -z "$LATEST" ]]; then
+            NEXT="v1.0.0"
+          else
+            VERSION="${LATEST#v}"
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+            PATCH=$(echo "$VERSION" | cut -d. -f3 | cut -d- -f1)
+            NEXT="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "📦 Next release tag: $NEXT"
+
+      - name: Create GitHub release
+        if: steps.check_tag.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.next_version.outputs.next }}" \
+            --title "${{ steps.next_version.outputs.next }}" \
+            --notes "Automated release — library change detected in \`src/\`." \
+            --latest
