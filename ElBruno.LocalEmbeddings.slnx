@@ -6,6 +6,7 @@
     <Project Path="samples/BenchmarkSample/BenchmarkSample.csproj" />
     <Project Path="samples/ConsoleApp/ConsoleApp.csproj" />
     <Project Path="samples/ConsoleAppLite/ConsoleAppLite.csproj" />
+    <Project Path="samples/HarrierConsoleApp/HarrierConsoleApp.csproj" />
     <Project Path="samples/HelloWorldAltModel/HelloWorldAltModel.csproj" />
     <Project Path="samples/ImageRagChat/ImageRagChat.csproj" />
     <Project Path="samples/ImageRagSimple/ImageRagSimple.csproj" />
@@ -21,11 +22,14 @@
     <Project Path="src/ElBruno.LocalEmbeddings.ImageEmbeddings/ElBruno.LocalEmbeddings.ImageEmbeddings.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.KernelMemory/ElBruno.LocalEmbeddings.KernelMemory.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.VectorData/ElBruno.LocalEmbeddings.VectorData.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.Harrier/ElBruno.LocalEmbeddings.Harrier.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.ImageEmbeddings.Tests/ElBruno.LocalEmbeddings.ImageEmbeddings.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.KernelMemory.Tests/ElBruno.LocalEmbeddings.KernelMemory.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.VectorData.Tests/ElBruno.LocalEmbeddings.VectorData.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.Harrier.Tests/ElBruno.LocalEmbeddings.Harrier.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.SharedModelTests/ElBruno.LocalEmbeddings.SharedModelTests.csproj" />
   </Folder>
 </Solution>
