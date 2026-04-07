@@ -86,6 +86,24 @@ Lambert provided complete test coverage for all 9 security findings across Phase
 
 Pattern established by Lambert: zero-byte placeholder files isolate specific constructor guards in multi-parameter constructors (e.g., `ClipTextEncoder_NonExistentVocabFile` creates a real model file to pass the first check, then provides a missing vocabPath).
 
+### 2026-06-01: Harrier Package Security Audit
+
+**Scope:** Full repository with focus on `ElBruno.LocalEmbeddings.Harrier` (new package).
+
+**Key findings (6 total — 0 critical, 2 medium, 4 low):**
+- **SEC-H02 (MEDIUM):** `HarrierModelDownloader` writes SHA-256 sidecars after download but never reads/verifies them on cache hit. Base library has `SidecarHashValid()` — Harrier does not. Integrity verification is write-only.
+- **SEC-H03 (MEDIUM):** No `ConcurrentDictionary<string, SemaphoreSlim>` download lock in Harrier. Base `ModelDownloader` serializes concurrent downloads for the same model directory; Harrier does not.
+- **SEC-H01 (LOW):** OnnxRuntime 1.24.2 behind latest 1.24.4. No security CVEs, but maintenance bump recommended.
+- **SEC-H04 (LOW):** `Directory.GetFiles(onnxSubDir)` moves all files from onnx/ subdirectory (no filter). Base library filters to `*.onnx`. Intentional for `_data` files but wider than needed.
+- **SEC-H05 (LOW):** No file size guard on `tokenizer.json` before parsing. Base library's `ClipTokenizer` has 50 MB guard; Harrier has none.
+- **SEC-H06 (LOW):** `.onnx_data` external weight files receive no sidecar hash verification.
+
+**Positive findings (14):** Zero CVEs, HTTPS enforced, path traversal guard present, safe JSON parsing (JsonDocument, no deserialization), comprehensive input validation on all public APIs, MaxSequenceLength enforced, CancellationToken threaded through all APIs, no secrets in source, .gitignore covers sensitive patterns.
+
+**Static HttpClient note:** `HarrierEmbeddingGenerator.SharedModelDownloadHttpClient` uses bare `new HttpClient()` without `SocketsHttpHandler`, same pattern as base library's `LocalEmbeddingGenerator`. Both bypass the handler fix applied to parameterless `ModelDownloader()` constructor.
+
+**Report written to:** `.squad/decisions/inbox/ash-security-audit.md`
+
 ### 2026-06-XX: Phase 4 Security Polish Implemented
 
 **SEC-002 (HttpClient socket exhaustion):**

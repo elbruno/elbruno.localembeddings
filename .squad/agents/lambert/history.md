@@ -109,3 +109,25 @@ Parker completed all actionable performance phases:
 - `ImageSearchEngineNullGuardTests.cs` — SEC-005, 6 tests (1 passes, 5 skipped pending real ONNX files)
 - **Total new tests: 34 — 29 pass, 5 skip on both net8.0 and net10.0 (0 failures)**
 
+### 2026-02-28: Full Repository Test Coverage Analysis
+
+**Scope:** All 9 test projects, all source packages. ~558 total test invocations (across net8.0 + net10.0 TFMs).
+
+**Key findings:**
+
+1. **Harrier is the weakest package** — 27 tests, all unit-level guard clauses. Zero integration tests. No test of actual tokenization output, real tokenizer.json parsing, embedding generation, instruction prefix behavior, DI registration, or disposal. This is the #1 gap in the entire repository.
+
+2. **Base library (LocalEmbeddings.Tests) is strong** — 120+ tests covering security, hashing, mean pooling, search parity, tokenizer, generator, and DI. Minor gaps: `CountTokens`, `DisposeAsync`, progress overload of `CreateAsync`.
+
+3. **SharedModelTests cross-lingual threshold `> 0.0` is meaningless** — random vectors can have positive cosine similarity. Should be raised to `> 0.3` minimum. Missing dissimilar-sentence tests for 6 of 9 languages.
+
+4. **No concurrency tests exist anywhere** — ONNX sessions are claimed thread-safe, but no test runs multiple `GenerateAsync` calls simultaneously on the same instance.
+
+5. **CancellationToken propagation** tested only in `ModelDownloader`. No generator or tokenizer cancellation tests.
+
+6. **NPU projects (3 source + 3 test) and ImageEmbeddings.Downloader are empty scaffolds** — no action needed.
+
+7. **Recommended: 63 new tests** — 4 P0 (critical), 41 P1 (important), 18 P2 (nice-to-have). Harrier alone needs 18 new tests.
+
+**Report written to:** `.squad/decisions/inbox/lambert-test-coverage-review.md`
+

@@ -53,6 +53,16 @@
 - Special token IDs exposed: `PaddingTokenId`, `ClassificationTokenId`, `SeparatorTokenId`
 - Thread-safe after initialization
 
+### 2026-02-28: Harrier Package Code Review
+
+- Reviewed full `src/ElBruno.LocalEmbeddings.Harrier/` implementation against base library patterns
+- **HarrierOnnxEmbeddingModel:** ArrayPool + tensor construction correct. Missing Linux ONNX alias workaround and DllNotFoundException handling from base library.
+- **HarrierTokenizer:** Manual BPE tokenizer construction from tokenizer.json. KEY RISK: SentencePiece normalizer (space→▁) may not be applied by `BpeTokenizer.Create`. Index-out-of-bounds bug when maxLength=1.
+- **HarrierModelDownloader:** Missing concurrent download serialization (base uses `ConcurrentDictionary<SemaphoreSlim>`). No sidecar hash verification on cache hit (SEC-001 gap). `.onnx_data` companion not checked on cache hit.
+- **HarrierEmbeddingGenerator:** Clean async factory pattern. No sync constructor (better than base). DI path still has sync-over-async risk.
+- **Code duplication candidates:** SHA-256 helpers, path traversal guards, SessionOptions construction, GenerateAsync boilerplate — all duplicated between base and Harrier.
+- Full report written to `.squad/decisions/inbox/dallas-harrier-code-review.md`
+
 ### 2026-02-13: Quick Wins Implementation
 
 Four high-value, low-effort improvements implemented:

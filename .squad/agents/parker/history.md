@@ -101,3 +101,31 @@ Lambert provided comprehensive test coverage for all performance work across Pha
 
 Key cross-agent note: Lambert's Phase 3 parity tests use the public extension method API (`using ElBruno.LocalEmbeddings.Extensions`). Signature is `FindClosest(Embedding<float> query, IReadOnlyList<Embedding<float>> corpus, int topK, float? minScore)`. Any future signature change will break these tests.
 
+### 2025-07-17: Harrier Package Performance Analysis (Analysis Only)
+
+**Scope:** Full performance review of `src/ElBruno.LocalEmbeddings.Harrier/` — 4 source files, 1 csproj, compared against base library patterns.
+
+**Key findings (23 total: 2 HIGH, 10 MEDIUM, 2 LOW, 9 GOOD):**
+
+**HIGH:**
+1. Default `MaxSequenceLength = 8192` causes ~128 KB allocation per text in `Tokenize()` (vs. 8 KB in base library with 512). At batch=100, this is ~12.8 MB of `long[]` GC pressure per call. Dynamic sequence-length padding or ArrayPool for tokenizer output would fix this.
+2. Zero benchmarks exist for Harrier in `benchmarks/`. Five benchmark classes recommended: HarrierTokenizerBenchmarks, HarrierEmbeddingGenerationBenchmarks, HarrierModelLoadingBenchmarks, HarrierExtractEmbeddingsBenchmarks, HarrierVsBaseBenchmarks.
+
+**Notable MEDIUM findings:**
+- Instruction prefix string concatenation allocates ~500 bytes per Tokenize call
+- `CountTokens` wastes 64 KB (unused `inputIds` array) per call
+- SHA-256 computed twice when `ExpectedHash` is set (double-reads 500 MB for FP32)
+- No `SemaphoreSlim` download lock (race on concurrent `EnsureModelAsync`)
+- Static `SharedModelDownloadHttpClient` missing `SocketsHttpHandler` (SEC-002 gap)
+- `outputTensor.Dimensions.ToArray()` allocates unnecessarily in `ExtractEmbeddings`
+
+**What's well-optimized:**
+- ArrayPool usage matches base library (PERF-01 pattern)
+- Session options follow PERF-03/15/16 patterns
+- Tokenizer parsed once, singleton reuse
+- `IList<string>` pattern from PERF-12/13
+- Async `CreateAsync` pattern correct
+- ExtractEmbeddings uses Span slicing (no mean pooling needed — baked into ONNX graph)
+
+**Report:** `.squad/decisions/inbox/parker-perf-review.md`
+
