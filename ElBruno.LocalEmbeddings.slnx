@@ -7,6 +7,7 @@
     <Project Path="samples/ConsoleApp/ConsoleApp.csproj" />
     <Project Path="samples/ConsoleAppLite/ConsoleAppLite.csproj" />
     <Project Path="samples/HarrierConsoleApp/HarrierConsoleApp.csproj" />
+    <Project Path="samples/HarrierMultilingualSample/HarrierMultilingualSample.csproj" />
     <Project Path="samples/HelloWorldAltModel/HelloWorldAltModel.csproj" />
     <Project Path="samples/ImageRagChat/ImageRagChat.csproj" />
     <Project Path="samples/ImageRagSimple/ImageRagSimple.csproj" />
