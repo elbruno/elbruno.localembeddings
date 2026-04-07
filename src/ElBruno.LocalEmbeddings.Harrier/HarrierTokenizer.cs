@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using Microsoft.ML.Tokenizers;
 
@@ -245,61 +244,82 @@ public sealed class HarrierTokenizer
             throw new InvalidOperationException("tokenizer.json missing 'model' section.");
         }
 
-        // Extract vocab: { "token": id, ... } → write as JSON stream
         if (!model.TryGetProperty("vocab", out var vocabElement))
         {
             throw new InvalidOperationException("tokenizer.json model section missing 'vocab'.");
         }
 
-        // Extract merges: [["a", "b"], ...] or ["a b", ...] → write as text stream
         if (!model.TryGetProperty("merges", out var mergesElement))
         {
             throw new InvalidOperationException("tokenizer.json model section missing 'merges'.");
         }
 
-        // Build vocab JSON stream
-        using var vocabStream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(vocabStream))
+        // Build vocabulary directly from JSON.
+        var vocabulary = new List<KeyValuePair<string, int>>();
+        foreach (var property in vocabElement.EnumerateObject())
         {
-            vocabElement.WriteTo(writer);
+            vocabulary.Add(new KeyValuePair<string, int>(property.Name, property.Value.GetInt32()));
         }
-        vocabStream.Position = 0;
 
-        // Build merges text stream
-        using var mergesStream = new MemoryStream();
-        using (var writer = new StreamWriter(mergesStream, Encoding.UTF8, leaveOpen: true))
+        // Build merges using BpeOptions instead of a text stream.
+        //
+        // BpeTokenizer.Create(Stream vocabStream, Stream mergesStream) reads the merges stream
+        // line-by-line and fails when a token piece contains embedded newline characters (e.g.
+        // the Harrier/Gemma tokenizer has merge entries whose pieces are raw '\n' or '\t' bytes).
+        // BpeOptions.Merges accepts an IEnumerable<string> where each element is "piece1 piece2",
+        // split internally on the first 0x20 space — this works because Harrier tokens use ▁
+        // (U+2581) for word boundaries instead of 0x20, so embedded newlines are not a problem.
+        var merges = new List<string>(mergesElement.GetArrayLength());
+        foreach (var merge in mergesElement.EnumerateArray())
         {
-            foreach (var merge in mergesElement.EnumerateArray())
+            if (merge.ValueKind == JsonValueKind.Array)
             {
-                if (merge.ValueKind == JsonValueKind.Array)
+                string? part0 = null, part1 = null;
+                int idx = 0;
+                foreach (var part in merge.EnumerateArray())
                 {
-                    // Format: ["token1", "token2"]
-                    var parts = new string[2];
-                    int idx = 0;
-                    foreach (var part in merge.EnumerateArray())
-                    {
-                        if (idx < 2)
-                        {
-                            parts[idx++] = part.GetString() ?? "";
-                        }
-                    }
-
-                    writer.Write(parts[0]);
-                    writer.Write(' ');
-                    writer.WriteLine(parts[1]);
+                    if (idx == 0) part0 = part.GetString();
+                    else if (idx == 1) part1 = part.GetString();
+                    idx++;
                 }
-                else if (merge.ValueKind == JsonValueKind.String)
+
+                if (part0 is not null && part1 is not null)
                 {
-                    // Format: "token1 token2"
-                    writer.WriteLine(merge.GetString());
+                    merges.Add($"{part0} {part1}");
                 }
             }
-
-            writer.Flush();
+            else if (merge.ValueKind == JsonValueKind.String)
+            {
+                var s = merge.GetString();
+                if (s is not null)
+                {
+                    merges.Add(s);
+                }
+            }
         }
-        mergesStream.Position = 0;
 
-        return BpeTokenizer.Create(vocabStream, mergesStream);
+        // Read optional model-level BPE settings from tokenizer.json.
+        string? unknownToken = model.TryGetProperty("unk_token", out var unkEl) && unkEl.ValueKind == JsonValueKind.String
+            ? unkEl.GetString()
+            : null;
+        bool fuseUnknown = model.TryGetProperty("fuse_unk", out var fuseEl) && fuseEl.ValueKind == JsonValueKind.True;
+        string continuingSubwordPrefix = model.TryGetProperty("continuing_subword_prefix", out var prefixEl) && prefixEl.ValueKind == JsonValueKind.String
+            ? prefixEl.GetString() ?? string.Empty
+            : string.Empty;
+        string endOfWordSuffix = model.TryGetProperty("end_of_word_suffix", out var suffixEl) && suffixEl.ValueKind == JsonValueKind.String
+            ? suffixEl.GetString() ?? string.Empty
+            : string.Empty;
+
+        var options = new BpeOptions(vocabulary)
+        {
+            Merges = merges,
+            UnknownToken = unknownToken,
+            FuseUnknownTokens = fuseUnknown,
+            ContinuingSubwordPrefix = continuingSubwordPrefix,
+            EndOfWordSuffix = endOfWordSuffix,
+        };
+
+        return BpeTokenizer.Create(options);
     }
 
     private static bool TokenizerIndicatesSentencePieceNormalization(JsonElement root)
