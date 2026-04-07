@@ -43,6 +43,8 @@ public sealed class HarrierOnnxEmbeddingModel : IDisposable
     /// <param name="useParallelExecution">Whether to use parallel execution mode in ONNX Runtime.</param>
     /// <param name="interOpNumThreads">Optional inter-op thread count override.</param>
     /// <param name="intraOpNumThreads">Optional intra-op thread count override.</param>
+    /// <param name="useDirectML">Whether to enable DirectML GPU acceleration (Windows only).</param>
+    /// <param name="directMLDeviceId">The DirectML device ID to use when <paramref name="useDirectML"/> is true.</param>
     /// <exception cref="ArgumentException">Thrown when the model path is null or empty.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the model file does not exist.</exception>
     /// <exception cref="InvalidOperationException">Thrown when a model is already loaded.</exception>
@@ -50,7 +52,9 @@ public sealed class HarrierOnnxEmbeddingModel : IDisposable
         string modelPath,
         bool useParallelExecution = true,
         int? interOpNumThreads = null,
-        int? intraOpNumThreads = null)
+        int? intraOpNumThreads = null,
+        bool useDirectML = false,
+        int directMLDeviceId = 0)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -87,9 +91,15 @@ public sealed class HarrierOnnxEmbeddingModel : IDisposable
                 InterOpNumThreads = resolvedInterOpNumThreads,
                 IntraOpNumThreads = resolvedIntraOpNumThreads
             };
+#if DIRECTML
+            if (useDirectML)
+            {
+                sessionOptions.AppendExecutionProvider_DML(directMLDeviceId);
+            }
+#endif
             _session = new InferenceSession(modelPath, sessionOptions);
         }
-        catch (DllNotFoundException ex)
+        catch (Exception ex) when (ex is DllNotFoundException or TypeInitializationException)
         {
             throw new InvalidOperationException(
                 $"Failed to load ONNX Runtime native library. OS: {RuntimeInformation.OSDescription}, " +

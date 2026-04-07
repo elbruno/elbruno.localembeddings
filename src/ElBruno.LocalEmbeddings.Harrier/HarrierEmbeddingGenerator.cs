@@ -43,7 +43,9 @@ public sealed class HarrierEmbeddingGenerator : IEmbeddingGenerator<string, Embe
             modelPath,
             options.UseParallelExecution,
             options.InterOpNumThreads,
-            options.IntraOpNumThreads);
+            options.IntraOpNumThreads,
+            options.UseDirectML,
+            options.DirectMLDeviceId);
 
         // Initialize the tokenizer with instruction prefix
         _tokenizer = HarrierTokenizer.Create(

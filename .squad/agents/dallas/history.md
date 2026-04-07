@@ -188,3 +188,34 @@ Created comprehensive multilingual sample at `samples/HarrierMultilingualSample/
 - Multi-generator pattern is the clean solution when needing both prefix and non-prefix embeddings
 - Multilingual RAG requires no special handling — same API, just different language inputs
 
+### 2026-04-08: DirectML GPU Support for ElBruno.LocalEmbeddings.Harrier
+
+Added DirectML execution provider support on branch `feature/harrier-gpu-directml`.
+
+**Package changes (`ElBruno.LocalEmbeddings.Harrier.csproj`):**
+- Replaced `Microsoft.ML.OnnxRuntime` with platform-conditional references:
+  - `Microsoft.ML.OnnxRuntime.DirectML` 1.24.4 on Windows (`$(OS) == 'Windows_NT'`)
+  - `Microsoft.ML.OnnxRuntime` 1.24.4 on non-Windows
+- Added `DIRECTML` preprocessor constant via a `Condition`-based `PropertyGroup` on Windows
+
+**Options (`HarrierEmbeddingsOptions.cs`):**
+- Added `UseDirectML` (bool, default `false`) — enables DirectML GPU acceleration on Windows
+- Added `DirectMLDeviceId` (int, default `0`) — selects the GPU device when DirectML is enabled
+
+**Model loading (`HarrierOnnxEmbeddingModel.Load`):**
+- Extended signature with `useDirectML` and `directMLDeviceId` parameters (both defaulted)
+- Added `#if DIRECTML` block calling `sessionOptions.AppendExecutionProvider_DML(deviceId)` before creating the session
+- Broadened exception filter from `DllNotFoundException` only to `ex is DllNotFoundException or TypeInitializationException` — matches base library pattern
+
+**Generator (`HarrierEmbeddingGenerator`):**
+- Updated `_model.Load()` call to pass `options.UseDirectML` and `options.DirectMLDeviceId`
+
+**Samples:**
+- `HarrierMultilingualSample`: detects Windows via `RuntimeInformation.IsOSPlatform`, sets `UseDirectML = useGpu` on both doc and query options, shows platform + acceleration in header, updates ✓ ready lines with GPU/CPU label
+- `HarrierConsoleApp`: same GPU detection pattern, adds `UseDirectML = useGpu` to options, prints acceleration line in setup block
+
+**Key decisions:**
+- `#if DIRECTML` guard ensures `AppendExecutionProvider_DML` is never compiled on Linux/macOS where the method doesn't exist in the CPU-only package
+- `DefineConstants` appended (not replaced) to preserve any existing constants
+- Samples default `useGpu = isWindows` so they run GPU automatically on Windows without requiring manual config
+

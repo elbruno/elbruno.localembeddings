@@ -87,6 +87,23 @@ public sealed class HarrierEmbeddingsOptions
     public int? IntraOpNumThreads { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to use DirectML GPU acceleration (Windows only).
+    /// Default is false (CPU inference). When true on Windows, uses DirectML execution provider.
+    /// </summary>
+    /// <remarks>
+    /// DirectML acceleration requires a DirectX 12 compatible GPU (most discrete and integrated GPUs
+    /// on Windows 10/11 qualify). Falls back gracefully to CPU if DirectML is unavailable.
+    /// On non-Windows platforms this property has no effect.
+    /// </remarks>
+    public bool UseDirectML { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the DirectML device ID to use for GPU acceleration.
+    /// Default is 0 (first GPU). Only used when <see cref="UseDirectML"/> is true.
+    /// </summary>
+    public int DirectMLDeviceId { get; set; } = 0;
+
+    /// <summary>
     /// Gets or sets the expected SHA-256 hash (lowercase hex string) of the primary ONNX model file.
     /// When set, the downloaded model file is verified against this hash after download.
     /// </summary>

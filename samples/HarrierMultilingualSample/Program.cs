@@ -12,7 +12,16 @@ Console.WriteLine();
 // SETUP: Create two generators — one for documents, one for queries
 // =============================================================================
 Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-Console.WriteLine("Setup: Initializing Harrier Model (INT8 Quantized)");
+
+// Detect GPU availability
+bool isWindows = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
+bool useGpu = isWindows; // DirectML is Windows-only
+
+Console.WriteLine($"Platform: {(isWindows ? "Windows" : "Linux/macOS")}");
+Console.WriteLine($"Acceleration: {(useGpu ? "🚀 DirectML GPU" : "💻 CPU")}");
+Console.WriteLine();
+
+Console.WriteLine($"Setup: Initializing Harrier Model (INT8 Quantized) — {(useGpu ? "DirectML GPU" : "CPU")}");
 Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 Console.WriteLine();
 
@@ -26,26 +35,28 @@ var docOptions = new HarrierEmbeddingsOptions
 {
     ModelVariant = HarrierModelVariant.Quantized,
     InstructionPrefix = string.Empty,
-    EnsureModelDownloaded = true
+    EnsureModelDownloaded = true,
+    UseDirectML = useGpu
 };
 
 Console.WriteLine("Loading document generator (no instruction prefix)...");
 await using var docGenerator = await HarrierEmbeddingGenerator.CreateAsync(docOptions, progress);
 Console.WriteLine();
-Console.WriteLine($"✓ Document generator ready");
+Console.WriteLine($"✓ Document generator ready ({(useGpu ? "GPU/DirectML" : "CPU")})");
 
 // Generator for queries (with instruction prefix)
 var queryOptions = new HarrierEmbeddingsOptions
 {
     ModelVariant = HarrierModelVariant.Quantized,
     InstructionPrefix = HarrierEmbeddingsOptions.DefaultInstructionPrefix,
-    EnsureModelDownloaded = true
+    EnsureModelDownloaded = true,
+    UseDirectML = useGpu
 };
 
 Console.WriteLine("Loading query generator (with instruction prefix)...");
 await using var queryGenerator = await HarrierEmbeddingGenerator.CreateAsync(queryOptions);
 Console.WriteLine();
-Console.WriteLine($"✓ Query generator ready");
+Console.WriteLine($"✓ Query generator ready ({(useGpu ? "GPU/DirectML" : "CPU")})");
 Console.WriteLine($"  Model: {queryGenerator.Metadata.DefaultModelId}");
 Console.WriteLine($"  Embedding dimensions: {queryGenerator.Metadata.DefaultModelDimensions}");
 Console.WriteLine();
