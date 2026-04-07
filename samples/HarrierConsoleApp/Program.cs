@@ -16,16 +16,22 @@ Console.WriteLine("Example 1: Basic Usage with Default Model (Quantized INT8)");
 Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 Console.WriteLine();
 
+// Detect GPU availability
+bool isWindows = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
+bool useGpu = isWindows; // DirectML is Windows-only
+
 var options = new HarrierEmbeddingsOptions
 {
     ModelVariant = HarrierModelVariant.Quantized,
     InstructionPrefix = HarrierEmbeddingsOptions.DefaultInstructionPrefix,
-    EnsureModelDownloaded = true
+    EnsureModelDownloaded = true,
+    UseDirectML = useGpu
 };
 
 Console.WriteLine($"Model: {options.ModelName}");
 Console.WriteLine($"Variant: {options.ModelVariant}");
 Console.WriteLine($"Max sequence length: {options.MaxSequenceLength}");
+Console.WriteLine($"Acceleration: {(useGpu ? "🚀 DirectML GPU" : "💻 CPU")}");
 Console.WriteLine();
 
 Console.WriteLine("Initializing model (will download ~500 MB on first run)...");

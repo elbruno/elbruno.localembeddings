@@ -3233,3 +3233,71 @@ The roadmap now emphasizes **zero-cloud AI** as a first-class scenario, showcasi
 2. Prioritize zero-cloud RAG sample (3.5) in Phase 3 implementation
 3. Update Phase 3 tracking issues to include new items 3.5 and 3.6
 4. Validate that ElBruno.LocalLLMs.Rag integration is clean (it already supports IEmbeddingGenerator)
+
+---
+
+## 2026-04-08: Add DirectML GPU Support to ElBruno.LocalEmbeddings.Harrier
+
+**By:** Dallas (Core Dev)  
+**Branch:** eature/harrier-gpu-directml  
+**Commit:** a68d8b6  
+**Status:** Implemented
+
+HarrierMultilingualSample and HarrierConsoleApp always ran on CPU even on Windows machines with capable GPUs. Root causes:
+1. ElBruno.LocalEmbeddings.Harrier.csproj referenced only Microsoft.ML.OnnxRuntime (CPU-only)
+2. HarrierEmbeddingsOptions had no GPU/DirectML surface
+3. HarrierOnnxEmbeddingModel.Load() never registered any GPU execution provider
+
+### Decision
+
+Add DirectML GPU acceleration behind a platform-conditional compile guard and an opt-in options flag.
+
+### Changes Implemented
+
+**1. Conditional NuGet packages + preprocessor constant**
+- Windows gets Microsoft.ML.OnnxRuntime.DirectML v1.24.4 with DIRECTML define
+- Non-Windows gets Microsoft.ML.OnnxRuntime v1.24.4 (CPU-only)
+- #if DIRECTML guard ensures DML calls compiled out on Linux/macOS
+
+**2. HarrierEmbeddingsOptions — two new properties**
+- UseDirectML (bool, default false): Enable DirectML GPU acceleration (Windows-only)
+- DirectMLDeviceId (int, default 0): GPU device index when DirectML is used
+- Opt-in default preserves backward compatibility
+
+**3. HarrierOnnxEmbeddingModel.Load() — extended signature**
+`csharp
+public void Load(
+    string modelPath,
+    bool useParallelExecution = true,
+    int? interOpNumThreads = null,
+    int? intraOpNumThreads = null,
+    bool useDirectML = false,
+    int directMLDeviceId = 0)
+`
+- #if DIRECTML guard around sessionOptions.AppendExecutionProvider_DML(directMLDeviceId)
+- Exception handler broadened: DllNotFoundException or TypeInitializationException
+
+**4. HarrierEmbeddingGenerator — pass-through**
+- Passes options.UseDirectML and options.DirectMLDeviceId to Load()
+
+**5. Sample updates**
+- Both HarrierMultilingualSample and HarrierConsoleApp auto-detect Windows and set UseDirectML = true
+- Platform and acceleration printed to console
+
+### Rationale
+
+- **Conditional compilation** prevents any breakage on non-Windows
+- **Opt-in default (alse)** lets users with broken GPU drivers stay on CPU
+- **All parameters have defaults** — existing code compiles unchanged
+- **Mirrors base library patterns** for consistency
+
+### Risks Mitigated
+
+| Risk | Mitigation |
+|---|---|
+| DirectML unavailable at runtime (no DX12) | TypeInitializationException caught and diagnosed |
+| Linux/macOS builds broken | #if DIRECTML guard excludes calls entirely on non-Windows |
+| CPU performance regression | UseDirectML defaults to alse; CPU path unchanged |
+| Breaking change | All new parameters have defaults |
+
+**Build Result:** 0 warnings, 0 errors
