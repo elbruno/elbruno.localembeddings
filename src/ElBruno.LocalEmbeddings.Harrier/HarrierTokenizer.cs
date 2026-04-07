@@ -107,62 +107,29 @@ public sealed class HarrierTokenizer
             throw new ArgumentOutOfRangeException(nameof(maxLength), effectiveMaxLength, "MaxLength must be at least 3 (BOS + 1 token + EOS).");
         }
 
-        // Prepend instruction prefix if configured
-        var inputText = !string.IsNullOrEmpty(_instructionPrefix)
-            ? _instructionPrefix + text
-            : text;
-
-        if (!_tokenizerIndicatesSentencePieceNormalization)
-        {
-            // tokenizer.json may omit the normalizer section, but Gemma tokenizers still require SentencePiece whitespace handling.
-        }
-
-        // Apply SentencePiece normalization: prepend ▁ and replace spaces with ▁
-        inputText = "\u2581" + inputText.Replace(' ', '\u2581');
-
-        // Reserve 2 slots for BOS and EOS
-        int contentMaxLength = effectiveMaxLength - 2;
-        contentMaxLength = Math.Max(1, contentMaxLength);
-
-        // Encode the text (without special tokens)
-        var encoding = _tokenizer.EncodeToIds(inputText, contentMaxLength, out _, out _);
+        int contentMaxLength = Math.Max(1, effectiveMaxLength - 2);
+        var encoding = EncodeTextContent(text, contentMaxLength);
 
         var inputIds = new long[effectiveMaxLength];
         var attentionMask = new long[effectiveMaxLength];
 
-        // BOS token
-        inputIds[0] = BosTokenId;
-        attentionMask[0] = 1;
-
-        // Content tokens
-        var copyLength = Math.Min(encoding.Count, contentMaxLength);
-        for (int i = 0; i < copyLength; i++)
-        {
-            inputIds[i + 1] = encoding[i];
-            attentionMask[i + 1] = 1;
-        }
-
-        // EOS token
-        int eosPosition = copyLength + 1;
-        if (eosPosition < effectiveMaxLength)
-        {
-            inputIds[eosPosition] = EosTokenId;
-            attentionMask[eosPosition] = 1;
-        }
-
-        // Remaining positions are 0 (PAD) by default
+        FillSequenceArrays(encoding, inputIds, attentionMask, effectiveMaxLength);
 
         return (inputIds, attentionMask);
     }
 
     /// <summary>
-    /// Tokenizes multiple texts, padding all to the same length for batched inference.
+    /// Tokenizes multiple texts using dynamic padding: all sequences in the batch are padded
+    /// to the length of the longest sequence in the batch, not to <see cref="MaxLength"/>.
+    /// This dramatically reduces memory usage (especially for GPU inference) when the actual
+    /// texts are shorter than the configured maximum sequence length.
     /// </summary>
     public (long[][] InputIds, long[][] AttentionMasks) TokenizeBatch(IEnumerable<string> texts, int? maxLength = null)
         => TokenizeBatch(texts, maxLength, CancellationToken.None);
 
     /// <summary>
-    /// Tokenizes multiple texts, padding all to the same length for batched inference.
+    /// Tokenizes multiple texts using dynamic padding: all sequences in the batch are padded
+    /// to the length of the longest sequence in the batch, not to <see cref="MaxLength"/>.
     /// </summary>
     public (long[][] InputIds, long[][] AttentionMasks) TokenizeBatch(
         IEnumerable<string> texts,
@@ -177,18 +144,86 @@ public sealed class HarrierTokenizer
             return ([], []);
         }
 
+        var effectiveMaxLength = maxLength ?? _maxLength;
+        int contentMaxLength = Math.Max(1, effectiveMaxLength - 2);
+
+        // Phase 1: encode all texts to find actual token counts (no padding yet)
+        var encodings = new IReadOnlyList<int>[textList.Count];
+        for (int i = 0; i < textList.Count; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            encodings[i] = EncodeTextContent(textList[i], contentMaxLength);
+        }
+
+        // Phase 2: dynamic padding — pad to the longest sequence in THIS batch,
+        // not to MaxSequenceLength. For short texts this can reduce tensor size by 99%+,
+        // which is critical for GPU (DirectML/CUDA) memory and throughput.
+        int batchMaxLength = 0;
+        foreach (var enc in encodings)
+        {
+            // BOS + content + EOS
+            int seqLen = enc.Count + 2;
+            if (seqLen > batchMaxLength) batchMaxLength = seqLen;
+        }
+
+        // Phase 3: build padded arrays at batchMaxLength
         var inputIds = new long[textList.Count][];
         var attentionMasks = new long[textList.Count][];
 
         for (int i = 0; i < textList.Count; i++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var (ids, mask) = Tokenize(textList[i], maxLength);
-            inputIds[i] = ids;
-            attentionMasks[i] = mask;
+            inputIds[i] = new long[batchMaxLength];
+            attentionMasks[i] = new long[batchMaxLength];
+            FillSequenceArrays(encodings[i], inputIds[i], attentionMasks[i], batchMaxLength);
         }
 
         return (inputIds, attentionMasks);
+    }
+
+    // Encodes text after applying instruction prefix and SentencePiece normalization,
+    // truncated to contentMaxLength content tokens.
+    private IReadOnlyList<int> EncodeTextContent(string text, int contentMaxLength)
+    {
+        var inputText = !string.IsNullOrEmpty(_instructionPrefix)
+            ? _instructionPrefix + text
+            : text;
+
+        // SentencePiece normalization: prepend ▁ and replace spaces with ▁
+        inputText = "\u2581" + inputText.Replace(' ', '\u2581');
+
+        return _tokenizer.EncodeToIds(inputText, contentMaxLength, out _, out _);
+    }
+
+    // Fills pre-allocated inputIds and attentionMask arrays (of length arrayLength)
+    // with BOS + encoding content + EOS, leaving the rest as 0 (PAD).
+    private static void FillSequenceArrays(
+        IReadOnlyList<int> encoding,
+        long[] inputIds,
+        long[] attentionMask,
+        int arrayLength)
+    {
+        // BOS token
+        inputIds[0] = BosTokenId;
+        attentionMask[0] = 1;
+
+        // Content tokens
+        var copyLength = Math.Min(encoding.Count, arrayLength - 2);
+        for (int i = 0; i < copyLength; i++)
+        {
+            inputIds[i + 1] = encoding[i];
+            attentionMask[i + 1] = 1;
+        }
+
+        // EOS token
+        int eosPosition = copyLength + 1;
+        if (eosPosition < arrayLength)
+        {
+            inputIds[eosPosition] = EosTokenId;
+            attentionMask[eosPosition] = 1;
+        }
+
+        // Remaining positions stay 0 (PAD)
     }
 
     /// <summary>
