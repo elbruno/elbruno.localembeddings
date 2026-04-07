@@ -160,3 +160,31 @@ Added two new high-value features to the core library for efficient large-scale 
 - Project builds successfully on both net8.0 and net10.0 targets
 - No warnings (TreatWarningsAsErrors is enabled)
 
+### 2026-04-07: HarrierMultilingualSample Created
+
+Created comprehensive multilingual sample at `samples/HarrierMultilingualSample/` demonstrating Harrier's 94+ language support:
+
+**Showcase A — Cross-lingual retrieval:**
+- English knowledge base with 12 diverse facts (science, history, geography, tech, culture, food, sports)
+- 7 multilingual queries: Spanish, French, German, Portuguese, Japanese, Chinese, Arabic
+- Demonstrates accurate retrieval of English facts from non-English queries
+- Results table shows query language, original query, matched English fact, similarity score
+
+**Showcase B — Language-agnostic search:**
+- 8-fact multilingual knowledge base, each fact in different language (Spanish, French, German, Portuguese, Italian, Japanese, Korean, Russian)
+- 8 English queries designed to match each fact
+- Demonstrates bidirectional multilingual semantic search
+- Results table shows query/document language pairs and similarity scores
+
+**Implementation Pattern:**
+- Two separate generators created: one without instruction prefix (for documents), one with prefix (for queries)
+- Follows established HarrierConsoleApp pattern: top-level statements, CreateAsync factory, progress reporting
+- Custom CosineSimilarity function for semantic search
+- Unicode box-drawing characters for clean console UI
+- Builds cleanly with 0 warnings, 0 errors (TreatWarningsAsErrors enabled)
+
+**Key Learnings:**
+- Harrier instruction-tuning requires different prefix handling for documents vs queries
+- Multi-generator pattern is the clean solution when needing both prefix and non-prefix embeddings
+- Multilingual RAG requires no special handling — same API, just different language inputs
+
