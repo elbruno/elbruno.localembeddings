@@ -1,5 +1,6 @@
 using ElBruno.LocalEmbeddings.Options;
 using ElBruno.LocalEmbeddings.VectorData.InMemory;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -161,6 +162,70 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<VectorStore>().GetCollection<TKey, TRecord>(
                 collectionName,
                 definition ?? new VectorStoreCollectionDefinition()));
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers a typed vector collection with automatic embedding generation support.
+    /// </summary>
+    /// <typeparam name="TKey">The key type.</typeparam>
+    /// <typeparam name="TRecord">The record type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="collectionName">The collection name in the vector store.</param>
+    /// <param name="useEmbeddingGenerator">If true, configures the collection to use the registered IEmbeddingGenerator for automatic embedding generation.</param>
+    /// <param name="definition">An optional collection definition.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="collectionName"/> is null or whitespace.</exception>
+    /// <remarks>
+    /// When <paramref name="useEmbeddingGenerator"/> is true, the collection definition will be configured
+    /// with the registered <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/> from the service provider.
+    /// This enables automatic embedding generation for text-based search operations when supported by the vector store implementation.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// services
+    ///     .AddLocalEmbeddingsWithInMemoryVectorStore(options =>
+    ///     {
+    ///         options.ModelName = "sentence-transformers/all-MiniLM-L6-v2";
+    ///     })
+    ///     .AddVectorStoreCollectionWithEmbeddings&lt;int, Product&gt;(
+    ///         collectionName: "products",
+    ///         useEmbeddingGenerator: true);
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddVectorStoreCollectionWithEmbeddings<TKey, TRecord>(
+        this IServiceCollection services,
+        string collectionName,
+        bool useEmbeddingGenerator = true,
+        VectorStoreCollectionDefinition? definition = null)
+        where TKey : notnull
+        where TRecord : class
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        if (string.IsNullOrWhiteSpace(collectionName))
+        {
+            throw new ArgumentException("Collection name cannot be null or whitespace.", nameof(collectionName));
+        }
+
+        services.TryAddSingleton(sp =>
+        {
+            var effectiveDefinition = definition ?? new VectorStoreCollectionDefinition();
+
+            if (useEmbeddingGenerator)
+            {
+                var generator = sp.GetService<IEmbeddingGenerator<string, Embedding<float>>>();
+                if (generator != null)
+                {
+                    effectiveDefinition.EmbeddingGenerator = generator;
+                }
+            }
+
+            return sp.GetRequiredService<VectorStore>().GetCollection<TKey, TRecord>(
+                collectionName,
+                effectiveDefinition);
+        });
 
         return services;
     }

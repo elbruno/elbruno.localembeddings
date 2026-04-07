@@ -15,6 +15,12 @@ namespace ElBruno.LocalEmbeddings;
 /// <c>Run()</c> calls. Multiple threads can generate embeddings simultaneously without 
 /// additional synchronization.
 /// </para>
+/// <para>
+/// <strong>Native AOT Compatibility:</strong> While this class itself is AOT-compatible,
+/// ONNX Runtime performs native library loading at runtime (onnxruntime.dll/.so). Native AOT
+/// applications must ensure the ONNX Runtime native libraries are available in the deployment.
+/// The library is trimming-safe when used with standard inference paths.
+/// </para>
 /// </remarks>
 public sealed class OnnxEmbeddingModel : IDisposable
 {

@@ -92,3 +92,71 @@ Four high-value, low-effort improvements implemented:
 - Harrier tokenizer now applies SentencePiece normalization, enforces maxLength >= 3, adds tokenizer.json size guard, and optimizes CountTokens to avoid padded allocations.
 - Harrier model downloader now serializes concurrent downloads, verifies sidecar hashes on cache hit, checks .onnx_data, writes sidecars for data files, and avoids double SHA-256 work.
 - Harrier ONNX loader adds Linux alias workaround and DllNotFoundException diagnostics; shared HttpClient uses pooled lifetime; provider name fixed; explicit package refs added.
+### 2026-02-13: Package Dependency Updates (April 2026 Latest)
+
+Updated all NuGet package references to their latest stable versions as of April 2026:
+
+**Core Library Packages:**
+- `Microsoft.Extensions.AI.Abstractions`: 10.3.0 → 10.4.1
+- `Microsoft.ML.OnnxRuntime`: 1.24.3 → 1.24.4 (all variants: base, DirectML, QNN)
+- `System.Numerics.Tensors`: 9.0.3 → 10.0.5
+- `ElBruno.HuggingFace.Downloader`: 0.5.0 → 0.6.0
+- All `Microsoft.Extensions.*` packages: 10.0.3 → 10.0.5
+- `Microsoft.Extensions.VectorData.Abstractions`: 9.7.0 → 10.1.0
+
+**Test Packages:**
+- `Microsoft.NET.Test.Sdk`: 17.14.1 → 18.3.0
+- `coverlet.collector`: 6.0.4 → 8.0.1
+- `xunit.runner.visualstudio`: 3.1.4 → 3.1.5
+- `Xunit.SkippableFact`: 1.5.23 → 1.5.61
+
+**Sample/Benchmark Packages:**
+- `BenchmarkDotNet`: 0.14.0 → 0.15.8
+- `Spectre.Console`: 0.49.1 → 0.55.0
+- `OllamaSharp`: 5.4.16 → 5.4.25
+- `OpenAI`: 2.8.0 → 2.10.0
+- `Microsoft.Agents.AI`: 1.0.0-rc1 → 1.0.0
+- `Microsoft.Extensions.AI.OpenAI`: 10.3.0 → 10.4.1
+- `System.Management`: 9.0.3 → 10.0.5
+
+**Important Notes:**
+- `Microsoft.AI.Foundry.Local` kept at 0.1.0 (not updated to 0.9.0) due to breaking API changes — version 0.9.0 removed the `StartModelAsync` method that the RagFoundryLocal sample depends on
+- `Intel.ML.OnnxRuntime.OpenVino` kept at 1.24.1 (uses separate versioning from main ORT packages due to standalone runtime)
+- All updates verified: solution builds successfully, all 138 tests pass across both net8.0 and net10.0 targets
+- Package version updates grouped in commits with Ripley (core/test packages) and Dallas (sample/benchmark packages)
+
+### 2026-02-13: Batch and Streaming Embeddings APIs
+
+Added two new high-value features to the core library for efficient large-scale embedding generation:
+
+1. **Batch Embedding API with Progress Reporting** (Feature 1.1):
+   - Created `EmbeddingProgress` record in `src/ElBruno.LocalEmbeddings/EmbeddingProgress.cs`
+   - Record type with properties: `CompletedItems`, `TotalItems`, `CurrentBatchSize`
+   - Added extension method `GenerateAsync(IEnumerable<string>, IProgress<EmbeddingProgress>, batchSize, options, cancellationToken)`
+   - Splits input into configurable batches (default 32), reports progress after each batch completes
+   - Returns aggregated `GeneratedEmbeddings<Embedding<float>>` with all results in input order
+   - Useful for monitoring long-running embedding operations on large datasets
+
+2. **Streaming Embeddings API** (Feature 1.2):
+   - Added extension method `GenerateStreamingAsync(IEnumerable<string>, batchSize, options, cancellationToken)`
+   - Returns `IAsyncEnumerable<Embedding<float>>` for processing embeddings as they become available
+   - Uses `[EnumeratorCancellation]` attribute for proper async enumerable cancellation support
+   - Enables streaming processing without waiting for all embeddings to complete
+   - Embeddings yielded in input order as each batch is processed
+
+**Implementation Details:**
+- Both methods use `Chunk(batchSize)` from System.Linq for efficient batching
+- Both support cancellation via `CancellationToken.ThrowIfCancellationRequested()`
+- All parameters validated with proper `ArgumentNullException` and `ArgumentOutOfRangeException` checks
+- Comprehensive XML documentation with usage examples
+- Added `using System.Runtime.CompilerServices;` for `[EnumeratorCancellation]` attribute
+
+**Compilation Fixes:**
+- Fixed metadata access in new WIP files (`CachingEmbeddingDecorator`, `EmbeddingComparer`) to use `GetService<EmbeddingGeneratorMetadata>()` pattern
+- Added AOT/trimming compatibility attributes to `ServiceCollectionExtensions.AddLocalEmbeddings(IConfiguration)` method
+- Used fully qualified attribute names: `[System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode]` and `[System.Diagnostics.CodeAnalysis.RequiresDynamicCode]`
+
+**Verification:**
+- Project builds successfully on both net8.0 and net10.0 targets
+- No warnings (TreatWarningsAsErrors is enabled)
+

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using ElBruno.LocalEmbeddings.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
@@ -188,6 +189,8 @@ public static class ServiceCollectionExtensions
     /// services.AddLocalEmbeddings(configuration.GetSection("LocalEmbeddings"));
     /// </code>
     /// </example>
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Binding strongly typed objects to configuration values may require unreferenced code.")]
+    [System.Diagnostics.CodeAnalysis.RequiresDynamicCode("Binding strongly typed objects to configuration values may require generating dynamic code at runtime.")]
     public static IServiceCollection AddLocalEmbeddings(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -224,6 +227,83 @@ public static class ServiceCollectionExtensions
         {
             var options = sp.GetRequiredService<IOptions<LocalEmbeddingsOptions>>().Value;
             return new LocalEmbeddingGenerator(options);
+        });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds <see cref="LocalEmbeddingGenerator"/> with LRU caching to the service collection.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configureEmbeddings">An optional action to configure embedding options.</param>
+    /// <param name="configureCache">An optional action to configure cache options.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <remarks>
+    /// <para>
+    /// This method registers a <see cref="CachingEmbeddingDecorator"/> that wraps the
+    /// <see cref="LocalEmbeddingGenerator"/>. The cache stores embeddings keyed by the
+    /// SHA-256 hash of the input text and uses an LRU eviction policy.
+    /// </para>
+    /// <para>
+    /// Caching is particularly beneficial when the same texts are embedded repeatedly,
+    /// such as in repeated searches or when processing documents with overlapping content.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// services.AddLocalEmbeddingsWithCache(
+    ///     configureEmbeddings: options =>
+    ///     {
+    ///         options.ModelName = "sentence-transformers/all-MiniLM-L6-v2";
+    ///     },
+    ///     configureCache: options =>
+    ///     {
+    ///         options.Enabled = true;
+    ///         options.MaxSize = 5000;
+    ///     });
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddLocalEmbeddingsWithCache(
+        this IServiceCollection services,
+        Action<LocalEmbeddingsOptions>? configureEmbeddings = null,
+        Action<EmbeddingCacheOptions>? configureCache = null)
+    {
+        services.AddOptions<EmbeddingCacheOptions>();
+        if (configureCache is not null)
+        {
+            services.Configure(configureCache);
+        }
+
+        var optionsBuilder = services.AddOptions<LocalEmbeddingsOptions>();
+        if (configureEmbeddings is not null)
+        {
+            optionsBuilder.Configure(configureEmbeddings);
+        }
+
+        services.AddHttpClient<IModelDownloader, ModelDownloader>()
+            .ConfigureHttpClient(client =>
+            {
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("LocalEmbeddings/1.0");
+            });
+
+        services.TryAddSingleton<LocalEmbeddingGenerator>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<LocalEmbeddingsOptions>>().Value;
+            return new LocalEmbeddingGenerator(options);
+        });
+
+        services.TryAddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(sp =>
+        {
+            var innerGenerator = sp.GetRequiredService<LocalEmbeddingGenerator>();
+            var cacheOptions = sp.GetRequiredService<IOptions<EmbeddingCacheOptions>>().Value;
+
+            if (cacheOptions.Enabled)
+            {
+                return new CachingEmbeddingDecorator(innerGenerator, cacheOptions.MaxSize);
+            }
+
+            return innerGenerator;
         });
 
         return services;

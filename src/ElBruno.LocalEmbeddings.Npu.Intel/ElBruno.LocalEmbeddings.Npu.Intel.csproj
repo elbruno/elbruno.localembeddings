@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>ElBruno.LocalEmbeddings.Npu.Intel</PackageId>
+    <Description>Intel Core Ultra NPU-accelerated local embedding generation using OpenVINO and ONNX Runtime</Description>
+    <Authors>Bruno Capuano</Authors>
+    <RepositoryUrl>https://github.com/elbruno/elbruno.localembeddings</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/elbruno/elbruno.localembeddings</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon_03.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>embeddings;onnx;ai;local;npu;intel;core-ultra;openvino;hardware-acceleration;microsoft-extensions-ai;sentence-transformers;nlp;machine-learning</PackageTags>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <!-- Standalone library — does NOT reference the base ElBruno.LocalEmbeddings project
+       because Intel.ML.OnnxRuntime.OpenVino ships its own onnxruntime.dll (with OpenVINO EP
+       compiled in), which conflicts with the one from Microsoft.ML.OnnxRuntime.DirectML.
+       Only one native DLL can load per process, so Intel NPU benchmarks run in a separate process. -->
+
+  <ItemGroup>
+    <PackageReference Include="ElBruno.HuggingFace.Downloader" Version="0.6.0" />
+    <PackageReference Include="Intel.ML.OnnxRuntime.OpenVino" Version="1.24.1" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.4.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
+    <PackageReference Include="System.Numerics.Tensors" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ElBruno.LocalEmbeddings.Npu.Intel.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\nuget_images\icon_03.png" Pack="true" PackagePath="\" Link="icon_03.png" />
+  </ItemGroup>
+
+</Project>

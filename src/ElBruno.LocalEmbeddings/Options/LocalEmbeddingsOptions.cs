@@ -91,4 +91,44 @@ public sealed class LocalEmbeddingsOptions
     /// Leave <see langword="null"/> to skip hash verification (default behavior).
     /// </remarks>
     public string? ExpectedHash { get; set; }
+
+    /// <summary>
+    /// Gets or sets the batch size mode for embedding generation.
+    /// Default is <see cref="BatchSizeMode.Fixed"/>.
+    /// </summary>
+    /// <remarks>
+    /// When set to <see cref="BatchSizeMode.Auto"/>, the library profiles inference
+    /// during the first batch and automatically selects the optimal batch size
+    /// based on throughput and memory characteristics.
+    /// </remarks>
+    public BatchSizeMode BatchSizeMode { get; set; } = BatchSizeMode.Fixed;
+
+    /// <summary>
+    /// Gets or sets the fixed batch size when <see cref="BatchSizeMode"/> is <see cref="BatchSizeMode.Fixed"/>.
+    /// Default is 32.
+    /// </summary>
+    /// <remarks>
+    /// This value is ignored when <see cref="BatchSizeMode"/> is <see cref="BatchSizeMode.Auto"/>.
+    /// </remarks>
+    public int BatchSize { get; set; } = 32;
+
+    /// <summary>
+    /// Gets or sets the minimum batch size for auto-tuning.
+    /// Default is 4.
+    /// </summary>
+    /// <remarks>
+    /// Only used when <see cref="BatchSizeMode"/> is <see cref="BatchSizeMode.Auto"/>.
+    /// The auto-tuner will not select a batch size smaller than this value.
+    /// </remarks>
+    public int MinBatchSize { get; set; } = 4;
+
+    /// <summary>
+    /// Gets or sets the maximum batch size for auto-tuning.
+    /// Default is 128.
+    /// </summary>
+    /// <remarks>
+    /// Only used when <see cref="BatchSizeMode"/> is <see cref="BatchSizeMode.Auto"/>.
+    /// The auto-tuner will not select a batch size larger than this value.
+    /// </remarks>
+    public int MaxBatchSize { get; set; } = 128;
 }

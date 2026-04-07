@@ -15,13 +15,22 @@
     <Project Path="samples/DocumentRagFoundry/DocumentRagFoundry.csproj" />
     <Project Path="samples/RagFoundryLocal/RagFoundryLocal.csproj" />
     <Project Path="samples/RagOllama/RagOllama.csproj" />
+    <Project Path="samples/LocalLlmRag/LocalLlmRag.csproj" />
+    <Project Path="samples/McpToolRouter/McpToolRouter.csproj" />
+    <Project Path="samples/NpuBenchmarkSample/NpuBenchmarkSample.csproj" />
+    <Project Path="samples/IntelNpuWorker/IntelNpuWorker.csproj" />
+    <Project Path="samples/DirectMLNpuWorker/DirectMLNpuWorker.csproj" />
     <Project Path="samples/VisionMemoryAgentSample/VisionMemoryAgentSample.csproj" />
+    <Project Path="samples/ZeroCloudRag/ZeroCloudRag.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.ImageEmbeddings.Downloader/ElBruno.LocalEmbeddings.ImageEmbeddings.Downloader.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.ImageEmbeddings/ElBruno.LocalEmbeddings.ImageEmbeddings.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.KernelMemory/ElBruno.LocalEmbeddings.KernelMemory.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.Npu/ElBruno.LocalEmbeddings.Npu.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.Npu.Qualcomm/ElBruno.LocalEmbeddings.Npu.Qualcomm.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.Npu.Intel/ElBruno.LocalEmbeddings.Npu.Intel.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.VectorData/ElBruno.LocalEmbeddings.VectorData.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.Harrier/ElBruno.LocalEmbeddings.Harrier.csproj" />
   </Folder>
@@ -29,6 +38,9 @@
     <Project Path="tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.ImageEmbeddings.Tests/ElBruno.LocalEmbeddings.ImageEmbeddings.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.KernelMemory.Tests/ElBruno.LocalEmbeddings.KernelMemory.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.Npu.Tests/ElBruno.LocalEmbeddings.Npu.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.Npu.Qualcomm.Tests/ElBruno.LocalEmbeddings.Npu.Qualcomm.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.Npu.Intel.Tests/ElBruno.LocalEmbeddings.Npu.Intel.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.VectorData.Tests/ElBruno.LocalEmbeddings.VectorData.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.Harrier.Tests/ElBruno.LocalEmbeddings.Harrier.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.SharedModelTests/ElBruno.LocalEmbeddings.SharedModelTests.csproj" />

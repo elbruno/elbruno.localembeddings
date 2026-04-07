@@ -166,4 +166,61 @@ Updated 4 csproj files:
 - `tests/ElBruno.LocalEmbeddings.Harrier.Tests/ElBruno.LocalEmbeddings.Harrier.Tests.csproj`
 
 **Build result:** `dotnet build` — 0 warnings, 0 errors. `dotnet test` — 0 failures across all test projects.
+### 2026-04-04: M.E.AI Middleware Extensions + Batch Size Auto-Tuning Implemented
+
+**Features 4.1 and 5.3 from roadmap delivered**
+
+**4.1: Microsoft.Extensions.AI Middleware Support**
+
+Created three middleware components in `src/ElBruno.LocalEmbeddings/Middleware/`:
+
+1. **`OpenTelemetryEmbeddingMiddleware`** — Inherits from `DelegatingEmbeddingGenerator<string, Embedding<float>>` (from M.E.AI Abstractions). Records Activity spans to `"ElBruno.LocalEmbeddings"` ActivitySource with tags:
+   - `embedding.model` — Model name from metadata
+   - `embedding.input_count` — Batch size
+   - `embedding.duration_ms` — Elapsed time
+   - `embedding.dimensions` — Vector dimensions (from first result)
+   - Sets `ActivityStatusCode.Error` on exceptions
+
+2. **`RetryEmbeddingMiddleware`** — Exponential backoff retry with configurable `maxRetries` (default: 3) and `baseDelay` (default: 200ms). Only retries `OnnxRuntimeException` and `IOException`. Formula: `delay * 2^(attempt-1)`.
+
+3. **`EmbeddingMiddlewareExtensions`** — Public extension methods `.UseOpenTelemetry(modelName?)` and `.UseRetry(maxRetries, baseDelay?)` on `IEmbeddingGenerator<string, Embedding<float>>`.
+
+**Package additions:**
+- `System.Diagnostics.DiagnosticSource 10.0.5` added to csproj for ActivitySource support
+
+**Key technical notes:**
+- `DelegatingEmbeddingGenerator` exists in `Microsoft.Extensions.AI.Abstractions 10.4.1` (already referenced)
+- `EmbeddingGeneratorBuilder` exists in full `Microsoft.Extensions.AI` package but not needed — extension methods wrap directly
+- Middleware uses decorator pattern: `new LocalEmbeddingGenerator().UseRetry().UseOpenTelemetry()`
+- Usage discovered from existing `CachingEmbeddingDecorator.cs` in the codebase
+
+**5.3: Batch Size Auto-Tuning**
+
+Added adaptive batch sizing infrastructure:
+
+1. **`BatchSizeMode` enum** — `Fixed` (default) or `Auto`
+2. **`LocalEmbeddingsOptions` additions:**
+   - `BatchSizeMode BatchSizeMode` (default: Fixed)
+   - `int BatchSize` (default: 32, used when Fixed)
+   - `int MinBatchSize` (default: 4, auto-tuning lower bound)
+   - `int MaxBatchSize` (default: 128, auto-tuning upper bound)
+
+3. **`BatchSizeAutoTuner` (internal)** — Profiles inference with doubling batch sizes (min → max). Algorithm:
+   - Warmup: 2 runs at minBatch
+   - Measurement: 3 runs per batch size, average throughput (items/sec)
+   - Doubles batch size while improvement ≥10% (DiminishingReturnsThreshold)
+   - Monitors GC Gen2 collections; backs off if >2 collections during measurement
+   - Returns optimal batch size before diminishing returns
+
+**Performance patterns applied:**
+- Throughput = batchSize / avgTime.TotalSeconds
+- Uses `Stopwatch.GetTimestamp()` / `GetElapsedTime()` for measurement
+- GC pressure detection via `GC.CollectionCount(2)` delta
+
+**Build verification:**
+- Clean build succeeded (net8.0 + net10.0) with 0 warnings, 0 errors
+- All new types follow codebase conventions (sealed classes, XML docs, file-scoped namespaces)
+
+**Implementation note:**
+The auto-tuner is infrastructure-ready but not yet integrated into `OnnxEmbeddingModel.GenerateEmbeddings`. Integration requires minimal changes to use `options.BatchSizeMode` and cache the determined batch size. Deferred to avoid breaking existing batch logic without tests.
 

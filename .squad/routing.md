@@ -14,6 +14,8 @@ How to decide who handles what.
 | Scope & priorities | Ripley | What to build next, trade-offs, decisions |
 | Performance benchmarks, profiling, allocation analysis, ONNX throughput | Parker | BenchmarkDotNet, Span<T>, TensorPrimitives, hot-path optimization |
 | Security audit, vulnerability scan, dependency advisories | Ash | NuGet CVEs, model download safety, path traversal, input validation |
+| Edge deployment, ARM64, Native AOT, WebAssembly, quantization | Brett | Raspberry Pi, IoT, trimming, WASM, model compression |
+| AI framework integration, MCP, Agent Framework, Semantic Kernel, AG-UI, middleware | Bishop | MCP tools, agent orchestration, SK connectors, M.E.AI middleware |
 | Session logging | Scribe | Automatic — never needs routing |
 
 ## Issue Routing
