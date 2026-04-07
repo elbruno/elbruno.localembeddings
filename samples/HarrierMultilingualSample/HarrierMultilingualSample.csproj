@@ -11,4 +11,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- On Windows, suppress the CPU-only ORT native DLL (from base lib transitive dep)
+       so the DirectML-capable onnxruntime.dll from OnnxRuntime.DirectML is used instead.
+       Both packages ship onnxruntime.dll; without this override the CPU version wins. -->
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.24.4" ExcludeAssets="native" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.24.4" />
+  </ItemGroup>
+
 </Project>
