@@ -9,6 +9,20 @@
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
 
+### 2026-02-28: Harrier Documentation Update
+
+**Completed:** All 6 documentation items identified in the architecture review have been updated.
+
+**What was done:**
+1. **README.md** — Added Harrier to Features section with 🦅 icon, Installation section, Quick Start (example #5), Documentation table, and Samples table
+2. **docs/changelog.md** — Added comprehensive [Unreleased] section for Harrier v1.0.0 with added/changed/fixed entries covering the entire audit phase
+3. **docs/harrier-integration.md** — Added "## Migrating from MiniLM to Harrier" migration guide covering vector store re-indexing (384→640 dims), DI swap, instruction prefix setup, model size considerations, and MaxSequenceLength optimization
+4. **samples/README.md** — Added HarrierConsoleApp entry after ConsoleApp, DocumentRagFoundry entry after RagFoundryLocal, VisionMemoryAgentSample and NpuBenchmarkSample entries in the Image Samples section
+5. **docs/dependency-injection.md** — Added "## Multi-Model Scenarios: DI Registration Conflicts" section documenting TryAddSingleton behavior, the first-registration-wins pattern, and three solutions (keyed services, explicit creation, wrapper service). Also added "## Harrier Integration" subsection with all 4 overloads and migration warning
+6. **src/ElBruno.LocalEmbeddings.Harrier/README.md** — Created new package-specific README with quick start, model details, features list, configuration, and DI registration examples. Updated Harrier.csproj to use local README.md instead of root
+
+**Verification:** Solution builds successfully (`dotnet build`). All changes follow established conventions: markdown formatting, XML documentation style, DI patterns, and branding (ElBruno prefix).
+
 ### 2026-02-12: Solution Structure Established
 
 **Architecture:**

@@ -205,3 +205,131 @@ The 270M model requires approximately 1–2 GB of RAM during inference. If you e
 ### Tokenizer errors
 
 If you see tokenizer-related errors, ensure the `tokenizer.json` file is present in the model directory alongside the ONNX model files.
+
+## Migrating from MiniLM to Harrier
+
+If you're currently using the base library's default MiniLM model and want to switch to Harrier, follow these steps:
+
+### 1. Vector Store Re-indexing (⚠️ Required)
+
+**Harrier produces 640-dimensional embeddings** while MiniLM produces **384-dimensional** embeddings. **Existing vector stores MUST be re-indexed.**
+
+If you have documents embedded with MiniLM:
+
+```csharp
+// Old approach: MiniLM generates 384-dim embeddings
+var oldGenerator = await LocalEmbeddingGenerator.CreateAsync();
+var oldEmbeddings = await oldGenerator.GenerateAsync(documents);
+// oldEmbeddings[0].Vector.Length == 384
+```
+
+These embeddings are **incompatible** with Harrier's 640-dim space. You must:
+
+1. Re-generate embeddings using Harrier
+2. Update your vector store with the new 640-dim vectors
+3. Optionally, delete the old MiniLM cache to free space
+
+```csharp
+// New approach: Harrier generates 640-dim embeddings
+var newGenerator = await HarrierEmbeddingGenerator.CreateAsync();
+var newEmbeddings = await newGenerator.GenerateAsync(documents);
+// newEmbeddings[0].Vector.Length == 640
+```
+
+### 2. Dependency Injection Swap
+
+Replace `AddLocalEmbeddings()` with `AddHarrierEmbeddings()`. Both register the same interface, so the rest of your code stays the same:
+
+**Before (MiniLM):**
+```csharp
+using ElBruno.LocalEmbeddings.Extensions;
+
+services.AddLocalEmbeddings(options =>
+{
+    options.ModelName = "sentence-transformers/all-MiniLM-L6-v2";
+});
+
+// Resolved the same way
+var generator = serviceProvider.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
+```
+
+**After (Harrier):**
+```csharp
+using ElBruno.LocalEmbeddings.Harrier.Extensions;
+
+services.AddHarrierEmbeddings(options =>
+{
+    options.ModelVariant = HarrierModelVariant.Quantized;
+});
+
+// Resolved the same way — interface is identical
+var generator = serviceProvider.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
+```
+
+### 3. Instruction Prefix Setup (Harrier-Specific)
+
+Harrier is instruction-tuned. By default, `AddHarrierEmbeddings()` sets a retrieval instruction prefix, but you may want to customize it for your use case:
+
+```csharp
+services.AddHarrierEmbeddings(options =>
+{
+    // Default retrieval prefix
+    options.InstructionPrefix = "Instruct: Retrieve semantically similar text\nQuery: ";
+    
+    // Or customize for your task
+    options.InstructionPrefix = "Instruct: Given a web search query, retrieve relevant passages\nQuery: ";
+});
+```
+
+**Important:** Only queries need the instruction prefix. Documents should **not** have a prefix. Create a second generator instance for document embedding:
+
+```csharp
+// For queries (with instruction prefix — default behavior)
+var queryGenerator = serviceProvider.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
+
+// For documents (without prefix)
+var docOptions = new HarrierEmbeddingsOptions
+{
+    InstructionPrefix = null  // Disable prefix for documents
+};
+var docGenerator = await HarrierEmbeddingGenerator.CreateAsync(docOptions);
+```
+
+### 4. Model Size Considerations
+
+Harrier is larger than MiniLM:
+
+| Aspect | MiniLM | Harrier |
+|--------|--------|---------|
+| Model file size | ~90 MB | ~500 MB (FP32) / ~270 MB (Quantized, default) |
+| Memory during inference | ~500 MB | ~1.5–2 GB |
+| Cache disk space | ~100 MB | ~300–500 MB |
+
+If disk space is limited, use the smallest variant:
+
+```csharp
+var options = new HarrierEmbeddingsOptions
+{
+    ModelVariant = HarrierModelVariant.Q4  // ~196 MB
+};
+```
+
+### 5. MaxSequenceLength (Optional Optimization)
+
+Harrier supports very long sequences (up to 32,768 tokens) compared to MiniLM (512 tokens). If you don't need long context, lower `MaxSequenceLength` to reduce memory usage:
+
+```csharp
+var options = new HarrierEmbeddingsOptions
+{
+    MaxSequenceLength = 512  // Instead of default 8192 — saves memory
+};
+```
+
+### Summary Checklist
+
+- ✅ Back up or re-generate embeddings for existing vector stores (dimension change: 384 → 640)
+- ✅ Replace `AddLocalEmbeddings()` with `AddHarrierEmbeddings()` in DI registration
+- ✅ Configure instruction prefix for your task (or use the default retrieval prefix)
+- ✅ Plan for ~3–4x larger model download and cache (100 MB → 300–500 MB)
+- ✅ Optionally reduce `MaxSequenceLength` if memory is tight
+- ✅ Test thoroughly — Harrier is higher quality but behaves differently (instruction tuning, decoder-based vs encoder)

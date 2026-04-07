@@ -55,4 +55,56 @@ public class HarrierTokenizerTests
             Directory.Delete(tempDir, true);
         }
     }
+
+    [Fact]
+    public void Create_ThrowsOnMaxLengthLessThan3()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDir);
+        File.WriteAllText(Path.Combine(tempDir, "tokenizer.json"), "{}");
+        try
+        {
+            var ex = Assert.Throws<ArgumentOutOfRangeException>(
+                () => HarrierTokenizer.Create(tempDir, maxLength: 2));
+            Assert.Contains("MaxLength must be at least 3", ex.Message);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Create_ThrowsOnMaxLengthOf2()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDir);
+        File.WriteAllText(Path.Combine(tempDir, "tokenizer.json"), "{}");
+        try
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(
+                () => HarrierTokenizer.Create(tempDir, maxLength: 2));
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void Create_ThrowsOnMaxLengthOf1()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDir);
+        File.WriteAllText(Path.Combine(tempDir, "tokenizer.json"), "{}");
+        try
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(
+                () => HarrierTokenizer.Create(tempDir, maxLength: 1));
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
 }

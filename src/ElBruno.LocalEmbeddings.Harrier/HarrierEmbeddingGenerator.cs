@@ -23,7 +23,10 @@ namespace ElBruno.LocalEmbeddings.Harrier;
 /// </remarks>
 public sealed class HarrierEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>, IAsyncDisposable
 {
-    private static readonly HttpClient SharedModelDownloadHttpClient = new();
+    private static readonly HttpClient SharedModelDownloadHttpClient = new(new SocketsHttpHandler
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+    });
     private readonly HarrierOnnxEmbeddingModel _model;
     private readonly HarrierTokenizer _tokenizer;
     private readonly EmbeddingGeneratorMetadata _metadata;
@@ -50,7 +53,7 @@ public sealed class HarrierEmbeddingGenerator : IEmbeddingGenerator<string, Embe
 
         // Create metadata
         _metadata = new EmbeddingGeneratorMetadata(
-            providerName: "LocalEmbeddings.Harrier",
+            providerName: "ElBruno.LocalEmbeddings.Harrier",
             providerUri: new Uri("https://github.com/elbruno/elbruno.localembeddings"),
             defaultModelId: options.ModelName,
             defaultModelDimensions: _model.EmbeddingDimension);

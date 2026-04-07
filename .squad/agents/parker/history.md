@@ -129,3 +129,41 @@ Key cross-agent note: Lambert's Phase 3 parity tests use the public extension me
 
 **Report:** `.squad/decisions/inbox/parker-perf-review.md`
 
+### 2025-07-17: Harrier Benchmarks + Cleanup (4-Item Sprint)
+
+**Scope:** 4 items — Harrier benchmarks, slnx cleanup, NPU dir cleanup, OnnxRuntime bump.
+
+**1. Harrier Benchmarks Created (perf-harrier-benchmarks)**
+
+3 new benchmark classes added to `benchmarks/ElBruno.LocalEmbeddings.Benchmarks/`:
+
+- `HarrierTokenizerBenchmarks` — 6 benchmarks: short/long text, batch-10, with/without prefix, CountTokens. Measures the 128 KB allocation per Tokenize() call (PERF-HIGH-1 from review) and instruction prefix concatenation overhead (PERF-MEDIUM).
+- `HarrierEmbeddingBenchmarks` — 3 benchmarks: single, batch-10, batch-100. End-to-end throughput through HarrierEmbeddingGenerator.
+- `HarrierVsBaseBenchmarks` — 2 benchmarks: base MiniLM vs Harrier single-embed head-to-head.
+
+`BenchmarkHelpers.TryResolveHarrierModelDirectory()` added — resolves Harrier cache at `%LOCALAPPDATA%\ElBruno\LocalEmbeddings\models\onnx-community_harrier-oss-v1-270m-ONNX`. CI-safe: all benchmarks no-op when model not cached.
+
+Harrier project reference added to benchmark csproj.
+
+**2. slnx Cleanup (cleanup-slnx)**
+
+Added `samples/DocumentRagFoundry/DocumentRagFoundry.csproj` to `/samples/` folder in slnx. `NpuBenchmarkSample` skipped — no .csproj file present.
+
+**3. NPU Directory Cleanup (cleanup-npu-dirs)**
+
+All 6 NPU directories removed entirely (contained only bin/obj artifacts, zero .cs or .csproj files):
+- `src/ElBruno.LocalEmbeddings.Npu/`, `.Npu.Intel/`, `.Npu.Qualcomm/`
+- `tests/ElBruno.LocalEmbeddings.Npu.Tests/`, `.Npu.Intel.Tests/`, `.Npu.Qualcomm.Tests/`
+
+No slnx references existed for these — clean removal.
+
+**4. OnnxRuntime Bump 1.24.2 → 1.24.4 (cleanup-onnxruntime-bump)**
+
+Updated 4 csproj files:
+- `src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj`
+- `src/ElBruno.LocalEmbeddings.ImageEmbeddings/ElBruno.LocalEmbeddings.ImageEmbeddings.csproj`
+- `tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj`
+- `tests/ElBruno.LocalEmbeddings.Harrier.Tests/ElBruno.LocalEmbeddings.Harrier.Tests.csproj`
+
+**Build result:** `dotnet build` — 0 warnings, 0 errors. `dotnet test` — 0 failures across all test projects.
+

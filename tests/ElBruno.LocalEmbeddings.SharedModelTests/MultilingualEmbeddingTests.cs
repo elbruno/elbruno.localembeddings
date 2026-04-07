@@ -250,6 +250,174 @@ public class MultilingualEmbeddingTests
     }
 
     // =========================================================================
+    // French — Dissimilar
+    // =========================================================================
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "Multilingual")]
+    public async Task French_DissimilarSentences_LowSimilarity()
+    {
+        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        {
+            var result = await generator.GenerateAsync([
+                "Le temps est magnifique aujourd'hui",
+                "La bourse a chuté hier",
+                "Mon chat adore dormir sur le canapé"
+            ]);
+
+            double similarSim = CosineSimilarity(result[0].Vector, result[0].Vector);
+            double dissimilarSim = CosineSimilarity(result[0].Vector, result[2].Vector);
+            Assert.True(dissimilarSim < similarSim,
+                $"[{name}] French: dissimilar ({dissimilarSim:F4}) should be lower than similar ({similarSim:F4})");
+            Assert.True(dissimilarSim < 0.6, $"[{name}] French dissimilar: expected < 0.6, got {dissimilarSim:F4}");
+        }
+    }
+
+    // =========================================================================
+    // German — Dissimilar
+    // =========================================================================
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "Multilingual")]
+    public async Task German_DissimilarSentences_LowSimilarity()
+    {
+        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        {
+            var result = await generator.GenerateAsync([
+                "Das Wetter ist heute wunderschön",
+                "Meine Katze schläft gerne auf dem Sofa"
+            ]);
+
+            double similarity = CosineSimilarity(result[0].Vector, result[1].Vector);
+            Assert.True(similarity < 0.6, $"[{name}] German dissimilar: expected < 0.6, got {similarity:F4}");
+        }
+    }
+
+    // =========================================================================
+    // Japanese — Dissimilar
+    // =========================================================================
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "Multilingual")]
+    public async Task Japanese_DissimilarSentences_LowSimilarity()
+    {
+        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        {
+            var result = await generator.GenerateAsync([
+                "今日はとても良い天気です",
+                "猫はソファで寝るのが好きです"
+            ]);
+
+            double similarity = CosineSimilarity(result[0].Vector, result[1].Vector);
+            Assert.True(similarity < 0.6, $"[{name}] Japanese dissimilar: expected < 0.6, got {similarity:F4}");
+        }
+    }
+
+    // =========================================================================
+    // Portuguese — Dissimilar
+    // =========================================================================
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "Multilingual")]
+    public async Task Portuguese_DissimilarSentences_LowSimilarity()
+    {
+        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        {
+            var result = await generator.GenerateAsync([
+                "O tempo está lindo hoje",
+                "Meu gato adora dormir no sofá"
+            ]);
+
+            double similarity = CosineSimilarity(result[0].Vector, result[1].Vector);
+            Assert.True(similarity < 0.6, $"[{name}] Portuguese dissimilar: expected < 0.6, got {similarity:F4}");
+        }
+    }
+
+    // =========================================================================
+    // Arabic — Dissimilar
+    // =========================================================================
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "Multilingual")]
+    public async Task Arabic_DissimilarSentences_LowSimilarity()
+    {
+        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        {
+            var result = await generator.GenerateAsync([
+                "الطقس جميل اليوم",
+                "قطتي تحب النوم على الأريكة"
+            ]);
+
+            double similarity = CosineSimilarity(result[0].Vector, result[1].Vector);
+            Assert.True(similarity < 0.6, $"[{name}] Arabic dissimilar: expected < 0.6, got {similarity:F4}");
+        }
+    }
+
+    // =========================================================================
+    // Korean — Dissimilar
+    // =========================================================================
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "Multilingual")]
+    public async Task Korean_DissimilarSentences_LowSimilarity()
+    {
+        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        {
+            var result = await generator.GenerateAsync([
+                "오늘 날씨가 정말 좋습니다",
+                "우리 고양이는 소파에서 자는 것을 좋아합니다"
+            ]);
+
+            double similarity = CosineSimilarity(result[0].Vector, result[1].Vector);
+            Assert.True(similarity < 0.6, $"[{name}] Korean dissimilar: expected < 0.6, got {similarity:F4}");
+        }
+    }
+
+    // =========================================================================
+    // Russian
+    // =========================================================================
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "Multilingual")]
+    public async Task Russian_SimilarSentences_HighSimilarity()
+    {
+        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        {
+            var result = await generator.GenerateAsync([
+                "Сегодня прекрасная погода",
+                "Сегодня замечательная погода"
+            ]);
+
+            double similarity = CosineSimilarity(result[0].Vector, result[1].Vector);
+            Assert.True(similarity > 0.5, $"[{name}] Russian similar: expected > 0.5, got {similarity:F4}");
+        }
+    }
+
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "Multilingual")]
+    public async Task Russian_DissimilarSentences_LowSimilarity()
+    {
+        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        {
+            var result = await generator.GenerateAsync([
+                "Сегодня прекрасная погода",
+                "Моя кошка любит спать на диване"
+            ]);
+
+            double similarity = CosineSimilarity(result[0].Vector, result[1].Vector);
+            Assert.True(similarity < 0.6, $"[{name}] Russian dissimilar: expected < 0.6, got {similarity:F4}");
+        }
+    }
+
+    // =========================================================================
     // Cross-lingual: same meaning across languages
     // =========================================================================
 
@@ -266,7 +434,7 @@ public class MultilingualEmbeddingTests
             ]);
 
             double similarity = CosineSimilarity(result[0].Vector, result[1].Vector);
-            Assert.True(similarity > 0.0, $"[{name}] Cross-lingual EN-ES: expected > 0.0, got {similarity:F4}");
+            Assert.True(similarity > 0.3, $"[{name}] Cross-lingual EN-ES: expected > 0.3, got {similarity:F4}");
         }
     }
 
@@ -283,7 +451,7 @@ public class MultilingualEmbeddingTests
             ]);
 
             double similarity = CosineSimilarity(result[0].Vector, result[1].Vector);
-            Assert.True(similarity > 0.0, $"[{name}] Cross-lingual EN-ZH: expected > 0.0, got {similarity:F4}");
+            Assert.True(similarity > 0.3, $"[{name}] Cross-lingual EN-ZH: expected > 0.3, got {similarity:F4}");
         }
     }
 
@@ -300,7 +468,7 @@ public class MultilingualEmbeddingTests
             ]);
 
             double similarity = CosineSimilarity(result[0].Vector, result[1].Vector);
-            Assert.True(similarity > 0.0, $"[{name}] Cross-lingual EN-FR: expected > 0.0, got {similarity:F4}");
+            Assert.True(similarity > 0.3, $"[{name}] Cross-lingual EN-FR: expected > 0.3, got {similarity:F4}");
         }
     }
 

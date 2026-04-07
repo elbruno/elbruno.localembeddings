@@ -86,3 +86,9 @@ Four high-value, low-effort improvements implemented:
 4. **Metadata via GetService**:
    - Updated `GetService<TService>()` to return `Metadata` when `TService` is `EmbeddingGeneratorMetadata`
    - Allows accessing metadata through `IEmbeddingGenerator` interface without casting
+
+### 2026-03-01: Harrier Hardening and Parity Fixes
+
+- Harrier tokenizer now applies SentencePiece normalization, enforces maxLength >= 3, adds tokenizer.json size guard, and optimizes CountTokens to avoid padded allocations.
+- Harrier model downloader now serializes concurrent downloads, verifies sidecar hashes on cache hit, checks .onnx_data, writes sidecars for data files, and avoids double SHA-256 work.
+- Harrier ONNX loader adds Linux alias workaround and DllNotFoundException diagnostics; shared HttpClient uses pooled lifetime; provider name fixed; explicit package refs added.

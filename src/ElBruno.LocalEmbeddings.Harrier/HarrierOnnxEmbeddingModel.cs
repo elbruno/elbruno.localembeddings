@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Runtime.InteropServices;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 
@@ -71,18 +72,30 @@ public sealed class HarrierOnnxEmbeddingModel : IDisposable
         ValidateThreadCount(interOpNumThreads, nameof(interOpNumThreads));
         ValidateThreadCount(intraOpNumThreads, nameof(intraOpNumThreads));
 
+        EnsureLinuxOnnxRuntimeAliases();
+
         var defaultThreadCount = Environment.ProcessorCount;
         var resolvedInterOpNumThreads = interOpNumThreads ?? defaultThreadCount;
         var resolvedIntraOpNumThreads = intraOpNumThreads ?? defaultThreadCount;
 
-        using var sessionOptions = new SessionOptions
+        try
         {
-            GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
-            ExecutionMode = useParallelExecution ? ExecutionMode.ORT_PARALLEL : ExecutionMode.ORT_SEQUENTIAL,
-            InterOpNumThreads = resolvedInterOpNumThreads,
-            IntraOpNumThreads = resolvedIntraOpNumThreads
-        };
-        _session = new InferenceSession(modelPath, sessionOptions);
+            using var sessionOptions = new SessionOptions
+            {
+                GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
+                ExecutionMode = useParallelExecution ? ExecutionMode.ORT_PARALLEL : ExecutionMode.ORT_SEQUENTIAL,
+                InterOpNumThreads = resolvedInterOpNumThreads,
+                IntraOpNumThreads = resolvedIntraOpNumThreads
+            };
+            _session = new InferenceSession(modelPath, sessionOptions);
+        }
+        catch (DllNotFoundException ex)
+        {
+            throw new InvalidOperationException(
+                $"Failed to load ONNX Runtime native library. OS: {RuntimeInformation.OSDescription}, " +
+                $"Arch: {RuntimeInformation.ProcessArchitecture}, Model: {modelPath}",
+                ex);
+        }
 
         _outputNames = _session.OutputMetadata.Keys.ToArray();
 
@@ -96,6 +109,61 @@ public sealed class HarrierOnnxEmbeddingModel : IDisposable
         if (threadCount is <= 0)
         {
             throw new ArgumentOutOfRangeException(paramName, "Thread count must be greater than zero when specified.");
+        }
+    }
+
+    private static void EnsureLinuxOnnxRuntimeAliases()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            return;
+        }
+
+        string? runtimeFolder = RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.Arm64 => "linux-arm64",
+            Architecture.X64 => "linux-x64",
+            Architecture.Arm => "linux-arm",
+            _ => null
+        };
+
+        if (runtimeFolder is null)
+        {
+            return;
+        }
+
+        var baseDirectory = AppContext.BaseDirectory;
+        var nativeDirectory = Path.Combine(baseDirectory, "runtimes", runtimeFolder, "native");
+        var canonicalLibraryPath = Path.Combine(nativeDirectory, "libonnxruntime.so");
+
+        if (!File.Exists(canonicalLibraryPath))
+        {
+            return;
+        }
+
+        var aliasNames = new[] { "onnxruntime.dll.so", "libonnxruntime.dll.so" };
+        foreach (var aliasName in aliasNames)
+        {
+            TryCreateAliasCopy(canonicalLibraryPath, Path.Combine(nativeDirectory, aliasName));
+            TryCreateAliasCopy(canonicalLibraryPath, Path.Combine(baseDirectory, aliasName));
+        }
+    }
+
+    private static void TryCreateAliasCopy(string sourcePath, string destinationPath)
+    {
+        if (File.Exists(destinationPath))
+        {
+            return;
+        }
+
+        try
+        {
+            File.Copy(sourcePath, destinationPath);
+        }
+        catch
+        {
+            // Best effort only. If this fails, ONNX Runtime will still throw and
+            // callers receive a detailed error message with platform diagnostics.
         }
     }
 
@@ -223,8 +291,7 @@ public sealed class HarrierOnnxEmbeddingModel : IDisposable
     /// </summary>
     internal static float[][] ExtractEmbeddings(Tensor<float> outputTensor, int batchSize)
     {
-        var dimensions = outputTensor.Dimensions.ToArray();
-        var embeddingDim = dimensions[^1];
+        var embeddingDim = outputTensor.Dimensions[^1];
         var embeddings = new float[batchSize][];
 
         var denseTensor = (DenseTensor<float>)outputTensor;

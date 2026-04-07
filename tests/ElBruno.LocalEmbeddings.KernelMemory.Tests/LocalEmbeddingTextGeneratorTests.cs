@@ -108,6 +108,18 @@ public class LocalEmbeddingTextGeneratorTests
         Assert.True(generator.DisposeAsyncCalled);
     }
 
+    [Fact]
+    public async Task DisposeAsync_WhenOwnsGeneratorFalse_DoesNotDispose()
+    {
+        var generator = new TestEmbeddingGenerator();
+        var adapter = new LocalEmbeddingTextGenerator(generator, ownsGenerator: false);
+
+        await adapter.DisposeAsync();
+
+        Assert.False(generator.DisposeCalled);
+        Assert.False(generator.DisposeAsyncCalled);
+    }
+
     private sealed class CustomTokenizer : ITextTokenizer
     {
         public int CountTokens(string text) => 42;

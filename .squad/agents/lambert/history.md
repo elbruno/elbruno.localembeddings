@@ -131,3 +131,35 @@ Parker completed all actionable performance phases:
 
 **Report written to:** `.squad/decisions/inbox/lambert-test-coverage-review.md`
 
+### Test Coverage Improvements — 6 Items Implemented
+
+**Date:** 2026-02-28  
+**Scope:** All 6 items from the test coverage gap analysis.
+
+**Changes made:**
+
+1. **Harrier integration tests (P0):** Created `HarrierIntegrationTests.cs` — 4 SkippableFact tests: `CreateAsync_WithRealModel_ReturnsGenerator`, `GenerateAsync_ProducesValidEmbeddings` (verifies 640 dimensions), `GenerateAsync_DeterministicOutput`, `Tokenize_KnownInput_ProducesValidTokenIds`. Uses same model detection pattern as SharedModelTests/ModelFixture.
+
+2. **Harrier unit test gaps (P1):** Added 3 maxLength boundary tests to `HarrierTokenizerTests.cs` (Create_ThrowsOnMaxLengthLessThan3, Create_ThrowsOnMaxLengthOf2, Create_ThrowsOnMaxLengthOf1). Added 2 idempotent disposal tests to `HarrierEmbeddingGeneratorTests.cs`. Created `HarrierDIExtensionsTests.cs` with 6 tests covering all 3 `AddHarrierEmbeddings` overloads, null guards, and IConfiguration binding.
+
+3. **SharedModelTests improvements (P1):** Raised cross-lingual similarity threshold from `> 0.0` to `> 0.3` in all 3 cross-lingual tests. Added 6 dissimilar-sentence tests (French, German, Japanese, Portuguese, Arabic, Korean). Added 2 Russian dedicated tests (similar + dissimilar).
+
+4. **Cross-cutting test gaps (P1):** Created `ConcurrencyTests.cs` (10 concurrent GenerateAsync calls), `CancellationTests.cs` (pre-cancelled token), `DisposalTests.cs` (DisposeAsync verification, GenerateAsync after dispose).
+
+5. **Base library test gaps (P1):** Created `CountTokensTests.cs` — 2 SkippableFact tests for `CountTokens_ReturnsPositiveCount` and `CountTokens_EmptyString_ReturnsCount`.
+
+6. **KernelMemory + VectorData test gaps (P1):** Added `DisposeAsync_WhenOwnsGeneratorFalse_DoesNotDispose` to KernelMemory tests. Added 3 InMemoryVectorStore lifecycle tests: `ListCollectionNamesAsync_ReturnsCreatedCollections`, `CollectionExistsAsync_ReturnsTrue_AfterEnsure`, `EnsureCollectionDeletedAsync_RemovesCollection`.
+
+**Infrastructure fix:** Updated `Microsoft.ML.OnnxRuntime` in Harrier.csproj from 1.24.2 → 1.24.4 to resolve NU1605 package downgrade error. Added DI/Configuration/Options package references to Harrier.Tests.csproj.
+
+**Build result:** 0 errors, 0 warnings across all projects (net8.0 + net10.0).  
+**Test result:** All new unit tests pass. SkippableFact tests skip cleanly when models are unavailable.
+
+**Test count changes:**
+- Harrier.Tests: 27 → 47 (+20 tests)
+- LocalEmbeddings.Tests: ~136 → 144 (+8 tests)
+- SharedModelTests: 20 → 28 (+8 tests)
+- KernelMemory.Tests: 9 → 13 (+1 new test, 3 per-TFM)
+- VectorData.Tests: 11 → 14 (+3 tests)
+- **Total new tests across all projects: ~33**
+

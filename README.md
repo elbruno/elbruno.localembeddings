@@ -21,6 +21,7 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 
 - **Local Embedding Generation** — Run inference entirely on your machine using ONNX Runtime
 - **Microsoft.Extensions.AI Integration** — Implements `IEmbeddingGenerator<string, Embedding<float>>`
+- **🦅 Harrier model support** — Microsoft Harrier-OSS-v1 (270M, 640-dim, 94+ languages, instruction-tuned) via `ElBruno.LocalEmbeddings.Harrier`
 - **Kernel Memory Integration** — Companion package `ElBruno.LocalEmbeddings.KernelMemory` provides a native `ITextEmbeddingGenerator` adapter for [Microsoft Kernel Memory](https://github.com/microsoft/kernel-memory)
 - **VectorData Integration** — Companion package `ElBruno.LocalEmbeddings.VectorData` adds DI helpers for `Microsoft.Extensions.VectorData` (`VectorStore` and typed collections)
 - **Built-in In-Memory Vector Store** — `ElBruno.LocalEmbeddings.VectorData` includes `InMemoryVectorStore` (no Semantic Kernel connector dependency required)
@@ -37,7 +38,13 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 dotnet add package ElBruno.LocalEmbeddings
 ```
 
-For **Kernel Memory** integration, also install the companion package:
+For **Harrier model support**, install the companion package:
+
+```bash
+dotnet add package ElBruno.LocalEmbeddings.Harrier
+```
+
+For **Kernel Memory** integration, also install:
 
 ```bash
 dotnet add package ElBruno.LocalEmbeddings.KernelMemory
@@ -101,6 +108,16 @@ foreach (var result in results)
     Console.WriteLine($"{result.Score:F3} - {result.Text}");
 ```
 
+### 5) Using Harrier model (higher quality, multilingual)
+
+```csharp
+using ElBruno.LocalEmbeddings.Harrier;
+
+var generator = await HarrierEmbeddingGenerator.CreateAsync();
+var embedding = await generator.GenerateEmbeddingAsync("Hello, world!");
+Console.WriteLine($"Dimensions: {embedding.Vector.Length}"); // 640
+```
+
 For custom models and runtime behavior, use the options-based constructor:
 `new LocalEmbeddingGenerator(new LocalEmbeddingsOptions { ... })`.
 
@@ -118,6 +135,7 @@ See the [samples README](samples/README.md) for prerequisites and run instructio
 | ------ | ------------- |
 | [HelloWorldAltModel](samples/HelloWorldAltModel) | Minimal hello world with `sentence-transformers/all-MiniLM-L12-v2` |
 | [ConsoleApp](samples/ConsoleApp) | All the basics: single/batch embeddings, similarity, semantic search, DI |
+| [HarrierConsoleApp](samples/HarrierConsoleApp) | Harrier embedding model usage and similarity search |
 | [RagChat](samples/RagChat) | Embedding-only semantic search Q&A using shared VectorData `InMemoryVectorStore` (no LLM needed) |
 | [RagOllama](samples/RagOllama) | Full RAG with Ollama + phi4-mini + Kernel Memory |
 | [RagFoundryLocal](samples/RagFoundryLocal) | Full RAG with Foundry Local + phi4-mini |
@@ -158,6 +176,7 @@ Estimated download sizes below are approximate and can vary by ONNX variant (fp3
 | [Configuration](docs/configuration.md) | Options, supported models, cache locations |
 | [Alternative Models](docs/alternative-models.md) | Non-default free models, local download workflow, and license notes |
 | [Dependency Injection](docs/dependency-injection.md) | All DI overloads and `IConfiguration` binding |
+| [Harrier Integration](docs/harrier-integration.md) | Microsoft Harrier-OSS-v1 local embedding model |
 | [Kernel Memory Integration](docs/kernel-memory-integration.md) | Using local embeddings with Microsoft Kernel Memory |
 | [VectorData Integration](docs/vector-data-integration.md) | Using local embeddings with Microsoft.Extensions.VectorData abstractions |
 | [Contributing](docs/contributing.md) | Build from source, repo structure, guidelines |

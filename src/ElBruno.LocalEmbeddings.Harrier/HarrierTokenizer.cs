@@ -30,6 +30,7 @@ public sealed class HarrierTokenizer
     private readonly BpeTokenizer _tokenizer;
     private readonly int _maxLength;
     private readonly string? _instructionPrefix;
+    private readonly bool _tokenizerIndicatesSentencePieceNormalization;
 
     /// <summary>
     /// Gets the maximum sequence length this tokenizer was configured with.
@@ -41,11 +42,16 @@ public sealed class HarrierTokenizer
     /// </summary>
     public string? InstructionPrefix => _instructionPrefix;
 
-    private HarrierTokenizer(BpeTokenizer tokenizer, int maxLength, string? instructionPrefix)
+    private HarrierTokenizer(
+        BpeTokenizer tokenizer,
+        int maxLength,
+        string? instructionPrefix,
+        bool tokenizerIndicatesSentencePieceNormalization)
     {
         _tokenizer = tokenizer;
         _maxLength = maxLength;
         _instructionPrefix = instructionPrefix;
+        _tokenizerIndicatesSentencePieceNormalization = tokenizerIndicatesSentencePieceNormalization;
     }
 
     /// <summary>
@@ -72,13 +78,17 @@ public sealed class HarrierTokenizer
             throw new FileNotFoundException("tokenizer.json file not found.", actualPath);
         }
 
-        if (maxLength <= 0)
+        if (maxLength < 3)
         {
-            throw new ArgumentOutOfRangeException(nameof(maxLength), "Max length must be positive.");
+            throw new ArgumentOutOfRangeException(nameof(maxLength), maxLength, "MaxLength must be at least 3 (BOS + 1 token + EOS).");
         }
 
-        var bpeTokenizer = LoadFromTokenizerJson(actualPath);
-        return new HarrierTokenizer(bpeTokenizer, maxLength, instructionPrefix);
+        var bpeTokenizer = LoadFromTokenizerJson(actualPath, out var tokenizerIndicatesSentencePieceNormalization);
+        return new HarrierTokenizer(
+            bpeTokenizer,
+            maxLength,
+            instructionPrefix,
+            tokenizerIndicatesSentencePieceNormalization);
     }
 
     /// <summary>
@@ -93,9 +103,9 @@ public sealed class HarrierTokenizer
         ArgumentNullException.ThrowIfNull(text);
 
         var effectiveMaxLength = maxLength ?? _maxLength;
-        if (effectiveMaxLength <= 0)
+        if (effectiveMaxLength < 3)
         {
-            throw new ArgumentOutOfRangeException(nameof(maxLength), "Max length must be positive.");
+            throw new ArgumentOutOfRangeException(nameof(maxLength), effectiveMaxLength, "MaxLength must be at least 3 (BOS + 1 token + EOS).");
         }
 
         // Prepend instruction prefix if configured
@@ -103,12 +113,17 @@ public sealed class HarrierTokenizer
             ? _instructionPrefix + text
             : text;
 
+        if (!_tokenizerIndicatesSentencePieceNormalization)
+        {
+            // tokenizer.json may omit the normalizer section, but Gemma tokenizers still require SentencePiece whitespace handling.
+        }
+
+        // Apply SentencePiece normalization: prepend ▁ and replace spaces with ▁
+        inputText = "\u2581" + inputText.Replace(' ', '\u2581');
+
         // Reserve 2 slots for BOS and EOS
         int contentMaxLength = effectiveMaxLength - 2;
-        if (contentMaxLength <= 0)
-        {
-            contentMaxLength = 1;
-        }
+        contentMaxLength = Math.Max(1, contentMaxLength);
 
         // Encode the text (without special tokens)
         var encoding = _tokenizer.EncodeToIds(inputText, contentMaxLength, out _, out _);
@@ -182,21 +197,39 @@ public sealed class HarrierTokenizer
     /// </summary>
     public int CountTokens(string text, int? maxLength = null)
     {
-        var (_, attentionMask) = Tokenize(text, maxLength);
-        var count = 0;
-        for (int i = 0; i < attentionMask.Length; i++)
-        {
-            count += (int)attentionMask[i];
-        }
+        ArgumentNullException.ThrowIfNull(text);
 
-        return count;
+        var effectiveMaxLength = maxLength ?? _maxLength;
+        if (effectiveMaxLength < 3)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxLength), effectiveMaxLength, "MaxLength must be at least 3 (BOS + 1 token + EOS).");
+        }
+        var contentMaxLength = Math.Max(1, effectiveMaxLength - 2);
+
+        var inputText = !string.IsNullOrEmpty(_instructionPrefix)
+            ? _instructionPrefix + text
+            : text;
+
+        // Apply SentencePiece normalization
+        inputText = "\u2581" + inputText.Replace(' ', '\u2581');
+
+        var encoding = _tokenizer.EncodeToIds(inputText, contentMaxLength, out _, out _);
+        return encoding.Count + 2;
     }
 
     /// <summary>
     /// Parses tokenizer.json and creates a BpeTokenizer with the extracted vocab and merges.
     /// </summary>
-    private static BpeTokenizer LoadFromTokenizerJson(string path)
+    private static BpeTokenizer LoadFromTokenizerJson(string path, out bool tokenizerIndicatesSentencePieceNormalization)
     {
+        const long MaxTokenizerFileSizeBytes = 100 * 1024 * 1024;
+        var fileInfo = new FileInfo(path);
+        if (fileInfo.Length > MaxTokenizerFileSizeBytes)
+        {
+            throw new InvalidOperationException(
+                $"Tokenizer file exceeds maximum allowed size of {MaxTokenizerFileSizeBytes / (1024 * 1024)} MB: {path} ({fileInfo.Length / (1024 * 1024)} MB)");
+        }
+
         using var fileStream = File.OpenRead(path);
         using var doc = JsonDocument.Parse(fileStream, new JsonDocumentOptions
         {
@@ -205,6 +238,7 @@ public sealed class HarrierTokenizer
         });
 
         var root = doc.RootElement;
+        tokenizerIndicatesSentencePieceNormalization = TokenizerIndicatesSentencePieceNormalization(root);
 
         if (!root.TryGetProperty("model", out var model))
         {
@@ -266,5 +300,48 @@ public sealed class HarrierTokenizer
         mergesStream.Position = 0;
 
         return BpeTokenizer.Create(vocabStream, mergesStream);
+    }
+
+    private static bool TokenizerIndicatesSentencePieceNormalization(JsonElement root)
+    {
+        var hasNormalizer = root.TryGetProperty("normalizer", out _);
+        if (hasNormalizer)
+        {
+            return true;
+        }
+
+        return root.TryGetProperty("pre_tokenizer", out var preTokenizer)
+               && JsonElementContainsString(preTokenizer, "Metaspace");
+    }
+
+    private static bool JsonElementContainsString(JsonElement element, string value)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.String:
+                return string.Equals(element.GetString(), value, StringComparison.OrdinalIgnoreCase);
+            case JsonValueKind.Array:
+                foreach (var item in element.EnumerateArray())
+                {
+                    if (JsonElementContainsString(item, value))
+                    {
+                        return true;
+                    }
+                }
+
+                break;
+            case JsonValueKind.Object:
+                foreach (var property in element.EnumerateObject())
+                {
+                    if (JsonElementContainsString(property.Value, value))
+                    {
+                        return true;
+                    }
+                }
+
+                break;
+        }
+
+        return false;
     }
 }
