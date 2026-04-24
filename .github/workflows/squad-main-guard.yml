@@ -1,11 +1,8 @@
 name: Squad Protected Branch Guard
 
+# Disabled by default; enable when Squad automation is in use.
 on:
-  pull_request:
-    branches: [main, preview, insider]
-    types: [opened, synchronize, reopened]
-  push:
-    branches: [main, preview, insider]
+  workflow_dispatch:
 
 permissions:
   contents: read

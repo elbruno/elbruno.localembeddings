@@ -1,5 +1,6 @@
 name: Squad Promote
 
+# Disabled by default; enable when Squad automation is in use.
 on:
   workflow_dispatch:
     inputs:

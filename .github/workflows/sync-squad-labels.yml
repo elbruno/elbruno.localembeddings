@@ -1,10 +1,7 @@
 name: Sync Squad Labels
 
+# Disabled by default; enable when Squad automation is in use.
 on:
-  push:
-    paths:
-      - '.squad/team.md'
-      - '.ai-team/team.md'
   workflow_dispatch:
 
 permissions:

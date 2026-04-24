@@ -1,12 +1,9 @@
 name: Squad CI
 # dotnet project — configure build/test commands below
 
+# Disabled by default; enable when Squad automation is in use.
 on:
-  pull_request:
-    branches: [dev, preview, main, insider]
-    types: [opened, synchronize, reopened]
-  push:
-    branches: [dev, insider]
+  workflow_dispatch:
 
 permissions:
   contents: read

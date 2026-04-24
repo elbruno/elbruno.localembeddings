@@ -1,8 +1,8 @@
 name: Squad Issue Assign
 
+# Disabled by default; enable when Squad automation is in use.
 on:
-  issues:
-    types: [labeled]
+  workflow_dispatch:
 
 permissions:
   issues: write
