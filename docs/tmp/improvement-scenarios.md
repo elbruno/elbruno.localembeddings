@@ -181,7 +181,7 @@ The `Microsoft.Extensions.AI.Evaluation` namespace provides a growing set of abs
 
 Create a sample and optional helper utilities that integrate with `Microsoft.Extensions.AI.Evaluation`:
 
-1. **Evaluation sample** (`samples/EvaluationSample`):
+1. **Evaluation sample** (`src/src/Samples/EvaluationSample`):
    - Define a test dataset: `(query, expectedDocumentIds[])`
    - Run semantic search against the corpus
    - Measure retrieval metrics: Precision@K, Recall@K, Mean Reciprocal Rank (MRR)
@@ -238,7 +238,7 @@ Filtered search (e.g., "search only in category=travel") is critical for multi-t
 ### Proposed Solution
 
 1. **Add a "Metadata & Filtering" section** to the Kernel Memory integration doc (`docs/kernel-memory-integration.md`)
-2. **Create a dedicated sample** (`samples/FilteredSearch`) showing:
+2. **Create a dedicated sample** (`src/src/Samples/FilteredSearch`) showing:
    - Importing documents with tags (category, source, department, etc.)
    - Searching with `MemoryFilter` to restrict results by tag
    - Combining semantic relevance with metadata filtering
@@ -284,7 +284,7 @@ The current library covers the **embedding** side of RAG but relies on Ollama or
 
 Create a sample (and optional companion package) that pairs local embeddings with ONNX Runtime GenAI for fully offline RAG:
 
-1. **Sample: `samples/RagLocalGenAI`**
+1. **Sample: `src/src/Samples/RagLocalGenAI`**
    - Use `ElBruno.LocalEmbeddings` for document vectorization and retrieval
    - Use `Microsoft.ML.OnnxRuntimeGenAI` (with a small model like Phi-3-mini ONNX) for answer generation
    - Wire both through `Microsoft.Extensions.AI` abstractions (`IEmbeddingGenerator` + `IChatClient`)
@@ -344,7 +344,7 @@ User Query
 
 ### Proposed Solution
 
-Create a sample (`samples/MiddlewarePipeline`) that shows:
+Create a sample (`src/src/Samples/MiddlewarePipeline`) that shows:
 
 1. **Distributed caching** — Cache embeddings for repeated texts using `IDistributedCache`
 2. **Logging** — Log embedding generation calls with `ILogger` via the M.E.AI logging middleware
@@ -397,7 +397,7 @@ The library supports multiple HuggingFace models (all-MiniLM-L6-v2, all-MiniLM-L
 
 ### Proposed Solution
 
-Create a sample (`samples/ModelComparison`) that:
+Create a sample (`src/src/Samples/ModelComparison`) that:
 
 1. Loads 2–3 models side by side
 2. Runs the same set of queries against the same corpus
@@ -453,3 +453,4 @@ bge-small-en-v1.5             384   15ms/text    87%          33MB
 6. **Scenario 8** (Multi-model comparison) — Useful reference material
 7. **Scenario 4** (Evaluation) — Medium effort, aligns with M.E.AI growth
 8. **Scenario 6** (ONNX GenAI) — Highest effort, biggest long-term payoff
+

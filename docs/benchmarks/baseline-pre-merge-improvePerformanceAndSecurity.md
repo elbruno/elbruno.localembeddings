@@ -18,9 +18,9 @@ After merging PR #37 to main, run:
 ```bash
 git checkout main
 git pull
-dotnet run --project benchmarks/ElBruno.LocalEmbeddings.Benchmarks -c Release --framework net8.0 -- --filter "*MeanPoolingBenchmarks*" --job short
-dotnet run --project benchmarks/ElBruno.LocalEmbeddings.Benchmarks -c Release --framework net8.0 -- --filter "*FindClosestBenchmarks*" --job short
-dotnet run --project benchmarks/ElBruno.LocalEmbeddings.Benchmarks -c Release --framework net8.0 -- --filter "*L2NormalizationBenchmarks*" --job short
+dotnet run --project src/ElBruno.LocalEmbeddings.src/ElBruno.LocalEmbeddings.Benchmarks/ElBruno.LocalEmbeddings.Benchmarks -c Release --framework net8.0 -- --filter "*MeanPoolingBenchmarks*" --job short
+dotnet run --project src/ElBruno.LocalEmbeddings.src/ElBruno.LocalEmbeddings.Benchmarks/ElBruno.LocalEmbeddings.Benchmarks -c Release --framework net8.0 -- --filter "*FindClosestBenchmarks*" --job short
+dotnet run --project src/ElBruno.LocalEmbeddings.src/ElBruno.LocalEmbeddings.Benchmarks/ElBruno.LocalEmbeddings.Benchmarks -c Release --framework net8.0 -- --filter "*L2NormalizationBenchmarks*" --job short
 ```
 
 Then compare the numbers below with the new output.
@@ -112,10 +112,10 @@ These benchmarks were not run in the pre-merge baseline because they require ONN
 - `SingleVsBatchBenchmarks`
 - `TokenizerBenchmarks`
 
-To run these, ensure models are downloaded (run the `samples/ConsoleApp` sample first to populate the cache), then:
+To run these, ensure models are downloaded (run the `src/src/Samples/ConsoleApp` sample first to populate the cache), then:
 
 ```bash
-dotnet run --project benchmarks/ElBruno.LocalEmbeddings.Benchmarks -c Release --framework net8.0 -- --job short
+dotnet run --project src/ElBruno.LocalEmbeddings.src/ElBruno.LocalEmbeddings.Benchmarks/ElBruno.LocalEmbeddings.Benchmarks -c Release --framework net8.0 -- --job short
 ```
 
 ---
@@ -130,3 +130,4 @@ The following performance improvements were implemented in this branch and are r
 | PERF-02   | `TensorPrimitives.Add`/`Divide` SIMD mean pooling | Measured above: 6.3 μs (128T) / 27.8 μs (512T) |
 | PERF-09   | `PriorityQueue` min-heap replaces LINQ `.OrderByDescending` in `FindClosest` | Measured above: O(n log k) confirmed |
 | PERF-16   | L2 norm via `TensorPrimitives` | Measured above: 109–259 ns, zero allocations |
+

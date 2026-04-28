@@ -219,7 +219,7 @@ The companion package handles generator construction, adapter wrapping, and life
 
 ## Complete Example — RAG with Ollama
 
-See [samples/RagOllama](../samples/RagOllama) for a full working example:
+See [src/src/Samples/RagOllama](../src/Samples/RagOllama) for a full working example:
 
 ```csharp
 using ElBruno.LocalEmbeddings.KernelMemory.Extensions;
@@ -262,3 +262,4 @@ For deeper insights into RAG patterns, Kernel Memory workflows, and production d
 - 📖 **Visit [ElBruno.com](https://elbruno.com)** for detailed guides and best practices
 - 🎬 **Check [YouTube](https://www.youtube.com/elbruno)** for RAG walkthroughs and live coding sessions
 - 💬 **Follow [@elbruno on X](https://www.x.com/in/elbruno/)** for hot takes on embeddings and KM updates
+

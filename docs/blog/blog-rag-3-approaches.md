@@ -417,9 +417,9 @@ All three share the same foundation: **embeddings generated locally on your mach
 
 ### Sample Source Code
 
-- [RagChat sample](https://github.com/elbruno/elbruno.localembeddings/tree/main/samples/RagChat) — VectorData + semantic search
-- [RagOllama sample](https://github.com/elbruno/elbruno.localembeddings/tree/main/samples/RagOllama) — Kernel Memory + Ollama
-- [RagFoundryLocal sample](https://github.com/elbruno/elbruno.localembeddings/tree/main/samples/RagFoundryLocal) — Manual pipeline + Foundry Local
+- [RagChat sample](https://github.com/elbruno/elbruno.localembeddings/tree/main/src/Samples/RagChat) — VectorData + semantic search
+- [RagOllama sample](https://github.com/elbruno/elbruno.localembeddings/tree/main/src/Samples/RagOllama) — Kernel Memory + Ollama
+- [RagFoundryLocal sample](https://github.com/elbruno/elbruno.localembeddings/tree/main/src/Samples/RagFoundryLocal) — Manual pipeline + Foundry Local
 
 ### External Projects
 
@@ -443,3 +443,4 @@ Greetings
 More posts in my blog [ElBruno.com](https://elbruno.com).
 
 More info in [https://beacons.ai/elbruno](https://beacons.ai/elbruno)
+

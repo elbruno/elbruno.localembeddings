@@ -60,10 +60,10 @@ dotnet test
 ├── src/
 │   ├── ElBruno.LocalEmbeddings/               # Core library (M.E.AI + ONNX)
 │   └── ElBruno.LocalEmbeddings.KernelMemory/   # Kernel Memory companion package
-├── tests/
-│   ├── ElBruno.LocalEmbeddings.Tests/                # Core unit tests
-│   └── ElBruno.LocalEmbeddings.KernelMemory.Tests/   # KM adapter tests
-└── samples/                    # Sample applications
+├── src/Tests/
+│   ├── ElBruno.LocalEmbeddings.src/Tests/                # Core unit tests
+│   └── ElBruno.LocalEmbeddings.KernelMemory.src/Tests/   # KM adapter tests
+└── src/src/Samples/                    # Sample applications
     ├── ConsoleApp/
     ├── RagChat/
     ├── RagOllama/
@@ -90,3 +90,4 @@ Have ideas? Found a bug? Want to contribute?
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](../LICENSE) file for details.
+

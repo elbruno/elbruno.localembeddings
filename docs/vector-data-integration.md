@@ -47,7 +47,7 @@ You can still use `AddLocalEmbeddingsWithVectorStore(...)` when you want to plug
 
 ## Reference sample
 
-See [samples/RagChat](../samples/RagChat) for a complete console sample that uses
+See [src/src/Samples/RagChat](../src/Samples/RagChat) for a complete console sample that uses
 `AddLocalEmbeddingsWithInMemoryVectorStore(...)` and `VectorStoreCollection<TKey, TRecord>` end-to-end.
 
 ## Record shape example
@@ -75,10 +75,11 @@ public sealed class ProductRecord
 
 ## Want a Full Example? 🚀
 
-Check out [samples/RagChat](../samples/RagChat) for an end-to-end semantic search Q&A demo using `InMemoryVectorStore`. It's a great starting point for building your own vector-powered applications.
+Check out [src/src/Samples/RagChat](../src/Samples/RagChat) for an end-to-end semantic search Q&A demo using `InMemoryVectorStore`. It's a great starting point for building your own vector-powered applications.
 
 For deeper dives into vector database patterns:
 
 - 📖 **[ElBruno.Com Blog](https://elbruno.com)** — Production patterns, vector indexing tips
 - 🎥 **[YouTube Channel](https://www.youtube.com/elbruno)** — Live demos and architecture walkthroughs
 - 🔗 **[Dependency Injection Guide](dependency-injection.md)** — All DI patterns for vector stores
+

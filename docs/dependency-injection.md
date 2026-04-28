@@ -276,7 +276,7 @@ After registration, you can resolve:
 
 See [VectorData Integration](vector-data-integration.md) for full usage details.
 
-For a complete end-to-end sample using the shared in-memory store, see [samples/RagChat](../samples/RagChat).
+For a complete end-to-end sample using the shared in-memory store, see [src/src/Samples/RagChat](../src/Samples/RagChat).
 
 ---
 
@@ -287,3 +287,4 @@ Explore these integration patterns in detail:
 - 📖 **[ElBruno.com blog](https://elbruno.com)** — Architecture patterns for DI, production deployment tips
 - 🎬 **[YouTube channel](https://www.youtube.com/elbruno)** — Live demos of DI setup and troubleshooting
 - 🎙️ **[No Tienen Nombre podcast](https://notienenombre.com)** — Discussions on framework choices and design patterns (Spanish)
+

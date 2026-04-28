@@ -143,18 +143,18 @@ Prefer a containerized dev environment? See the Dev Container section in the [Co
 
 ## Samples
 
-See the [samples README](samples/README.md) for prerequisites and run instructions.
+All sample applications are located in `src/Samples/`. See the [samples README](src/Samples/README.md) for prerequisites and run instructions.
 
 | Sample | What It Shows |
 | ------ | ------------- |
-| [HelloWorldAltModel](samples/HelloWorldAltModel) | Minimal hello world with `sentence-transformers/all-MiniLM-L12-v2` |
-| [ConsoleApp](samples/ConsoleApp) | All the basics: single/batch embeddings, similarity, semantic search, DI |
-| [HarrierConsoleApp](samples/HarrierConsoleApp) | Harrier embedding model usage and similarity search |
-| [RagChat](samples/RagChat) | Embedding-only semantic search Q&A using shared VectorData `InMemoryVectorStore` (no LLM needed) |
-| [RagOllama](samples/RagOllama) | Full RAG with Ollama + phi4-mini + Kernel Memory |
-| [RagFoundryLocal](samples/RagFoundryLocal) | Full RAG with Foundry Local + phi4-mini |
-| [ImageRagSimple](samples/ImageRagSimple) | Minimal image RAG: index images → search by text |
-| [ImageRagChat](samples/ImageRagChat) | Interactive image RAG chat with text and image-to-image search |
+| [HelloWorldAltModel](src/Samples/HelloWorldAltModel) | Minimal hello world with `sentence-transformers/all-MiniLM-L12-v2` |
+| [ConsoleApp](src/Samples/ConsoleApp) | All the basics: single/batch embeddings, similarity, semantic search, DI |
+| [HarrierConsoleApp](src/Samples/HarrierConsoleApp) | Harrier embedding model usage and similarity search |
+| [RagChat](src/Samples/RagChat) | Embedding-only semantic search Q&A using shared VectorData `InMemoryVectorStore` (no LLM needed) |
+| [RagOllama](src/Samples/RagOllama) | Full RAG with Ollama + phi4-mini + Kernel Memory |
+| [RagFoundryLocal](src/Samples/RagFoundryLocal) | Full RAG with Foundry Local + phi4-mini |
+| [ImageRagSimple](src/Samples/ImageRagSimple) | Minimal image RAG: index images → search by text |
+| [ImageRagChat](src/Samples/ImageRagChat) | Interactive image RAG chat with text and image-to-image search |
 
 ## Configuration
 

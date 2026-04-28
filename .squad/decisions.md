@@ -4,6 +4,33 @@ Shared decisions all agents must respect. Scribe merges new decisions from the i
 
 <!-- Decisions are appended below. Each starts with ### -->
 
+## 2026-02-16: Repository Structure — All Code in src/
+
+**By:** Keaton (Lead Architect)  
+**Status:** Established
+
+Refactored repository to consolidate all project files under the `src/` directory for a unified, clean structure.
+
+### Structure
+- **Library projects:** `src/ElBruno.LocalEmbeddings/`, `src/ElBruno.LocalEmbeddings.Harrier/`, etc.
+- **Test projects:** `src/Tests/ElBruno.LocalEmbeddings.Tests/`, `src/Tests/ElBruno.LocalEmbeddings.Harrier.Tests/`, etc.
+- **Sample applications:** `src/Samples/ConsoleApp/`, `src/Samples/RagChat/`, etc.
+- **Benchmarks:** `src/ElBruno.LocalEmbeddings.Benchmarks/`
+- **Solution file:** `ElBruno.LocalEmbeddings.slnx` (at repo root)
+
+### Rationale
+- **Monorepo cleanliness:** Single source of truth for all code, eliminating top-level clutter
+- **Consistency:** Mirrors industry standard practice (Maven, Gradle, Go, Rust, npm)
+- **Scalability:** Easy to add new projects without reorganizing existing structure
+- **CI/CD:** Publish workflow already targets `src/` paths — no changes needed
+
+### Relative Paths
+- Tests reference libraries: `../../ElBruno.LocalEmbeddings/` (from `src/Tests/Project/`)
+- Samples reference libraries: `../../ElBruno.LocalEmbeddings/` (from `src/Samples/Project/`)
+- Benchmarks reference libraries: `../ElBruno.LocalEmbeddings/` (from `src/ElBruno.LocalEmbeddings.Benchmarks/`)
+
+---
+
 ## 2026-02-12: Solution Structure and API Surface
 
 **By:** Ripley  

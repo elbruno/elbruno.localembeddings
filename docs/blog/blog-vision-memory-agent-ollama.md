@@ -8,7 +8,7 @@ We’ll use:
 - **Ollama** as the local LLM runtime.
 - **Microsoft Agent Framework** to wire tool-calling into a conversational agent.
 
-> Repo sample: <https://github.com/elbruno/elbruno.localembeddings/tree/main/samples/VisionMemoryAgentSample>
+> Repo sample: <https://github.com/elbruno/elbruno.localembeddings/tree/main/src/Samples/VisionMemoryAgentSample>
 
 ## Why this scenario is fun
 
@@ -37,13 +37,13 @@ ollama pull llama3.2
 
 Follow the repo guide to download the required CLIP assets locally:
 
-<https://github.com/elbruno/elbruno.localembeddings/blob/main/samples/README_IMAGES.md#1-setup-download-models>
+<https://github.com/elbruno/elbruno.localembeddings/blob/main/src/Samples/README_IMAGES.md#1-setup-download-models>
 
 ## Step 3 — Run the sample
 
 ```bash
 # From repo root
- dotnet run --project samples/VisionMemoryAgentSample -- --model-dir ./scripts/clip-models
+ dotnet run --project src/src/Samples/VisionMemoryAgentSample -- --model-dir ./scripts/clip-models
 ```
 
 ## The agent wiring (core code)
@@ -159,11 +159,11 @@ string FindSimilarImages(
 ## Demo: conversational flow
 
 ```
-> Please ingest the image at ./samples/images/cat.jpg
+> Please ingest the image at ./src/Samples/images/cat.jpg
 Ingested 'cat.jpg'. Store now has 1 image(s).
 
-> Ingest images from folder ./samples/images
-Ingested 2 image(s) from './samples/images'. Store now has 3 image(s).
+> Ingest images from folder ./src/Samples/images
+Ingested 2 image(s) from './src/Samples/images'. Store now has 3 image(s).
 
 > Find images similar to "a beautiful sky at dusk"
 Top 1 result(s):
@@ -190,3 +190,4 @@ The end result is a clean, fast, and privacy-friendly way to explore image retri
 - Ollama quickstart: <https://docs.ollama.com/quickstart>
 - .NET SDK download: <https://dotnet.microsoft.com/download>
 - Repository: <https://github.com/elbruno/elbruno.localembeddings>
+

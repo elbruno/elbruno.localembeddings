@@ -1,29 +1,4 @@
 <Solution>
-  <Folder Name="/benchmarks/">
-    <Project Path="benchmarks/ElBruno.LocalEmbeddings.Benchmarks/ElBruno.LocalEmbeddings.Benchmarks.csproj" />
-  </Folder>
-  <Folder Name="/samples/">
-    <Project Path="samples/BenchmarkSample/BenchmarkSample.csproj" />
-    <Project Path="samples/ConsoleApp/ConsoleApp.csproj" />
-    <Project Path="samples/ConsoleAppLite/ConsoleAppLite.csproj" />
-    <Project Path="samples/HarrierConsoleApp/HarrierConsoleApp.csproj" />
-    <Project Path="samples/HarrierMultilingualSample/HarrierMultilingualSample.csproj" />
-    <Project Path="samples/HelloWorldAltModel/HelloWorldAltModel.csproj" />
-    <Project Path="samples/ImageRagChat/ImageRagChat.csproj" />
-    <Project Path="samples/ImageRagSimple/ImageRagSimple.csproj" />
-    <Project Path="samples/RaspberryPiTiny/RaspberryPiTiny.csproj" />
-    <Project Path="samples/RagChat/RagChat.csproj" />
-    <Project Path="samples/DocumentRagFoundry/DocumentRagFoundry.csproj" />
-    <Project Path="samples/RagFoundryLocal/RagFoundryLocal.csproj" />
-    <Project Path="samples/RagOllama/RagOllama.csproj" />
-    <Project Path="samples/LocalLlmRag/LocalLlmRag.csproj" />
-    <Project Path="samples/McpToolRouter/McpToolRouter.csproj" />
-    <Project Path="samples/NpuBenchmarkSample/NpuBenchmarkSample.csproj" />
-    <Project Path="samples/IntelNpuWorker/IntelNpuWorker.csproj" />
-    <Project Path="samples/DirectMLNpuWorker/DirectMLNpuWorker.csproj" />
-    <Project Path="samples/VisionMemoryAgentSample/VisionMemoryAgentSample.csproj" />
-    <Project Path="samples/ZeroCloudRag/ZeroCloudRag.csproj" />
-  </Folder>
   <Folder Name="/src/">
     <Project Path="src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.ImageEmbeddings.Downloader/ElBruno.LocalEmbeddings.ImageEmbeddings.Downloader.csproj" />
@@ -34,16 +9,39 @@
     <Project Path="src/ElBruno.LocalEmbeddings.Npu.Intel/ElBruno.LocalEmbeddings.Npu.Intel.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.VectorData/ElBruno.LocalEmbeddings.VectorData.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.Harrier/ElBruno.LocalEmbeddings.Harrier.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.Benchmarks/ElBruno.LocalEmbeddings.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj" />
-    <Project Path="tests/ElBruno.LocalEmbeddings.ImageEmbeddings.Tests/ElBruno.LocalEmbeddings.ImageEmbeddings.Tests.csproj" />
-    <Project Path="tests/ElBruno.LocalEmbeddings.KernelMemory.Tests/ElBruno.LocalEmbeddings.KernelMemory.Tests.csproj" />
-    <Project Path="tests/ElBruno.LocalEmbeddings.Npu.Tests/ElBruno.LocalEmbeddings.Npu.Tests.csproj" />
-    <Project Path="tests/ElBruno.LocalEmbeddings.Npu.Qualcomm.Tests/ElBruno.LocalEmbeddings.Npu.Qualcomm.Tests.csproj" />
-    <Project Path="tests/ElBruno.LocalEmbeddings.Npu.Intel.Tests/ElBruno.LocalEmbeddings.Npu.Intel.Tests.csproj" />
-    <Project Path="tests/ElBruno.LocalEmbeddings.VectorData.Tests/ElBruno.LocalEmbeddings.VectorData.Tests.csproj" />
-    <Project Path="tests/ElBruno.LocalEmbeddings.Harrier.Tests/ElBruno.LocalEmbeddings.Harrier.Tests.csproj" />
-    <Project Path="tests/ElBruno.LocalEmbeddings.SharedModelTests/ElBruno.LocalEmbeddings.SharedModelTests.csproj" />
+    <Project Path="src/Tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj" />
+    <Project Path="src/Tests/ElBruno.LocalEmbeddings.ImageEmbeddings.Tests/ElBruno.LocalEmbeddings.ImageEmbeddings.Tests.csproj" />
+    <Project Path="src/Tests/ElBruno.LocalEmbeddings.KernelMemory.Tests/ElBruno.LocalEmbeddings.KernelMemory.Tests.csproj" />
+    <Project Path="src/Tests/ElBruno.LocalEmbeddings.Npu.Tests/ElBruno.LocalEmbeddings.Npu.Tests.csproj" />
+    <Project Path="src/Tests/ElBruno.LocalEmbeddings.Npu.Qualcomm.Tests/ElBruno.LocalEmbeddings.Npu.Qualcomm.Tests.csproj" />
+    <Project Path="src/Tests/ElBruno.LocalEmbeddings.Npu.Intel.Tests/ElBruno.LocalEmbeddings.Npu.Intel.Tests.csproj" />
+    <Project Path="src/Tests/ElBruno.LocalEmbeddings.VectorData.Tests/ElBruno.LocalEmbeddings.VectorData.Tests.csproj" />
+    <Project Path="src/Tests/ElBruno.LocalEmbeddings.Harrier.Tests/ElBruno.LocalEmbeddings.Harrier.Tests.csproj" />
+    <Project Path="src/Tests/ElBruno.LocalEmbeddings.SharedModelTests/ElBruno.LocalEmbeddings.SharedModelTests.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="src/Samples/BenchmarkSample/BenchmarkSample.csproj" />
+    <Project Path="src/Samples/ConsoleApp/ConsoleApp.csproj" />
+    <Project Path="src/Samples/ConsoleAppLite/ConsoleAppLite.csproj" />
+    <Project Path="src/Samples/HarrierConsoleApp/HarrierConsoleApp.csproj" />
+    <Project Path="src/Samples/HarrierMultilingualSample/HarrierMultilingualSample.csproj" />
+    <Project Path="src/Samples/HelloWorldAltModel/HelloWorldAltModel.csproj" />
+    <Project Path="src/Samples/ImageRagChat/ImageRagChat.csproj" />
+    <Project Path="src/Samples/ImageRagSimple/ImageRagSimple.csproj" />
+    <Project Path="src/Samples/RaspberryPiTiny/RaspberryPiTiny.csproj" />
+    <Project Path="src/Samples/RagChat/RagChat.csproj" />
+    <Project Path="src/Samples/DocumentRagFoundry/DocumentRagFoundry.csproj" />
+    <Project Path="src/Samples/RagFoundryLocal/RagFoundryLocal.csproj" />
+    <Project Path="src/Samples/RagOllama/RagOllama.csproj" />
+    <Project Path="src/Samples/LocalLlmRag/LocalLlmRag.csproj" />
+    <Project Path="src/Samples/McpToolRouter/McpToolRouter.csproj" />
+    <Project Path="src/Samples/NpuBenchmarkSample/NpuBenchmarkSample.csproj" />
+    <Project Path="src/Samples/IntelNpuWorker/IntelNpuWorker.csproj" />
+    <Project Path="src/Samples/DirectMLNpuWorker/DirectMLNpuWorker.csproj" />
+    <Project Path="src/Samples/VisionMemoryAgentSample/VisionMemoryAgentSample.csproj" />
+    <Project Path="src/Samples/ZeroCloudRag/ZeroCloudRag.csproj" />
   </Folder>
 </Solution>

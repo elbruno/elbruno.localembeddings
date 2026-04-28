@@ -48,10 +48,10 @@ Console.WriteLine($"Dimensions: {embedding[0].Vector.Length}");
 Use a different non-default model directly from Hugging Face through `ModelName`.
 
 - Model used in this scenario: `sentence-transformers/all-MiniLM-L12-v2` (Apache-2.0)
-- Sample project: [`samples/HelloWorldAltModel`](../samples/HelloWorldAltModel)
+- Sample project: [`src/src/Samples/HelloWorldAltModel`](../src/Samples/HelloWorldAltModel)
 
 ```bash
-dotnet run --project samples/HelloWorldAltModel
+dotnet run --project src/src/Samples/HelloWorldAltModel
 ```
 
 The app creates `LocalEmbeddingGenerator` with the model above, generates one embedding, and prints model name + embedding dimensions.
@@ -74,3 +74,4 @@ Check the [Configuration Guide](configuration.md) for a full comparison of suppo
 - 📖 **[ElBruno.Com Blog](https://elbruno.com)** — Deep comparisons and performance analysis
 - 🎥 **[YouTube](https://www.youtube.com/elbruno)** — Model selection strategies and benchmarks
 - 🔗 Connect on **[LinkedIn](https://www.linkedin.com/in/elbruno/)** or **[Twitter/X](https://www.x.com/in/elbruno/)** for specific questions
+

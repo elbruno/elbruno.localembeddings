@@ -67,7 +67,7 @@ Here’s the simplest possible flow using the new library:
 using ElBruno.LocalEmbeddings.ImageEmbeddings;
 
 string modelDir = "./scripts/clip-models";
-string imageDir = "./samples/images";
+string imageDir = "./src/Samples/images";
 
 string textModelPath = Path.Combine(modelDir, "text_model.onnx");
 string visionModelPath = Path.Combine(modelDir, "vision_model.onnx");
@@ -103,7 +103,7 @@ That’s it: index images → run text query → get ranked results.
 Run it like this:
 
 ```bash
-dotnet run --project samples/ImageRagSimple -- ./scripts/clip-models ./samples/images
+dotnet run --project src/src/Samples/ImageRagSimple -- ./scripts/clip-models ./src/Samples/images
 ```
 
 This is the best sample to read if you want to understand the **library usage** with minimal noise.
@@ -121,7 +121,7 @@ This is the best sample to read if you want to understand the **library usage** 
 Run it like this:
 
 ```bash
-dotnet run --project samples/ImageRagChat -- --model-dir ./scripts/clip-models --image-dir ./samples/images
+dotnet run --project src/src/Samples/ImageRagChat -- --model-dir ./scripts/clip-models --image-dir ./src/Samples/images
 ```
 
 Commands inside the app:
@@ -153,9 +153,9 @@ In the meantime, check out the videos on my channel:
 
 ## 📚 Resources
 
-- [Image Embeddings setup guide](../../samples/README_IMAGES.md)
-- [ImageRagSimple sample](../../samples/ImageRagSimple/Program.cs)
-- [ImageRagChat sample](../../samples/ImageRagChat/Program.cs)
+- [Image Embeddings setup guide](../../src/Samples/README_IMAGES.md)
+- [ImageRagSimple sample](../../src/Samples/ImageRagSimple/Program.cs)
+- [ImageRagChat sample](../../src/Samples/ImageRagChat/Program.cs)
 
 ---
 
@@ -170,3 +170,4 @@ Greetings
 More posts in my blog [ElBruno.com](https://elbruno.com).
 
 More info in [https://beacons.ai/elbruno](https://beacons.ai/elbruno)
+

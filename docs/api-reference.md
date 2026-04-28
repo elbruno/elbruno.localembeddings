@@ -235,7 +235,7 @@ public static class ServiceCollectionExtensions
 }
 ```
 
-See [samples/RagChat](../samples/RagChat) for a full sample using
+See [src/src/Samples/RagChat](../src/Samples/RagChat) for a full sample using
 `AddLocalEmbeddingsWithInMemoryVectorStore(...)` + `AddVectorStoreCollection<TKey, TRecord>(...)`.
 
 ---
@@ -414,3 +414,4 @@ public static class ServiceCollectionExtensions
 - 🎥 **[YouTube Channel](https://www.youtube.com/elbruno)** — Live demos and tutorials
 - 🎙️ **[No Tienen Nombre Podcast](https://notienenombre.com)** — Conversations about AI and .NET (Spanish)
 ```
+

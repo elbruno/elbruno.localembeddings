@@ -191,12 +191,12 @@ Two complete RAG samples are included:
 
 | Sample | LLM Provider | How to Run |
 |--------|-------------|------------|
-| [RagOllama](../samples/RagOllama) | Ollama + `OllamaSharp` | `ollama pull phi4-mini` then `dotnet run` |
-| [RagFoundryLocal](../samples/RagFoundryLocal) | Foundry Local + OpenAI client | Install Foundry Local then `dotnet run` |
+| [RagOllama](../src/Samples/RagOllama) | Ollama + `OllamaSharp` | `ollama pull phi4-mini` then `dotnet run` |
+| [RagFoundryLocal](../src/Samples/RagFoundryLocal) | Foundry Local + OpenAI client | Install Foundry Local then `dotnet run` |
 
 Both use `LocalEmbeddingGenerator` for embeddings and `IChatClient` (from `Microsoft.Extensions.AI`) for chat completions, so the RAG logic is identical — only the LLM provider changes.
 
-> **Tip:** The [RagOllama](../samples/RagOllama) sample uses the companion package `ElBruno.LocalEmbeddings.KernelMemory` which integrates directly with [Microsoft Kernel Memory](https://github.com/microsoft/kernel-memory). Instead of building the RAG pipeline manually, the single call `.WithLocalEmbeddings()` on `KernelMemoryBuilder` handles embedding registration. See [Kernel Memory Integration](kernel-memory-integration.md) for details.
+> **Tip:** The [RagOllama](../src/Samples/RagOllama) sample uses the companion package `ElBruno.LocalEmbeddings.KernelMemory` which integrates directly with [Microsoft Kernel Memory](https://github.com/microsoft/kernel-memory). Instead of building the RAG pipeline manually, the single call `.WithLocalEmbeddings()` on `KernelMemoryBuilder` handles embedding registration. See [Kernel Memory Integration](kernel-memory-integration.md) for details.
 
 ### Key code pattern (from both samples)
 
@@ -231,7 +231,7 @@ await foreach (var chunk in chatClient.GetStreamingResponseAsync(prompt))
 - **[Dependency Injection](dependency-injection.md)** — All DI overloads and `IConfiguration` binding
 - **[Kernel Memory Integration](kernel-memory-integration.md)** — Use local embeddings with Microsoft Kernel Memory for semantic memory / RAG
 - **[VectorData Integration](vector-data-integration.md)** — Use local embeddings with Microsoft.Extensions.VectorData abstractions
-- **[Samples README](../samples/README.md)** — All sample projects with prerequisites and run instructions
+- **[Samples README](../src/Samples/README.md)** — All sample projects with prerequisites and run instructions
 
 ---
 
@@ -243,3 +243,4 @@ Dive into embeddings and local AI on multiple platforms:
 - 🎙️ **Listen to [No Tienen Nombre podcast](https://notienenombre.com)** (Spanish) for conversations about AI and development culture
 - 📹 **Watch tutorials on [YouTube](https://www.youtube.com/elbruno)** for live demos and end-to-end walkthroughs
 - 🔔 **Follow [@elbruno on Twitter/X](https://www.x.com/in/elbruno/)** for quick tips and releases
+
