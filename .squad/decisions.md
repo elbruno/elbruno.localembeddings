@@ -3301,3 +3301,442 @@ public void Load(
 | Breaking change | All new parameters have defaults |
 
 **Build Result:** 0 warnings, 0 errors
+# Architecture Review: ICustomEmbedder Interface (GitHub Issue #43)
+
+**Date:** 2026-04-27  
+**Reviewer:** Ripley (Lead Architect)  
+**Issue:** #43 — Add pluggable embedder interface (ICustomEmbedder)  
+**Requested by:** Bruno Capuano  
+**Status:** ✅ APPROVED WITH MODIFICATIONS
+
+---
+
+## Executive Summary
+
+The proposed `ICustomEmbedder` interface aligns well with ElBruno's design principles and Microsoft.Extensions.AI patterns. The concept is **sound**: delegating custom embedding backends (Ollama, cloud APIs) outside ElBruno keeps the library focused on local ONNX while providing a clean extension point for MemPalace.NET and other downstream libraries.
+
+**Decision:** Approve the feature with required modifications to the interface and factory signature to match established M.E.AI patterns in this codebase.
+
+---
+
+## Architecture Assessment
+
+### ✅ What Works Well
+
+1. **Separation of Concerns** — Custom backends stay outside ElBruno. The library maintains its core responsibility: local ONNX embeddings only.
+
+2. **Minimal Dependency** — ElBruno doesn't take on HTTP, retry, auth, or cloud API concerns. Clean boundary.
+
+3. **M.E.AI Alignment** — The adapter pattern naturally fits the existing `IEmbeddingGenerator<string, Embedding<float>>` interface already in use throughout this codebase.
+
+4. **Extensibility** — MemPalace.NET and other projects can implement `ICustomEmbedder` for Ollama, OpenAI, Hugging Face, etc., without modifying ElBruno.
+
+5. **Reusability** — Other ElBruno libraries (e.g., `.LocalLLMs`) can adopt the same pattern for custom implementations.
+
+---
+
+## Critical Gaps & Required Fixes
+
+### 1. ⚠️ Missing CancellationToken Support
+
+**Issue:** The proposed interface omits `CancellationToken`, but all async operations in ElBruno support cancellation.
+
+**Current proposal:**
+```csharp
+Task EmbedAsync(string text);
+Task<IEnumerable<float[]>> EmbedBatchAsync(IEnumerable<string> texts);
+```
+
+**Required change:**
+```csharp
+Task<float[]> EmbedAsync(string text, CancellationToken cancellationToken = default);
+Task<IEnumerable<float[]>> EmbedBatchAsync(
+    IEnumerable<string> texts, 
+    CancellationToken cancellationToken = default);
+```
+
+**Rationale:** Consistency with `IEmbeddingGenerator` contract. Cancellation is critical for cloud APIs and resource cleanup.
+
+---
+
+### 2. ⚠️ Incomplete Return Types
+
+**Issue:** `EmbedAsync(string text)` returns `Task` with no value. The factory method must convert this to `Embedding<float>[]`.
+
+**Current proposal:**
+```csharp
+Task EmbedAsync(string text);  // ← Returns what? Where's the embedding?
+```
+
+**Fix:** The return type must be `float[]` (a raw embedding vector):
+
+```csharp
+Task<float[]> EmbedAsync(string text, CancellationToken cancellationToken = default);
+```
+
+The adapter wrapper will convert raw `float[]` → `Embedding<float>` for M.E.AI consumption.
+
+---
+
+### 3. ⚠️ Factory Method Signature
+
+**Issue:** The proposed `CreateCustom()` factory doesn't show how it bridges from `ICustomEmbedder` → `IEmbeddingGenerator<string, Embedding<float>>`.
+
+**Current proposal:**
+```csharp
+public static IEmbeddingGenerator<string, Embedding<float>> CreateCustom(
+    ICustomEmbedder embedder,
+    string modelId = "custom");
+```
+
+**Fix:** Should return an adapter class that wraps the embedder:
+
+```csharp
+/// <summary>
+/// Creates an <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/> from a custom embedder implementation.
+/// </summary>
+/// <param name="embedder">The custom embedder to adapt.</param>
+/// <param name="modelName">Human-readable model identifier (defaults to "custom").</param>
+/// <returns>An <see cref="IEmbeddingGenerator"/> that delegates to the custom embedder.</returns>
+/// <exception cref="ArgumentNullException">Thrown if embedder is null.</exception>
+/// <remarks>
+/// The adapter normalizes L2 embedding vectors by default (consistent with LocalEmbeddingGenerator).
+/// If your embedder already normalizes, configure options to disable re-normalization.
+/// </remarks>
+public static IEmbeddingGenerator<string, Embedding<float>> CreateCustom(
+    ICustomEmbedder embedder,
+    string modelName = "custom",
+    CustomEmbedderOptions? options = null);
+```
+
+**Reasoning:** Follows the existing factory pattern (e.g., `LocalEmbeddingGenerator.CreateAsync()`). Optional `options` parameter allows configuration (e.g., normalization, metadata).
+
+---
+
+### 4. ⚠️ Missing Metadata Fields
+
+**Issue:** The interface lacks essential metadata for production use.
+
+**Add to interface:**
+```csharp
+public interface ICustomEmbedder
+{
+    /// <summary>
+    /// Human-readable name of the embedder (e.g., "ollama-embeddings", "openai-ada-3").
+    /// </summary>
+    string Name { get; }
+
+    /// <summary>
+    /// Version string (optional). Useful for tracking model/implementation versioning.
+    /// </summary>
+    string? Version { get; }
+
+    /// <summary>
+    /// Embedding dimension size (e.g., 384, 1536, 768).
+    /// </summary>
+    int DimensionSize { get; }
+
+    /// <summary>
+    /// Optional list of capabilities (e.g., "batching", "streaming", "sparse").
+    /// </summary>
+    IReadOnlyList<string> Capabilities { get; }
+}
+```
+
+**Rationale:** 
+- `Name` and `Version` enable debugging and logging.
+- `Capabilities` allows downstream code (MemPalace.NET) to detect features and adapt behavior.
+- Aligns with `EmbeddingGeneratorMetadata` pattern already in `LocalEmbeddingGenerator`.
+
+---
+
+### 5. ✅ Error Handling — Existing Patterns Sufficient
+
+**Assessment:** No new error-handling mechanisms are needed. Implementers should follow these established patterns:
+
+- **Input validation:** Validate text length, batch size in the custom implementation
+- **Null handling:** Return `ArgumentNullException.ThrowIfNull()` for public methods
+- **Async cleanup:** Implement `IAsyncDisposable` if managing long-lived resources (HTTP clients, connections)
+- **Exceptions:** Propagate domain errors (e.g., `HttpRequestException`, `OperationCanceledException`); wrap in a custom `EmbedderException` if needed
+
+**Guidance:** Document these expectations in a sample implementation or XML comments.
+
+---
+
+### 6. ✅ DI Registration — Recommend Helper
+
+**Proposal:** Add a convenience extension for registering custom embedders:
+
+```csharp
+public static class CustomEmbedderServiceCollectionExtensions
+{
+    /// <summary>
+    /// Registers a custom embedder as the <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/>.
+    /// </summary>
+    public static IServiceCollection AddCustomEmbedder<TCustomEmbedder>(
+        this IServiceCollection services,
+        Func<IServiceProvider, TCustomEmbedder> factory,
+        string modelName = "custom",
+        Action<CustomEmbedderOptions>? configure = null)
+        where TCustomEmbedder : class, ICustomEmbedder
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(factory);
+
+        services.TryAddSingleton(factory);
+        services.TryAddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(sp =>
+        {
+            var embedder = sp.GetRequiredService<TCustomEmbedder>();
+            var options = new CustomEmbedderOptions();
+            configure?.Invoke(options);
+            return CustomEmbedder.CreateAdapter(embedder, modelName, options);
+        });
+
+        return services;
+    }
+}
+```
+
+**Rationale:** Developers can then register like:
+```csharp
+services.AddCustomEmbedder<OllamaEmbedder>(
+    sp => new OllamaEmbedder(sp.GetRequiredService<HttpClient>()),
+    modelName: "ollama:nomic-embed-text");
+```
+
+---
+
+## Revised Interface & Implementation Plan
+
+### Final ICustomEmbedder Design
+
+```csharp
+namespace ElBruno.LocalEmbeddings;
+
+/// <summary>
+/// Interface for custom embedding implementations that delegate to alternative backends
+/// (Ollama, cloud APIs, etc.) while maintaining compatibility with ElBruno patterns.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Implementers should:
+/// <list type="bullet">
+/// <item><description>Validate input (text length, null checks)</description></item>
+/// <item><description>Return <c>float[]</c> vectors matching <see cref="DimensionSize"/></description></item>
+/// <item><description>Support <see cref="CancellationToken"/> for cancellation</description></item>
+/// <item><description>Implement <see cref="IAsyncDisposable"/> if managing resources</description></item>
+/// </list>
+/// </para>
+/// </remarks>
+public interface ICustomEmbedder
+{
+    /// <summary>
+    /// Gets the human-readable name of this embedder (e.g., "ollama-embeddings").
+    /// </summary>
+    string Name { get; }
+
+    /// <summary>
+    /// Gets an optional version string for the embedder or underlying model.
+    /// </summary>
+    string? Version { get; }
+
+    /// <summary>
+    /// Gets the dimensionality of embeddings produced (e.g., 384, 1536).
+    /// </summary>
+    int DimensionSize { get; }
+
+    /// <summary>
+    /// Gets optional capability strings (e.g., "batching", "sparse", "streaming").
+    /// </summary>
+    IReadOnlyList<string> Capabilities { get; }
+
+    /// <summary>
+    /// Generates an embedding for a single text string.
+    /// </summary>
+    /// <param name="text">The text to embed.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A float array of size <see cref="DimensionSize"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when text is null.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when cancellation is requested.</exception>
+    Task<float[]> EmbedAsync(string text, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Generates embeddings for multiple text strings in a batch.
+    /// </summary>
+    /// <param name="texts">The texts to embed.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>An enumerable of float arrays, each of size <see cref="DimensionSize"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when texts is null.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when cancellation is requested.</exception>
+    Task<IEnumerable<float[]>> EmbedBatchAsync(
+        IEnumerable<string> texts,
+        CancellationToken cancellationToken = default);
+}
+```
+
+### Factory Method
+
+```csharp
+namespace ElBruno.LocalEmbeddings;
+
+public static class CustomEmbedder
+{
+    /// <summary>
+    /// Creates an <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/> from a custom embedder.
+    /// </summary>
+    /// <param name="embedder">The custom embedder implementation.</param>
+    /// <param name="modelName">Human-readable model identifier (defaults to embedder name).</param>
+    /// <param name="options">Optional configuration.</param>
+    /// <returns>An embedding generator adapting the custom embedder to M.E.AI patterns.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if embedder is null.</exception>
+    public static IEmbeddingGenerator<string, Embedding<float>> CreateAdapter(
+        ICustomEmbedder embedder,
+        string? modelName = null,
+        CustomEmbedderOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(embedder);
+        return new CustomEmbedderAdapter(embedder, modelName ?? embedder.Name, options ?? new());
+    }
+}
+```
+
+### Options Class
+
+```csharp
+namespace ElBruno.LocalEmbeddings.Options;
+
+/// <summary>
+/// Configuration options for custom embedder adapters.
+/// </summary>
+public class CustomEmbedderOptions
+{
+    /// <summary>
+    /// Whether to apply L2 normalization to embeddings (default: true).
+    /// </summary>
+    public bool NormalizeEmbeddings { get; set; } = true;
+}
+```
+
+### Internal Adapter Implementation
+
+The adapter should be marked `internal` and implement:
+```csharp
+internal sealed class CustomEmbedderAdapter : IEmbeddingGenerator<string, Embedding<float>>, IAsyncDisposable
+{
+    public EmbeddingGeneratorMetadata Metadata { get; }
+
+    public async Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
+        IEnumerable<string> values,
+        EmbeddingGenerationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Convert raw float[] from embedder to Embedding<float>
+        // Apply normalization if configured
+        // Return GeneratedEmbeddings with metadata
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_embedder is IAsyncDisposable asyncDisposable)
+        {
+            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+}
+```
+
+---
+
+## Implementation Checklist
+
+- [ ] Add `ICustomEmbedder` interface (public, with full XML docs)
+- [ ] Add `CustomEmbedderOptions` class (public)
+- [ ] Implement `CustomEmbedderAdapter` (internal)
+- [ ] Add `CustomEmbedder.CreateAdapter()` static factory
+- [ ] Add `CustomEmbedderServiceCollectionExtensions` with `AddCustomEmbedder<T>` helper
+- [ ] Write unit tests for adapter (null handling, normalization, batch operations)
+- [ ] Add sample: `samples/CustomEmbedderOllama/` showing Ollama integration
+- [ ] Update `README.md` with "Extensibility" section mentioning `ICustomEmbedder`
+- [ ] Add to `docs/extension-points.md` (new document) explaining usage patterns
+- [ ] Update `CHANGELOG.md` for v1.x.0 release
+
+---
+
+## Risks & Mitigations
+
+| Risk | Mitigation |
+|------|-----------|
+| Custom implementations leak resource handles | Document `IAsyncDisposable` pattern; test with resource validation |
+| Dimension mismatch between embedders | Metadata field + adapter validation at creation time |
+| Missing cancellation support in custom code | Mark `CancellationToken` parameter as mandatory in docs/samples |
+| Error handling inconsistency | Provide sample implementation showing try/catch patterns |
+| API abuse (e.g., huge batch sizes) | Recommend batch size limits in `ICustomEmbedder` docs |
+
+---
+
+## Impact Assessment
+
+### Scope
+- **No breaking changes** to existing APIs
+- **New public types:** `ICustomEmbedder`, `CustomEmbedderOptions`, `CustomEmbedder` (static factory), `CustomEmbedderServiceCollectionExtensions`
+- **Minor version bump** (v1.1.0 or next minor release)
+
+### Downstream Projects
+- **MemPalace.NET:** Can now implement `ICustomEmbedder` for Ollama, OpenAI, Hugging Face, etc.
+- **ElBruno.LocalLLMs:** Can adopt the same pattern for custom LLM backends
+- **Other ElBruno libraries:** Clean extension point model to follow
+
+### Documentation
+- Add "Extensibility" section to README
+- Create `docs/extension-points.md`
+- Provide minimal Ollama example in samples/
+- Update CHANGELOG
+
+---
+
+## Design Alignment
+
+✅ **Microsoft.Extensions.AI alignment:**
+- Implements standard factory pattern
+- Adapts to `IEmbeddingGenerator<string, Embedding<float>>`
+- Supports `EmbeddingGenerationOptions` (passed through in adapter)
+- Consistent with `EmbeddingGeneratorMetadata` pattern
+
+✅ **ElBruno patterns:**
+- Options pattern for configuration (`CustomEmbedderOptions`)
+- Async factory methods with `CancellationToken`
+- `IAsyncDisposable` for resource cleanup
+- XML documentation on public APIs
+- Middleware compatibility (adapter can be wrapped by caching/retry/telemetry middleware)
+
+✅ **.NET best practices:**
+- Separation of concerns (custom backends outside core library)
+- Dependency injection friendly
+- Testable (interface-based design)
+- Cancellation-aware
+
+---
+
+## Recommendation
+
+**APPROVE** the feature with the modifications outlined above. The interface brings real value to MemPalace.NET and aligns naturally with ElBruno's architecture and Microsoft.Extensions.AI patterns. The required changes are straightforward:
+
+1. Add `CancellationToken` to all async methods
+2. Fix return types (`float[]` from `EmbedAsync`)
+3. Add metadata fields (`Name`, `Version`, `Capabilities`)
+4. Provide DI registration helper
+5. Create sample implementation (Ollama reference)
+
+**Implementation Priority:** Medium — Required for MemPalace.NET v0.7.0 roadmap; no dependency on other roadmap items.
+
+**Team Assignments:**
+- **Architecture/API Design:** Ripley (lead) — complete
+- **Implementation:** Dallas (M.E.AI integration) + Kane (adapter logic)
+- **Testing:** Lambert (unit tests, sample validation)
+- **Documentation:** Documentation specialist (README, samples, docs/)
+
+---
+
+**Approved by:** Ripley  
+**Date:** 2026-04-27  
+**Decision Authority:** Architecture Lead
