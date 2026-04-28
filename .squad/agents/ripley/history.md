@@ -9,6 +9,38 @@
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
 
+### 2026-04-11: Rebase feature/repo-improvements onto main (v1.4.4)
+
+**Outcome:** ✅ Successfully rebased and pushed. All tests pass (936 passed, 104 skipped).
+
+**Rebase conflicts:** None - clean fast-forward rebase from e597af3 to main (91ec0a3).
+
+**Test failures fixed:**
+- **Issue:** 4 multilingual tests failed with MiniLM-L6-v2 (English-only model)
+  - `CrossLingual_EnglishSpanish_SameMeaning_PositiveSimilarity` - Expected > 0.3, got 0.1919
+  - `CrossLingual_EnglishChinese_SameMeaning_PositiveSimilarity` - Expected > 0.3, got 0.0496
+  - `Arabic_DissimilarSentences_LowSimilarity` - Expected < 0.6, got 0.7437
+  - `Korean_DissimilarSentences_LowSimilarity` - Expected < 0.6, got 0.9512
+- **Root cause:** Tests in `SharedModelTests` were iterating over all available generators (MiniLM + Harrier), but non-English tests require multilingual models
+- **Fix:** Added `GetMultilingualGenerators()` method to `ModelFixture` that returns only Harrier; updated 4 tests to use `GetMultilingualGeneratorsOrSkip()` instead of `GetGeneratorsOrSkip()`
+- **Secondary issue:** MiniLM test expected normalized embeddings (norm ≈ 1.0) but got 6.35
+- **Fix:** Set `NormalizeEmbeddings = true` in `CreateMiniLmGenerator()` for test consistency
+- **Note:** Harrier always outputs normalized embeddings (built into model), so no option needed
+
+**Package version alignment:** All packages aligned to main (v1.4.4). No conflicts.
+
+**Branch state after rebase:**
+- Base: main @ 91ec0a3 (v1.4.4 with ICustomEmbedder interface from PR #44)
+- HEAD: cfc6b16 (test fixes)
+- Commits ahead: 14 (13 from main + 1 test fix)
+
+**Test results:** 1040 total (936 passed, 104 skipped, 0 failed)
+
+**Key decisions:**
+1. Multilingual tests (non-English, cross-lingual) should only run on Harrier
+2. MiniLM-L6-v2 is English-only and should not be expected to handle multilingual scenarios
+3. Normalized embeddings are required for cross-model similarity comparisons in integration tests
+
 ### 2026-02-28: Harrier Documentation Update
 
 **Completed:** All 6 documentation items identified in the architecture review have been updated.
