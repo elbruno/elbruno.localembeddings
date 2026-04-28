@@ -54,6 +54,7 @@ jobs:
 
       - name: Create GitHub release
         if: steps.check_tag.outputs.skip == 'false'
+        id: release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -61,3 +62,10 @@ jobs:
             --title "${{ steps.next_version.outputs.next }}" \
             --notes "Automated release — library change detected in \`src/\`." \
             --latest
+
+      - name: Trigger Publish workflow
+        if: steps.check_tag.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run publish.yml -f version="${{ steps.next_version.outputs.next }}"
