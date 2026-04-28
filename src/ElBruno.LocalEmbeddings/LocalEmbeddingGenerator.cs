@@ -3,6 +3,8 @@ using Microsoft.Extensions.AI;
 
 namespace ElBruno.LocalEmbeddings;
 
+// Release v1.4.5: Harrier multilingual embeddings + P0 bugfixes + security hardening
+
 /// <summary>
 /// Generates embeddings locally using ONNX Runtime models.
 /// </summary>
