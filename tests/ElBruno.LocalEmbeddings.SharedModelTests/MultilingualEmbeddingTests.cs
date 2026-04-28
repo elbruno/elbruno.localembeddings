@@ -346,7 +346,7 @@ public class MultilingualEmbeddingTests
     [Trait("Category", "Multilingual")]
     public async Task Arabic_DissimilarSentences_LowSimilarity()
     {
-        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        foreach (var (name, generator) in GetMultilingualGeneratorsOrSkip())
         {
             var result = await generator.GenerateAsync([
                 "الطقس جميل اليوم",
@@ -367,7 +367,7 @@ public class MultilingualEmbeddingTests
     [Trait("Category", "Multilingual")]
     public async Task Korean_DissimilarSentences_LowSimilarity()
     {
-        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        foreach (var (name, generator) in GetMultilingualGeneratorsOrSkip())
         {
             var result = await generator.GenerateAsync([
                 "오늘 날씨가 정말 좋습니다",
@@ -426,7 +426,7 @@ public class MultilingualEmbeddingTests
     [Trait("Category", "Multilingual")]
     public async Task CrossLingual_EnglishSpanish_SameMeaning_PositiveSimilarity()
     {
-        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        foreach (var (name, generator) in GetMultilingualGeneratorsOrSkip())
         {
             var result = await generator.GenerateAsync([
                 "The weather is beautiful today",
@@ -443,7 +443,7 @@ public class MultilingualEmbeddingTests
     [Trait("Category", "Multilingual")]
     public async Task CrossLingual_EnglishChinese_SameMeaning_PositiveSimilarity()
     {
-        foreach (var (name, generator) in GetGeneratorsOrSkip())
+        foreach (var (name, generator) in GetMultilingualGeneratorsOrSkip())
         {
             var result = await generator.GenerateAsync([
                 "Machine learning is a subset of artificial intelligence",
@@ -587,6 +587,13 @@ public class MultilingualEmbeddingTests
     {
         var generators = ModelFixture.GetAvailableGenerators().ToList();
         Skip.If(generators.Count == 0, "No embedding models available locally — skipping.");
+        return generators;
+    }
+
+    private static IReadOnlyList<(string Name, IEmbeddingGenerator<string, Embedding<float>> Generator)> GetMultilingualGeneratorsOrSkip()
+    {
+        var generators = ModelFixture.GetMultilingualGenerators().ToList();
+        Skip.If(generators.Count == 0, "No multilingual embedding models available locally — skipping. Install Harrier to run these tests.");
         return generators;
     }
 

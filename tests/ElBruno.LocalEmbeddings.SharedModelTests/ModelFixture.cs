@@ -47,6 +47,17 @@ public static class ModelFixture
             yield return ("Harrier-270M", harrier);
     }
 
+    /// <summary>
+    /// Enumerates only multilingual-capable generators (currently only Harrier).
+    /// Use this for tests that require non-English or cross-lingual capabilities.
+    /// </summary>
+    public static IEnumerable<(string Name, IEmbeddingGenerator<string, Embedding<float>> Generator)> GetMultilingualGenerators()
+    {
+        var harrier = GetHarrierGenerator();
+        if (harrier is not null)
+            yield return ("Harrier-270M", harrier);
+    }
+
     private static string? GetMiniLmModelPath()
     {
         // Check new cache path first
@@ -92,7 +103,8 @@ public static class ModelFixture
             return new LocalEmbeddingGenerator(new LocalEmbeddingsOptions
             {
                 ModelPath = modelPath,
-                EnsureModelDownloaded = false
+                EnsureModelDownloaded = false,
+                NormalizeEmbeddings = true // Required for multilingual similarity tests
             });
         }
         catch
@@ -108,6 +120,7 @@ public static class ModelFixture
 
         try
         {
+            // Harrier already outputs normalized embeddings (built into the model)
             return HarrierEmbeddingGenerator.CreateAsync(new HarrierEmbeddingsOptions
             {
                 ModelPath = modelPath,
