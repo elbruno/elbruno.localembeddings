@@ -65,9 +65,12 @@ var tracerProvider = new TracerProviderBuilder()
 | `EnableTracing` | `bool` | `true` | Enable OpenTelemetry tracing |
 | `EnableMetrics` | `bool` | `true` | Enable metrics collection |
 | `EnableBaggagePropagation` | `bool` | `false` | Enable W3C baggage propagation |
+| `EnableBaggage` | `bool` | `false` | Alias for `EnableBaggagePropagation` |
 | `SamplingRate` | `double` | `1.0` | Sampling rate (0.0 - 1.0) |
 | `RecordExceptionDetails` | `bool` | `true` | Record exception details in spans |
 | `RecordBaggageInAttributes` | `bool` | `false` | Record baggage items in span attributes |
+| `BaggageItems` | `IDictionary<string, string>` | `{}` | Custom baggage entries appended to span tags |
+| `MaxBaggageItemsToRecord` | `int` | `16` | Safety cap for baggage tags attached per span |
 
 ## Trace Operations
 
@@ -79,6 +82,8 @@ The following operations are instrumented with distributed tracing:
 | Model Loading | `ElBruno.LocalEmbeddings.LoadModel` | 100ms - 5s |
 | Batch Processing | `ElBruno.LocalEmbeddings.BatchGenerate` | 1ms - 100ms |
 | Streaming Generation | `ElBruno.LocalEmbeddings.StreamingGenerate` | 10ms - 1s |
+| Stream Buffering | `ElBruno.LocalEmbeddings.StreamBuffer` | 0.5ms - 50ms |
+| Vector Search | `ElBruno.LocalEmbeddings.VectorSearch` | 0.1ms - 50ms |
 | Model Download | `ElBruno.LocalEmbeddings.DownloadModel` | 500ms - 30s |
 | Cache Validation | `ElBruno.LocalEmbeddings.ValidateCache` | 1ms - 50ms |
 

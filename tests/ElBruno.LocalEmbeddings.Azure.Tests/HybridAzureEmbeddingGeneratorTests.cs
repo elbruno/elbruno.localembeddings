@@ -94,7 +94,7 @@ public class HybridAzureEmbeddingGeneratorTests
 
         // Assert
         Assert.NotEmpty(errors);
-        Assert.Contains("Endpoint is required", errors);
+        Assert.Contains("Endpoint is required.", errors);
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public class HybridAzureEmbeddingGeneratorTests
 
         // Assert
         Assert.NotEmpty(errors);
-        Assert.Contains("ApiKey is required", errors);
+        Assert.Contains("ApiKey is required.", errors);
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public class HybridAzureEmbeddingGeneratorTests
 
         // Assert
         Assert.NotEmpty(errors);
-        Assert.Contains("DeploymentName is required", errors);
+        Assert.Contains("DeploymentName is required.", errors);
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public class HybridAzureEmbeddingGeneratorTests
 
         // Assert
         Assert.NotEmpty(errors);
-        Assert.Contains("TimeoutMilliseconds must be at least 1000", errors);
+        Assert.Contains("TimeoutMilliseconds must be at least 1000.", errors);
     }
 
     [Fact]

@@ -92,9 +92,40 @@ public static class ServiceCollectionExtensions
 
     private static IServiceCollection AddHybridEmbeddingGenerator(IServiceCollection services)
     {
-        services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(provider =>
+        var existingDescriptor = services.FirstOrDefault(
+            sd => sd.ServiceType == typeof(IEmbeddingGenerator<string, Embedding<float>>));
+        if (existingDescriptor is null)
         {
-            var localGenerator = provider.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
+            throw new InvalidOperationException(
+                "No IEmbeddingGenerator<string, Embedding<float>> is registered. " +
+                "Call AddLocalEmbeddings() before AddLocalEmbeddingsWithAzureFallback().");
+        }
+
+        services.Remove(existingDescriptor);
+
+        services.Add(ServiceDescriptor.Describe(
+            typeof(IEmbeddingGenerator<string, Embedding<float>>),
+            provider =>
+            {
+                IEmbeddingGenerator<string, Embedding<float>> localGenerator;
+
+                if (existingDescriptor.ImplementationFactory is not null)
+                {
+                    localGenerator = (IEmbeddingGenerator<string, Embedding<float>>)existingDescriptor.ImplementationFactory(provider)!;
+                }
+                else if (existingDescriptor.ImplementationInstance is not null)
+                {
+                    localGenerator = (IEmbeddingGenerator<string, Embedding<float>>)existingDescriptor.ImplementationInstance;
+                }
+                else
+                {
+                    var implementationType = existingDescriptor.ImplementationType ??
+                        typeof(IEmbeddingGenerator<string, Embedding<float>>);
+                    localGenerator = (IEmbeddingGenerator<string, Embedding<float>>)ActivatorUtilities.GetServiceOrCreateInstance(
+                        provider,
+                        implementationType)!;
+                }
+
             var optionsMonitor = provider.GetRequiredService<IOptionsMonitor<LocalEmbeddingsAzureOptions>>();
             var options = optionsMonitor.CurrentValue;
             var logger = provider.GetService<ILoggerFactory>()?.CreateLogger<HybridAzureEmbeddingGenerator>();
@@ -111,7 +142,8 @@ public static class ServiceCollectionExtensions
                 new OpenAIClientOptions { Endpoint = new Uri(options.Endpoint!) });
 
             return new HybridAzureEmbeddingGenerator(localGenerator, azureClient, options, logger);
-        });
+            },
+            existingDescriptor.Lifetime));
 
         return services;
     }

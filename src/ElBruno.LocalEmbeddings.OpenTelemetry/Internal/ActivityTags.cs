@@ -23,6 +23,18 @@ internal static class ActivityTags
     public const string CacheHit = "cache.hit";
     public const string ErrorType = "error.type";
     public const string DurationMs = "duration.ms";
+    public const string SamplingSampled = "sampling.sampled";
+    public const string StreamItemCount = "custom.stream_item_count";
+    public const string BufferSize = "custom.buffer_size";
+    public const string BatchCount = "custom.batch_count";
+    public const string BatchNumber = "custom.batch_number";
+    public const string BufferedItemCount = "custom.buffered_item_count";
+    public const string CorpusSize = "custom.corpus_size";
+    public const string TopK = "custom.top_k";
+    public const string SimilarityMetric = "custom.similarity_metric";
+    public const string ResultsReturned = "custom.results_returned";
+    public const string EmbeddingDimension = "custom.embedding_dimension";
+    public const string BaggagePrefix = "baggage.";
 
     // Standard OpenTelemetry attributes
     public const string HttpStatusCode = "http.status_code";

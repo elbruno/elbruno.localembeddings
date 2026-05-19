@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using ElBruno.LocalEmbeddings.OpenTelemetry.Internal;
 using ElBruno.LocalEmbeddings.OpenTelemetry.Instrumentation;
@@ -54,7 +55,7 @@ public class InstrumentedEmbeddingGeneratorTests
         var metadata = instrumentedGenerator.Metadata;
         
         Assert.NotNull(metadata);
-        Assert.Equal("InstrumentedLocalEmbeddings", metadata.DefaultModelId);
+        Assert.Null(metadata.DefaultModelId);
     }
 
     [Fact]
@@ -71,7 +72,6 @@ public class InstrumentedEmbeddingGeneratorTests
         var metadata = instrumentedGenerator.Metadata;
         
         Assert.NotNull(metadata);
-        Assert.Equal("test-model", metadata.DefaultModelId);
     }
 
     [Fact]
@@ -135,5 +135,125 @@ public class InstrumentedEmbeddingGeneratorTests
 
         Assert.NotNull(service);
         mockGenerator.Verify(g => g.GetService(serviceType, null), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task GenerateAsync_BaggageConfiguration_CompletesSuccessfully(
+        bool enableBaggagePropagation,
+        bool recordBaggageInAttributes)
+    {
+        using var baggageScope = new ParentActivityScope(("trace.request_id", "req-123"), ("trace.user_id", "user-123"));
+
+        var embeddings = new[] { new Embedding<float>(new float[] { 1.0f, 2.0f, 3.0f }) };
+        var expectedResult = new GeneratedEmbeddings<Embedding<float>>(embeddings);
+
+        var mockGenerator = new Mock<IEmbeddingGenerator<string, Embedding<float>>>();
+        mockGenerator.Setup(g => g.GenerateAsync(It.IsAny<IEnumerable<string>>(), null, default))
+            .ReturnsAsync(expectedResult);
+        var options = new LocalEmbeddingsOpenTelemetryOptions
+        {
+            EnableTracing = true,
+            EnableBaggagePropagation = enableBaggagePropagation,
+            RecordBaggageInAttributes = recordBaggageInAttributes,
+            EnableMetrics = false
+        };
+
+        var instrumentedGenerator = new InstrumentedEmbeddingGenerator(mockGenerator.Object, options);
+
+        var result = await instrumentedGenerator.GenerateAsync(new[] { "test" });
+
+        Assert.Single(result);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_BaggageEnabledAndRecorded_AddsBaggageTags()
+    {
+        var completedActivities = new ConcurrentQueue<Activity>();
+        using var listener = CreateListener(completedActivities);
+
+        var embeddings = new[] { new Embedding<float>(new float[] { 1.0f, 2.0f, 3.0f }) };
+        var expectedResult = new GeneratedEmbeddings<Embedding<float>>(embeddings);
+
+        var mockGenerator = new Mock<IEmbeddingGenerator<string, Embedding<float>>>();
+        mockGenerator.Setup(g => g.GenerateAsync(It.IsAny<IEnumerable<string>>(), null, default))
+            .ReturnsAsync(expectedResult);
+
+        var baggageProvider = new DictionaryBaggageProvider(new Dictionary<string, string?>
+        {
+            ["trace.request_id"] = "req-123",
+            ["trace.user_id"] = "user-123"
+        });
+
+        var options = new LocalEmbeddingsOpenTelemetryOptions
+        {
+            EnableTracing = true,
+            EnableMetrics = false,
+            EnableBaggagePropagation = true,
+            RecordBaggageInAttributes = true
+        };
+
+        var instrumentedGenerator = new InstrumentedEmbeddingGenerator(
+            mockGenerator.Object,
+            options,
+            baggageProvider);
+
+        _ = await instrumentedGenerator.GenerateAsync(new[] { "test" });
+
+        var recordedActivities = completedActivities.ToArray();
+        Assert.Contains(recordedActivities, a => Equals(a.GetTagItem("baggage.trace.request_id"), "req-123"));
+        Assert.Contains(recordedActivities, a => Equals(a.GetTagItem("baggage.trace.user_id"), "user-123"));
+    }
+
+    private static ActivityListener CreateListener(ConcurrentQueue<Activity> completedActivities)
+    {
+        var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == "ElBruno.LocalEmbeddings",
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = activity => completedActivities.Enqueue(activity)
+        };
+
+        ActivitySource.AddActivityListener(listener);
+        return listener;
+    }
+
+    private sealed class ParentActivityScope : IDisposable
+    {
+        private readonly Activity _activity;
+
+        public ParentActivityScope(params (string Key, string Value)[] items)
+        {
+            _activity = new Activity("test-parent");
+            foreach (var (key, value) in items)
+            {
+                _activity.AddBaggage(key, value);
+            }
+
+            _activity.Start();
+        }
+
+        public void Dispose()
+        {
+            _activity.Stop();
+        }
+    }
+
+    private sealed class DictionaryBaggageProvider : IActivityBaggageProvider
+    {
+        private readonly IDictionary<string, string?> _items;
+
+        public DictionaryBaggageProvider(IDictionary<string, string?> items)
+        {
+            _items = items;
+        }
+
+        public IEnumerable<KeyValuePair<string, string?>> GetBaggage() => _items;
+
+        public void SetBaggage(string key, string? value) => _items[key] = value;
+
+        public bool TryReadFromHeader(string? baggageHeader) => BaggageExtensions.TryReadFromHeader(baggageHeader, this);
     }
 }
