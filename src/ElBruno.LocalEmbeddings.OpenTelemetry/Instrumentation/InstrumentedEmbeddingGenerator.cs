@@ -17,6 +17,7 @@ namespace ElBruno.LocalEmbeddings.OpenTelemetry.Instrumentation;
 public sealed class InstrumentedEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>, IDisposable, IAsyncDisposable
 {
     private readonly IEmbeddingGenerator<string, Embedding<float>> _innerGenerator;
+    private readonly IActivityBaggageProvider _baggageProvider;
     private readonly LocalEmbeddingsOpenTelemetryOptions _options;
     private readonly ILogger<InstrumentedEmbeddingGenerator>? _logger;
     private bool _disposed;
@@ -32,6 +33,15 @@ public sealed class InstrumentedEmbeddingGenerator : IEmbeddingGenerator<string,
         IEmbeddingGenerator<string, Embedding<float>> innerGenerator,
         LocalEmbeddingsOpenTelemetryOptions options,
         ILogger<InstrumentedEmbeddingGenerator>? logger = null)
+        : this(innerGenerator, options, baggageProvider: null, logger)
+    {
+    }
+
+    internal InstrumentedEmbeddingGenerator(
+        IEmbeddingGenerator<string, Embedding<float>> innerGenerator,
+        LocalEmbeddingsOpenTelemetryOptions options,
+        IActivityBaggageProvider? baggageProvider,
+        ILogger<InstrumentedEmbeddingGenerator>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(innerGenerator);
         ArgumentNullException.ThrowIfNull(options);
@@ -39,6 +49,7 @@ public sealed class InstrumentedEmbeddingGenerator : IEmbeddingGenerator<string,
         options.Validate();
 
         _innerGenerator = innerGenerator;
+        _baggageProvider = baggageProvider ?? new ActivityBaggageProvider();
         _options = options;
         _logger = logger;
     }
@@ -83,7 +94,8 @@ public sealed class InstrumentedEmbeddingGenerator : IEmbeddingGenerator<string,
                 activity.SetTag(ActivityTags.LlmRequestModel, metadata.DefaultModelId ?? "unknown");
             }
 
-            activity.SetTag("sampling.sampled", shouldSample);
+            activity.SetTag(ActivityTags.SamplingSampled, shouldSample);
+            BaggageExtensions.AttachBaggageToActivity(activity, _options, _baggageProvider);
         }
 
         try
@@ -182,4 +194,3 @@ public sealed class InstrumentedEmbeddingGenerator : IEmbeddingGenerator<string,
         }
     }
 }
-

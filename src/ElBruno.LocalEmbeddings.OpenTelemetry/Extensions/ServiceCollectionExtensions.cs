@@ -1,4 +1,5 @@
 using ElBruno.LocalEmbeddings.OpenTelemetry.Instrumentation;
+using ElBruno.LocalEmbeddings.OpenTelemetry.Internal;
 using ElBruno.LocalEmbeddings.OpenTelemetry.Metrics;
 using ElBruno.LocalEmbeddings.OpenTelemetry.Options;
 using Microsoft.Extensions.AI;
@@ -55,6 +56,7 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddSingleton(options);
+        services.AddSingleton<IActivityBaggageProvider, ActivityBaggageProvider>();
         if (options.MetricMeter is not null)
         {
             services.AddSingleton(options.MetricMeter);
@@ -95,9 +97,10 @@ public static class ServiceCollectionExtensions
                 }
 
                 var opts = provider.GetRequiredService<LocalEmbeddingsOpenTelemetryOptions>();
+                var baggageProvider = provider.GetRequiredService<IActivityBaggageProvider>();
                 var logger = provider.GetService<Microsoft.Extensions.Logging.ILogger<InstrumentedEmbeddingGenerator>>();
                 
-                return new InstrumentedEmbeddingGenerator(innerGenerator, opts, logger);
+                return new InstrumentedEmbeddingGenerator(innerGenerator, opts, baggageProvider, logger);
             },
             existingDescriptor.Lifetime));
 
@@ -137,6 +140,7 @@ public static class ServiceCollectionExtensions
         services.AddOptions<LocalEmbeddingsOpenTelemetryOptions>()
             .Bind(configuration.GetSection("OpenTelemetry"))
             .ValidateOnStart();
+        services.AddSingleton<IActivityBaggageProvider, ActivityBaggageProvider>();
 
         if (configure is not null)
         {
@@ -181,6 +185,7 @@ public static class ServiceCollectionExtensions
                 }
 
                 var options = provider.GetRequiredService<LocalEmbeddingsOpenTelemetryOptions>();
+                var baggageProvider = provider.GetRequiredService<IActivityBaggageProvider>();
                 var meter = provider.GetService<MetricMeter>();
                 if (options.EnableMetrics && meter is not null)
                 {
@@ -189,7 +194,7 @@ public static class ServiceCollectionExtensions
 
                 var logger = provider.GetService<Microsoft.Extensions.Logging.ILogger<InstrumentedEmbeddingGenerator>>();
                 
-                return new InstrumentedEmbeddingGenerator(innerGenerator, options, logger);
+                return new InstrumentedEmbeddingGenerator(innerGenerator, options, baggageProvider, logger);
             },
             existingDescriptor.Lifetime));
 
@@ -219,6 +224,7 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddSingleton(options);
+        services.AddSingleton<IActivityBaggageProvider, ActivityBaggageProvider>();
         if (options.MetricMeter is not null)
         {
             services.AddSingleton(options.MetricMeter);
@@ -259,13 +265,13 @@ public static class ServiceCollectionExtensions
                 }
 
                 var opts = provider.GetRequiredService<LocalEmbeddingsOpenTelemetryOptions>();
+                var baggageProvider = provider.GetRequiredService<IActivityBaggageProvider>();
                 var logger = provider.GetService<Microsoft.Extensions.Logging.ILogger<InstrumentedEmbeddingGenerator>>();
                 
-                return new InstrumentedEmbeddingGenerator(innerGenerator, opts, logger);
+                return new InstrumentedEmbeddingGenerator(innerGenerator, opts, baggageProvider, logger);
             },
             existingDescriptor.Lifetime));
 
         return services;
     }
 }
-
