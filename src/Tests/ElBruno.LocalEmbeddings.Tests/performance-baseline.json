@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "created_at": "2026-05-19T11:23:02Z",
+  "description": "Performance baselines for Phase 2 features - used for regression detection",
+  "measurements": {
+    "latency.generate_single": 10,
+    "latency.generate_batch_100": 200,
+    "latency.model_load_cold": 1000,
+    "latency.model_load_cached": 50,
+    "memory.model": 500000000,
+    "throughput.streaming_100k": 10000,
+    "latency.aot_cold_start_ms": 500,
+    "latency.quantized_int8_vs_fp32": 150,
+    "latency.quantized_fp16_vs_fp32": 200,
+    "accuracy.quantized_int8_similarity": 99,
+    "accuracy.quantized_fp16_similarity": 99,
+    "memory.quantized_int8_ratio": 25,
+    "memory.quantized_fp16_ratio": 50,
+    "latency.otel_overhead_ms": 2,
+    "latency.streaming_throughput_per_sec": 10000
+  },
+  "targets": {
+    "aot_cold_start_seconds": {
+      "target": 2,
+      "description": "Release gate: AOT-E2E-001 - Cold start time must be less than 2 seconds"
+    },
+    "quantization_accuracy_min": {
+      "target": 0.99,
+      "description": "Release gate: QNT-I-003 - Quantized model accuracy must be >0.99 vs baseline"
+    },
+    "streaming_100k_memory_mb": {
+      "target": 150,
+      "description": "Release gate: STR-M-001 - Streaming 100K vectors must use <150MB memory"
+    },
+    "otel_overhead_percent": {
+      "target": 2,
+      "description": "Release gate: OTEL-P-002 - Telemetry overhead must be <2%"
+    }
+  },
+  "tolerance_percent": 10,
+  "warning_threshold_percent": 5,
+  "failure_threshold_percent": 10
+}

@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>ElBruno.LocalEmbeddings.OpenTelemetry</PackageId>
+    <Description>OpenTelemetry observability instrumentation for ElBruno.LocalEmbeddings — distributed tracing, metrics collection, and structured events for enterprise observability</Description>
+    <Authors>Bruno Capuano</Authors>
+    <RepositoryUrl>https://github.com/elbruno/elbruno.localembeddings</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/elbruno/elbruno.localembeddings</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon_03.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>embeddings;opentelemetry;observability;tracing;metrics;jaeger;datadog;azure-monitor;distributed-tracing</PackageTags>
+    <Version>1.0.0</Version>
+    <NoWarn>$(NoWarn);NU1902</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ElBruno.LocalEmbeddings\ElBruno.LocalEmbeddings.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Api" Version="1.10.0" />
+    <PackageReference Include="OpenTelemetry" Version="1.10.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.4.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ElBruno.LocalEmbeddings.OpenTelemetry.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\nuget_images\icon_03.png" Pack="true" PackagePath="\" Link="icon_03.png" />
+  </ItemGroup>
+
+</Project>
