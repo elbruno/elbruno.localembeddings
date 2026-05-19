@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-05-19T15:40:14.0622845Z",
+  "aot_cold_start_ms": 1823,
+  "model_load_ms": 1678,
+  "first_embedding_ms": 144,
+  "steady_state_avg_ms": 60,
+  "steady_state_min_ms": 45,
+  "steady_state_max_ms": 87,
+  "total_for_10_embeddings_ms": 2368,
+  "cold_start_gate_ok": true
+}

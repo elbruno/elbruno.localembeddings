@@ -1,3 +1,5 @@
+using ElBruno.LocalEmbeddings.OpenTelemetry.Metrics;
+
 namespace ElBruno.LocalEmbeddings.OpenTelemetry.Options;
 
 /// <summary>
@@ -43,6 +45,12 @@ public sealed class LocalEmbeddingsOpenTelemetryOptions
     public bool RecordBaggageInAttributes { get; set; } = false;
 
     /// <summary>
+    /// Gets or sets the metric meter instance for recording metrics.
+    /// If not set, a default instance will be created during initialization.
+    /// </summary>
+    public MetricMeter? MetricMeter { get; set; }
+
+    /// <summary>
     /// Validates the configuration options.
     /// </summary>
     /// <exception cref="ArgumentException">Thrown if SamplingRate is outside the valid range [0, 1].</exception>
@@ -52,5 +60,24 @@ public sealed class LocalEmbeddingsOpenTelemetryOptions
         {
             throw new ArgumentException($"SamplingRate must be between 0.0 and 1.0, got {SamplingRate}", nameof(SamplingRate));
         }
+    }
+
+    /// <summary>
+    /// Determines whether tracing and metrics should be applied for the current request based on the sampling rate.
+    /// </summary>
+    /// <returns>true if the request should be sampled; otherwise false.</returns>
+    public bool ShouldSample()
+    {
+        if (SamplingRate >= 1.0)
+        {
+            return true;
+        }
+
+        if (SamplingRate <= 0.0)
+        {
+            return false;
+        }
+
+        return Random.Shared.NextDouble() < SamplingRate;
     }
 }

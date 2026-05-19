@@ -1,0 +1,12 @@
+Phase,OperationNumber,DurationMs,CumulativeMs,Timestamp
+Model Load (Cold),0,1678.6457,1678.6457,05/19/2026 15:40:13
+First Embedding,1,144.7552,1823.4009,05/19/2026 15:40:13
+Steady-State Embedding,2,46.0712,1869.4721000000002,05/19/2026 15:40:13
+Steady-State Embedding,3,78.9402,1948.4123000000002,05/19/2026 15:40:13
+Steady-State Embedding,4,87.2954,2035.7077000000002,05/19/2026 15:40:13
+Steady-State Embedding,5,45.7415,2081.4492,05/19/2026 15:40:13
+Steady-State Embedding,6,53.4414,2134.8906,05/19/2026 15:40:13
+Steady-State Embedding,7,63.461,2198.3516,05/19/2026 15:40:13
+Steady-State Embedding,8,64.4753,2262.8269,05/19/2026 15:40:13
+Steady-State Embedding,9,52.5051,2315.332,05/19/2026 15:40:13
+Steady-State Embedding,10,53.5745,2368.9065,05/19/2026 15:40:13

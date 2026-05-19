@@ -1,4 +1,5 @@
 using ElBruno.LocalEmbeddings.OpenTelemetry.Instrumentation;
+using ElBruno.LocalEmbeddings.OpenTelemetry.Metrics;
 using ElBruno.LocalEmbeddings.OpenTelemetry.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
@@ -47,7 +48,17 @@ public static class ServiceCollectionExtensions
         }
         options.Validate();
 
+        // Create MetricMeter if metrics are enabled and not provided
+        if (options.EnableMetrics && options.MetricMeter is null)
+        {
+            options.MetricMeter = new MetricMeter();
+        }
+
         services.AddSingleton(options);
+        if (options.MetricMeter is not null)
+        {
+            services.AddSingleton(options.MetricMeter);
+        }
 
         // Store the existing factory before we replace it
         var existingDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(IEmbeddingGenerator<string, Embedding<float>>));
@@ -141,6 +152,9 @@ public static class ServiceCollectionExtensions
                 "Call AddLocalEmbeddings() before AddLocalEmbeddingsOpenTelemetry().");
         }
 
+        // Add MetricMeter as singleton
+        services.AddSingleton<MetricMeter>();
+
         // Remove the existing descriptor so we can replace it
         services.Remove(existingDescriptor);
 
@@ -167,6 +181,12 @@ public static class ServiceCollectionExtensions
                 }
 
                 var options = provider.GetRequiredService<LocalEmbeddingsOpenTelemetryOptions>();
+                var meter = provider.GetService<MetricMeter>();
+                if (options.EnableMetrics && meter is not null)
+                {
+                    options.MetricMeter = meter;
+                }
+
                 var logger = provider.GetService<Microsoft.Extensions.Logging.ILogger<InstrumentedEmbeddingGenerator>>();
                 
                 return new InstrumentedEmbeddingGenerator(innerGenerator, options, logger);
@@ -192,7 +212,17 @@ public static class ServiceCollectionExtensions
 
         options.Validate();
 
+        // Create MetricMeter if metrics are enabled and not provided
+        if (options.EnableMetrics && options.MetricMeter is null)
+        {
+            options.MetricMeter = new MetricMeter();
+        }
+
         services.AddSingleton(options);
+        if (options.MetricMeter is not null)
+        {
+            services.AddSingleton(options.MetricMeter);
+        }
 
         // Store the existing factory before we replace it
         var existingDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(IEmbeddingGenerator<string, Embedding<float>>));
@@ -238,3 +268,4 @@ public static class ServiceCollectionExtensions
         return services;
     }
 }
+

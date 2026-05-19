@@ -64,7 +64,9 @@ public sealed class InstrumentedEmbeddingGenerator : IEmbeddingGenerator<string,
             return await _innerGenerator.GenerateAsync(valuesList, options, cancellationToken).ConfigureAwait(false);
         }
 
+        bool shouldSample = _options.ShouldSample();
         var startTime = Environment.TickCount64;
+        
         using var activity = OpenTelemetryActivitySource.Source.StartActivity(
             OpenTelemetryActivitySource.GenerateEmbeddings,
             ActivityKind.Internal);
@@ -80,6 +82,8 @@ public sealed class InstrumentedEmbeddingGenerator : IEmbeddingGenerator<string,
             {
                 activity.SetTag(ActivityTags.LlmRequestModel, metadata.DefaultModelId ?? "unknown");
             }
+
+            activity.SetTag("sampling.sampled", shouldSample);
         }
 
         try
@@ -99,6 +103,13 @@ public sealed class InstrumentedEmbeddingGenerator : IEmbeddingGenerator<string,
                 }
 
                 activity.SetStatus(ActivityStatusCode.Ok);
+            }
+
+            if (shouldSample && _options.EnableMetrics && _options.MetricMeter is not null)
+            {
+                _options.MetricMeter.RecordEmbeddingLatency(Environment.TickCount64 - startTime);
+                _options.MetricMeter.RecordBatchSize(valuesList.Count);
+                _options.MetricMeter.IncrementEmbeddingsGenerated(valuesList.Count);
             }
 
             _logger?.LogDebug("Successfully generated {Count} embeddings in {Duration}ms", valuesList.Count, Environment.TickCount64 - startTime);
@@ -124,6 +135,11 @@ public sealed class InstrumentedEmbeddingGenerator : IEmbeddingGenerator<string,
                 }
 
                 activity.SetStatus(ActivityStatusCode.Error, ex.Message);
+            }
+
+            if (shouldSample && _options.EnableMetrics && _options.MetricMeter is not null)
+            {
+                _options.MetricMeter.IncrementErrors();
             }
 
             throw;
@@ -166,3 +182,4 @@ public sealed class InstrumentedEmbeddingGenerator : IEmbeddingGenerator<string,
         }
     }
 }
+

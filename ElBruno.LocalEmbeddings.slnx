@@ -45,5 +45,6 @@
     <Project Path="src/Samples/DirectMLNpuWorker/DirectMLNpuWorker.csproj" />
     <Project Path="src/Samples/VisionMemoryAgentSample/VisionMemoryAgentSample.csproj" />
     <Project Path="src/Samples/ZeroCloudRag/ZeroCloudRag.csproj" />
+    <Project Path="src/Samples/AotColdStartMeasurement/AotColdStartMeasurement.csproj" />
   </Folder>
 </Solution>
