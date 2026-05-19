@@ -219,3 +219,41 @@ Added DirectML execution provider support on branch `feature/harrier-gpu-directm
 - `DefineConstants` appended (not replaced) to preserve any existing constants
 - Samples default `useGpu = isWindows` so they run GPU automatically on Windows without requiring manual config
 
+### 2026-05-19: Phase 2 Native AOT Enablement — Week 1 Validation
+
+Started Phase 2 Native AOT workstream. Executed Week 1 deliverables:
+
+**1. Reflection Audit (COMPLETE):**
+- Searched codebase for dangerous patterns: `Type.GetType`, `Activator.CreateInstance`, `Expression.Compile`, `DynamicMethod`, `System.Reflection.Emit`
+- Result: ✅ **ZERO found** — no reflection in inference path
+- Config binding via `IConfiguration.Bind()` found in 6 files (main lib + Harrier, KernelMemory, VectorData, NPU packages)
+- Status: ✅ Already marked with `[RequiresUnreferencedCode]` and `[RequiresDynamicCode]` attributes
+
+**2. AOT Build Validation (COMPLETE):**
+- `dotnet publish` net8.0 with `PublishAot=true -r win-x64`: ✅ **SUCCESS**
+  - Generated native executable with .lib export
+- `dotnet publish` net10.0 with `PublishAot=true -r win-x64`: ✅ **SUCCESS**
+  - Generated native executable with .lib export
+- Build output: `bin\Release\net{8,10}.0\win-x64\publish\` contains self-contained binary
+
+**3. DI API Audit (COMPLETE):**
+- **Delegate-based API:** ✅ Already exists
+  - `AddLocalEmbeddings(Action<LocalEmbeddingsOptions>? configure = null)` (lines 69–82)
+  - `AddLocalEmbeddings(LocalEmbeddingsOptions options)` (lines 105–128)
+  - `AddLocalEmbeddings(string modelName)` (lines 151–161)
+- **Instance-based API:** ✅ Already exists — direct instance registration without reflection
+- **IConfiguration API:** ✅ Exists but marked `[RequiresUnreferencedCode]` as required (lines 192–204)
+- **Deployment guidance:** Users can deploy to AOT by using delegate/instance APIs; IConfiguration binding is explicitly not supported in AOT (design decision)
+
+**Key Findings:**
+- ✅ Library is **90% AOT-ready** (per phase2 architecture doc) — verified
+- ✅ **Zero reflection in inference path** — confirmed via comprehensive grep
+- ✅ **AOT builds succeed** on both net8.0 and net10.0
+- ✅ **Config binding pattern** already handles AOT via `[RequiresUnreferencedCode]` attribute
+- ⚠️ Next steps: Week 2 (AOT + Quantization tests, cold-start measurement), Week 3 (Docker, Azure Functions integration)
+
+**Files Verified:**
+- `src/ElBruno.LocalEmbeddings/Extensions/ServiceCollectionExtensions.cs` — All 4 overloads (delegate, instance, model-name, IConfiguration)
+- `src/ElBruno.LocalEmbeddings/Options/LocalEmbeddingsOptions.cs` — Clean POCO, no reflection
+- Similar patterns confirmed in Harrier, KernelMemory, VectorData, NPU packages
+
