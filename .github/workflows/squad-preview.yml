@@ -1,9 +1,9 @@
 name: Squad Preview Validation
 # dotnet project — configure build, test, and validation commands below
 
-# Disabled by default; enable when Squad automation is in use.
 on:
-  workflow_dispatch:
+  push:
+    branches: [preview]
 
 permissions:
   contents: read

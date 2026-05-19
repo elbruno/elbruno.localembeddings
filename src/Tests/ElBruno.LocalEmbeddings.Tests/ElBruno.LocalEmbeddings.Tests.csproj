@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ElBruno.LocalEmbeddings\ElBruno.LocalEmbeddings.csproj" />
+    <ProjectReference Include="..\..\ElBruno.LocalEmbeddings.Benchmarks\ElBruno.LocalEmbeddings.Benchmarks.csproj" />
   </ItemGroup>
 
 </Project>

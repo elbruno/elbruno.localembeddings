@@ -1,9 +1,9 @@
 name: Squad Release
 # dotnet project — configure build, test, and release commands below
 
-# Disabled by default; enable when Squad automation is in use.
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: write

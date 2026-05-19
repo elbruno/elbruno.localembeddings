@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>ElBruno.LocalEmbeddings.Azure</PackageId>
+    <Description>Azure OpenAI fallback integration for ElBruno.LocalEmbeddings — try local embeddings first, fall back to Azure on failure</Description>
+    <Authors>Bruno Capuano</Authors>
+    <RepositoryUrl>https://github.com/elbruno/elbruno.localembeddings</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/elbruno/elbruno.localembeddings</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon_03.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>embeddings;azure;openai;fallback;ai;local;microsoft-extensions-ai</PackageTags>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ElBruno.LocalEmbeddings\ElBruno.LocalEmbeddings.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenAI" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.4.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ElBruno.LocalEmbeddings.Azure.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\nuget_images\icon_03.png" Pack="true" PackagePath="\" Link="icon_03.png" />
+  </ItemGroup>
+
+</Project>

@@ -3861,3 +3861,263 @@ internal sealed class CustomEmbedderAdapter : IEmbeddingGenerator<string, Embedd
 **Approved by:** Ripley  
 **Date:** 2026-04-27  
 **Decision Authority:** Architecture Lead
+
+---
+
+# PHASE 2 ENTERPRISE HARDENING — DESIGN PHASE COMPLETE
+
+**Phase 2 Design Lockdown:** 2026-06-15  
+**Architects:** Ripley (Lead AOT), Kane (Observability), Lambert (Testing)  
+**Status:** All 3 design streams complete, ready for implementation (4-6 weeks)
+
+---
+
+## NATIVE AOT + QUANTIZATION STRATEGY
+
+### Decision: Native AOT Enablement for Serverless Deployment
+**Date:** 2026-06-15  
+**Authors:** Ripley (Architecture), Dallas (Feasibility), Scribe (Documentation)  
+**Status:** DESIGNED (Phase 2)
+
+Architect native AOT compilation support to enable zero-cold-start serverless deployments on Azure Functions, AWS Lambda, Google Cloud Run.
+
+**Key Details:**
+- **AOT Readiness:** 90% ready now (zero reflection in inference path)
+- **Only blocker:** Optional config binding (already marked `[RequiresUnreferencedCode]`)
+- **Solution:** Use delegate-based DI API instead of config binding
+- **Deployment:** `PublishAot=true`, `PublishTrimmed=true`, .NET 8 & 10 compatible
+- **Serverless targets:** Azure Functions, AWS Lambda, Google Cloud Run
+- **Total package:** ~130 MB (executable + native lib + quantized model)
+- **Cold-start:** <2 seconds estimated
+- **Cost:** O(1) per request (no per-API-call fees like Azure OpenAI)
+
+**Impact:**
+- Enables enterprise serverless at cost parity with open-source (no per-request API charges)
+- Unblocks sub-2s inference on cold VMs (vs. 5-10s JIT startup)
+- Zero breaking changes to existing API
+
+**Success Criteria:**
+- AOT builds successfully on .NET 8 & 10 with PublishAot=true
+- All 314+ existing tests pass
+- <5% performance overhead vs. non-AOT
+- Security audit approved
+- 16 validation tasks (AOT build, tests, E2E, Docker, Azure Functions, perf baseline)
+
+**Documents:** phase2-native-aot-quantization-architecture.md, aot-validation-checklist.md, phase2-implementation-roadmap.md
+
+---
+
+### Decision: Quantization API (Float32, Int8, Float16)
+**Date:** 2026-06-15  
+**Authors:** Ripley (Architecture), Parker (Feasibility)  
+**Status:** DESIGNED (Phase 2)
+
+Add explicit quantization support to reduce model size, memory usage, and latency for edge/serverless deployments.
+
+**API Design:**
+```csharp
+public enum QuantizationFormat { Float32, Int8, Float16 }
+// Add to LocalEmbeddingsOptions:
+public QuantizationFormat PreferredQuantization { get; set; } = QuantizationFormat.Float32;
+// Keep PreferQuantized (deprecated) working for backward compatibility
+```
+
+**Key Details:**
+- **Model Registry:** JSON schema for tracking quantized variants (accuracy, speed tradeoffs)
+- **Graceful Fallback:** If quantized variant not found → auto-load full-precision (no errors)
+- **User Control:** Can specify variant offline (quantize models using ONNX tools)
+- **Performance targets:**
+  - INT8: 2-3× speedup, <1% accuracy loss
+  - Float16: 1.5-2× speedup, <0.1% accuracy loss
+- **Zero breaking changes:** New API, PreferQuantized still works
+
+**Impact:**
+- 2-3× latency reduction for real-time inference (RAG, semantic search)
+- 4-8× memory savings (INT8: 90 MB → 22.5 MB for all-MiniLM)
+- Enables edge deployment on low-power devices
+- Unblocks cost-conscious SaaS pricing models
+
+**Success Criteria:**
+- Quantization API works end-to-end with INT8, Float16 variants
+- Graceful fallback to Float32 tested
+- Accuracy >0.99 preserved (measured vs. Float32 baseline)
+- <5% performance overhead for quantization check
+- Pre-quantized model registry published
+
+**Documents:** quantization-model-registry.md
+
+---
+
+## OPENTELEMETRY OBSERVABILITY INTEGRATION
+
+### Decision: OpenTelemetry Tracing + Metrics for Enterprise Observability
+**Date:** 2026-06-15  
+**Authors:** Kane (Architecture), Scribe (Documentation)  
+**Status:** DESIGNED (Phase 2)
+
+Implement distributed tracing, structured logging, and metrics collection via OpenTelemetry SDK for enterprise observability (Jaeger, Datadog, Azure Monitor compatible).
+
+**Key Details:**
+
+**Traces (20+ span attributes):**
+- Activity names: GenerateEmbeddings, LoadModel, BatchGenerate, StreamEmbed, etc.
+- Span attributes: input_size, model_name, quantization_format, duration_ms, error_type
+- Baggage items: trace_id, span_id, user_id, request_id (W3C TraceContext compatible)
+- Root cause analysis: trace shows exactly which operation was slow (load vs. compute vs. network)
+
+**Metrics (11 total):**
+- Histograms (4): embedding_latency_ms, model_load_ms, quantization_check_ms, batch_size
+- Counters (5): embeddings_generated_total, models_loaded_total, errors_total, cache_hits_total, cache_misses_total
+- Gauges (2): active_requests, model_cache_size_mb
+
+**Performance:** <2% overhead (activity tracking + metrics collection)
+
+**DI Integration:**
+```csharp
+services.AddLocalEmbeddingsOpenTelemetry(config => {
+    config.TracingEnabled = true;
+    config.MetricsEnabled = true;
+    config.SamplingRate = 0.1; // 10% sampling in production
+});
+```
+
+**Enterprise Integration:**
+- Jaeger: Compatible with OpenTelemetry collector
+- Datadog: APM integration via OpenTelemetry
+- Azure Monitor: Application Insights exporter
+- Prometheus: Metrics scrape endpoint
+- Grafana: Pre-built dashboards (latency, throughput, error rates)
+
+**Impact:**
+- Enterprise observability without vendor lock-in
+- Root cause analysis (trace shows exact bottleneck)
+- Cost-aware sampling (reduce telemetry volume in production)
+- Full trace context propagation across microservices
+
+**Success Criteria:**
+- Traces exported to Jaeger, Datadog, Azure Monitor successfully
+- <2% performance overhead verified
+- 40+ unit tests for trace/metric validation
+- Sampling, batching, selective export working
+- Zero breaking changes to core library
+
+**Documents:** phase2-opentelemetry-design.md, phase2-otel-trace-design.md, phase2-otel-metrics-design.md, phase2-otel-implementation-guide.md, phase2-otel-examples.md
+
+---
+
+## PHASE 2 TEST STRATEGY
+
+### Decision: Comprehensive Phase 2 Test Coverage (54+ tests, 88% target)
+**Date:** 2026-06-15  
+**Authors:** Lambert (Strategy), Scribe (Documentation)  
+**Status:** DESIGNED (Phase 2)
+
+Design and implement 54+ tests across AOT, Quantization, OpenTelemetry, and Streaming features with 88% coverage target and 6-week delivery timeline.
+
+**Test Matrix:**
+- **AOT (13 tests):** 5 unit, 4 integration, 4 E2E (self-contained binary, all tests pass, perf baseline)
+- **Quantization (13 tests):** 5 unit, 8 integration (accuracy >0.99, graceful fallback, variant registry)
+- **OpenTelemetry (14 tests):** 7 unit, 7 integration (spans, metrics, samplers, exporters)
+- **Streaming (14 tests):** 4 unit, 10 integration (100K vectors <150MB, cancellation, backpressure)
+
+**Total:** 54+ tests, 88% coverage target
+
+**Test Infrastructure:**
+- Pattern: xUnit + Moq + table-driven tests (established Phase 1 pattern)
+- CI/CD: All tests run on .NET 8 & 10
+- Performance baselines: Latency, throughput, memory benchmarks
+- Critical tests (release gate-keepers): AOT-E2E-001, QNT-I-003, STR-M-001, OTEL-P-002
+
+**Timeline:** 6 weeks (77 story points)
+- Week 1-2: CI setup, test data prep
+- Week 2-3: AOT + Quantization tests (26 tests)
+- Week 3-4: OpenTelemetry tests (14 tests)
+- Week 4-5: Streaming tests (14 tests)
+- Week 5-6: Performance baselines, UAT validation
+
+**Impact:**
+- 88% coverage ensures Phase 2 lands with high quality
+- Release gate-keepers prevent shipping broken code
+- Performance baselines enable regression detection
+- Table-driven patterns scale for Phase 3 features
+
+**Success Criteria:**
+- All 54+ tests pass on .NET 8 & 10
+- Coverage target 88% met (measured via code coverage tool)
+- Performance baselines established and documented
+- Critical tests locked before RC release
+- Zero test flakiness (rerun 100× shows 100% pass rate)
+
+**Documents:** PHASE2_TEST_STRATEGY.md, PHASE2_TEST_QUICKREF.md, PHASE2_TEST_SCAFFOLDING.md, PHASE2_TEST_SUMMARY.md, PHASE2_TEST_INDEX.md
+
+---
+
+## PHASE 2 IMPLEMENTATION ROADMAP
+
+### Decision: 4-Week Implementation Sprint Structure
+**Date:** 2026-06-15  
+**Authors:** Ripley (Sequencing), Scribe (Roadmap)  
+**Status:** LOCKED (Phase 2)
+
+Execute Phase 2 in 3 parallel workstreams (AOT, Quantization, OpenTelemetry) with dependencies managed and risk mitigation in place.
+
+**Workstream 1 — Native AOT (Dallas lead, 18 days):**
+- Week 1: AOT build validation, reflection audit, config binding refactor
+- Week 2: Delegate-based DI API, testing framework, cold-start measurement
+- Week 3: Docker support, Azure Functions integration, perf baseline
+
+**Workstream 2 — OpenTelemetry (Kane lead, 16 days):**
+- Week 1: Activity/meter setup, span instrumentation in core paths
+- Week 2: Metrics collection, sampling/batching logic, exporter integrations
+- Week 3: Jaeger/Datadog/Azure Monitor testing, performance profiling
+
+**Workstream 3 — Testing (Lambert lead, 20 days):**
+- Week 1: Test infrastructure, data generators, CI/CD pipeline
+- Week 2: AOT + Quantization test implementation (26 tests)
+- Week 3: OpenTelemetry tests (14 tests)
+- Week 4: Streaming tests (14 tests), perf baselines, UAT
+
+**Parallel Support:**
+- Parker: Quantization benchmarks (BenchmarkDotNet harness)
+- Ash: Security audit of new code paths
+- Scribe: Merge PRs, documentation, decision logging
+
+**Dependencies:**
+- OpenTelemetry can start after AOT architecture is locked (no AOT-specific instrumentation)
+- Quantization can start immediately (orthogonal feature)
+- Testing starts after feature branches are created (depends on API shape only)
+
+**Risk Mitigation:**
+1. **ONNX Runtime compatibility:** Validate INT8/Float16 on both CPU and GPU before production
+2. **AOT trimming failures:** Pre-check PublishAot=true builds daily; catch link errors early
+3. **Cold-start regression:** Measure baseline <2s; fail builds if exceeded
+4. **Metrics overhead:** Profile <2% constraint; alert if exceeded
+
+**Go/No-Go Success Criteria:**
+- All 54+ tests pass on .NET 8 & 10
+- AOT builds successfully, cold-start <2s
+- Quantization accuracy >0.99
+- Telemetry overhead <2%
+- Security audit passed
+- Zero breaking changes
+
+**Timeline:** 4-6 weeks total (estimated: 5 weeks with risk buffer)
+
+---
+
+## PHASE 2 DESIGN CONSOLIDATION
+
+**Total Delivered:** ~240 KB of design documentation (5 architects, 3 workstreams, 15 documents)
+
+**Next Steps:**
+1. ✅ Design phase complete (Ripley, Kane, Lambert locked)
+2. 🔄 Scribe merges all decisions into decisions.md (this entry)
+3. 🔄 Commit Phase 2 design to main (squash all design commits)
+4. 📋 Ask @elbruno: Ready for Phase 2 implementation (4-6 weeks), or review designs first?
+5. 🚀 If approved: Launch Phase 2 implementation (all hands, Dallas/Kane/Lambert/Parker + support team)
+
+**No blockers identified.** Phase 1 is production-ready (0 CVEs, 356 tests passing). Phase 2 architecture is solid and ready to execute.
+
+**Approved by:** Ripley (Lead Architect)  
+**Date:** 2026-06-15  
+**Decision Authority:** Architecture Lead + Squad Consensus

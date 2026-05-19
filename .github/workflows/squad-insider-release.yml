@@ -1,9 +1,9 @@
 name: Squad Insider Release
 # dotnet project — configure build, test, and insider release commands below
 
-# Disabled by default; enable when Squad automation is in use.
 on:
-  workflow_dispatch:
+  push:
+    branches: [insider]
 
 permissions:
   contents: write

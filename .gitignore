@@ -125,3 +125,8 @@ publish/
 
 # Language server / IDE cache files
 *.lscache
+.squad/orchestration-log/
+.squad/log/
+.squad/decisions/inbox/
+.squad/sessions/
+.squad-workstream
