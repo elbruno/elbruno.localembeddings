@@ -148,7 +148,7 @@ public class PerformanceOverheadTests
     }
 
     [Fact]
-    public void MetricRecording_DoesNotThrow_UnderConcurrency()
+    public async Task MetricRecording_DoesNotThrow_UnderConcurrency()
     {
         using var meter = new MetricMeter();
         const int threadCount = 10;
@@ -169,11 +169,10 @@ public class PerformanceOverheadTests
             .ToArray();
 
         // Should not throw
-        Task.WaitAll(tasks);
+        await Task.WhenAll(tasks);
 
         // Metrics should still be operational
         meter.RecordEmbeddingLatency(100.0);
-        Assert.NoThrow(() => meter.RecordEmbeddingLatency(100.0));
     }
 
     [Fact]
@@ -210,16 +209,7 @@ public class PerformanceOverheadTests
         Assert.True(watch1.ElapsedMilliseconds < 100);
         Assert.True(watch2.ElapsedMilliseconds < 100);
         Assert.True(watch3.ElapsedMilliseconds < 100);
-    }
-}
 
-/// <summary>
-/// Helper extension methods for assertions.
-/// </summary>
-internal static class AssertExtensions
-{
-    public static void NoThrow(Action action)
-    {
-        action();
+        await Task.CompletedTask;
     }
 }

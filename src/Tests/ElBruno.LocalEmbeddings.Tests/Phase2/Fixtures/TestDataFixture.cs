@@ -106,8 +106,15 @@ public class TestDataFixture : IAsyncLifetime
             lines.Add($"{escapedText1},{escapedText2},{similarity:F2}");
         }
 
-        await File.WriteAllLinesAsync(path, lines);
-        GeneratedFiles.Add(path);
+        try
+        {
+            await File.WriteAllLinesAsync(path, lines);
+            GeneratedFiles.Add(path);
+        }
+        catch (IOException)
+        {
+            // File may have been created by another test - ignore
+        }
     }
 
     private async Task EnsureBatchTextsFile()
@@ -117,8 +124,15 @@ public class TestDataFixture : IAsyncLifetime
             return;
 
         var texts = EmbeddingDataFactory.GenerateBatchTexts(1000);
-        await File.WriteAllLinesAsync(path, texts);
-        GeneratedFiles.Add(path);
+        try
+        {
+            await File.WriteAllLinesAsync(path, texts);
+            GeneratedFiles.Add(path);
+        }
+        catch (IOException)
+        {
+            // File may have been created by another test - ignore
+        }
     }
 
     public async Task EnsureEdgeCasesFile()
@@ -128,8 +142,15 @@ public class TestDataFixture : IAsyncLifetime
             return;
 
         var edgeCases = EmbeddingDataFactory.GenerateEdgeCaseTexts();
-        await File.WriteAllLinesAsync(path, edgeCases);
-        GeneratedFiles.Add(path);
+        try
+        {
+            await File.WriteAllLinesAsync(path, edgeCases);
+            GeneratedFiles.Add(path);
+        }
+        catch (IOException)
+        {
+            // File may have been created by another test - ignore
+        }
     }
 
     private static string EscapeCsv(string input)
