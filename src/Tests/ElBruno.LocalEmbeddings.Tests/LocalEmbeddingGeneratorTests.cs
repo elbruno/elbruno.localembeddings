@@ -254,7 +254,7 @@ public class LocalEmbeddingGeneratorTests
 
         Assert.NotNull(generator.Metadata);
         Assert.Equal("LocalEmbeddings", generator.Metadata.ProviderName);
-        Assert.NotNull(generator.Metadata.ProviderUri);
+        Assert.Null(generator.Metadata.ProviderUri);
         Assert.Equal("sentence-transformers/all-MiniLM-L6-v2", generator.Metadata.DefaultModelId);
         Assert.Equal(384, generator.Metadata.DefaultModelDimensions);
     }
