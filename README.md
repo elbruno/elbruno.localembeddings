@@ -20,6 +20,7 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 ## Features
 
 - **Local Embedding Generation** — Run inference entirely on your machine using ONNX Runtime
+- **Multi-Framework** — Targets **.NET 8.0 (LTS)** and **.NET 10.0**
 - **Microsoft.Extensions.AI Integration** — Implements `IEmbeddingGenerator<string, Embedding<float>>`
 - **🦅 Harrier model support** — Microsoft Harrier-OSS-v1 (270M, 640-dim, 94+ languages, instruction-tuned) via `ElBruno.LocalEmbeddings.Harrier`
 - **Kernel Memory Integration** — Companion package `ElBruno.LocalEmbeddings.KernelMemory` provides a native `ITextEmbeddingGenerator` adapter for [Microsoft Kernel Memory](https://github.com/microsoft/kernel-memory)
@@ -211,7 +212,7 @@ dotnet test
 
 ## Requirements
 
-- .NET 10.0 SDK or later
+- .NET 8.0 SDK (LTS) or .NET 10.0 SDK
 - ONNX Runtime compatible platform (Windows, Linux, macOS)
 
 ## 👋 About the Author

@@ -16,7 +16,7 @@
     <PackageIcon>icon_03.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>embeddings;onnx;ai;local;microsoft-extensions-ai;sentence-transformers;nlp;machine-learning</PackageTags>
-    <Version>1.0.1</Version>
+    <Version>1.5.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
