@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download) or later
+- [.NET 8.0 SDK (LTS)](https://dotnet.microsoft.com/download) or [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
 - Git
 
 ## Getting Started
@@ -76,7 +76,7 @@ dotnet test
 - All extended documentation goes in `docs/`.
 - The NuGet package IDs are always prefixed with `ElBruno.` (e.g., `ElBruno.LocalEmbeddings`, `ElBruno.LocalEmbeddings.KernelMemory`).
 - The core `ElBruno.LocalEmbeddings` package must **not** depend on Kernel Memory — KM integration lives in the companion package.
-- Target .NET 10.0 or later.
+- Target .NET 8.0 or later (both `net8.0` and `net10.0` are supported).
 
 ## Get Involved & Stay Connected
 
