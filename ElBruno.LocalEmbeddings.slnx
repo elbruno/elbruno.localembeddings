@@ -9,6 +9,7 @@
     <Project Path="src/ElBruno.LocalEmbeddings.Npu.Intel/ElBruno.LocalEmbeddings.Npu.Intel.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.VectorData/ElBruno.LocalEmbeddings.VectorData.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.Azure/ElBruno.LocalEmbeddings.Azure.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.OpenTelemetry/ElBruno.LocalEmbeddings.OpenTelemetry.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.Harrier/ElBruno.LocalEmbeddings.Harrier.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.Benchmarks/ElBruno.LocalEmbeddings.Benchmarks.csproj" />
   </Folder>
@@ -21,6 +22,7 @@
     <Project Path="src/Tests/ElBruno.LocalEmbeddings.Npu.Intel.Tests/ElBruno.LocalEmbeddings.Npu.Intel.Tests.csproj" />
     <Project Path="src/Tests/ElBruno.LocalEmbeddings.VectorData.Tests/ElBruno.LocalEmbeddings.VectorData.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.Azure.Tests/ElBruno.LocalEmbeddings.Azure.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.OpenTelemetry.Tests/ElBruno.LocalEmbeddings.OpenTelemetry.Tests.csproj" />
     <Project Path="src/Tests/ElBruno.LocalEmbeddings.Harrier.Tests/ElBruno.LocalEmbeddings.Harrier.Tests.csproj" />
     <Project Path="src/Tests/ElBruno.LocalEmbeddings.SharedModelTests/ElBruno.LocalEmbeddings.SharedModelTests.csproj" />
   </Folder>
