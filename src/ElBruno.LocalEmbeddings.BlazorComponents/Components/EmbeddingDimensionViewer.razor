@@ -1,0 +1,153 @@
+@* EmbeddingDimensionViewer — simple 2-D scatter plot (PCA-projection) of a set of embeddings *@
+@using Microsoft.Extensions.AI
+@using System.Numerics
+
+<div class="embedding-dimension-viewer">
+    <h3 class="viewer-title">@Title</h3>
+
+    @if (Labels is null || Labels.Count == 0)
+    {
+        <p class="viewer-empty">Provide Labels and Embeddings to render the scatter plot.</p>
+    }
+    else if (_points is null)
+    {
+        <p class="viewer-empty">Computing projection…</p>
+    }
+    else
+    {
+        <svg class="scatter-plot"
+             viewBox="0 0 @CanvasSize @CanvasSize"
+             xmlns="http://www.w3.org/2000/svg"
+             role="img"
+             aria-label="Embedding scatter plot">
+
+            @* Axes *@
+            <line x1="@_margin" y1="@_margin" x2="@_margin" y2="@(_canvasPx - _margin)"
+                  stroke="#ccc" stroke-width="1" />
+            <line x1="@_margin" y1="@(_canvasPx - _margin)" x2="@(_canvasPx - _margin)" y2="@(_canvasPx - _margin)"
+                  stroke="#ccc" stroke-width="1" />
+
+            @foreach (var (x, y, label, color) in _points)
+            {
+                <circle cx="@x.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)"
+                        cy="@y.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)"
+                        r="6" fill="@color" opacity="0.8">
+                    <title>@label</title>
+                </circle>
+                @((MarkupString)$"<text x=\"{(x + 8).ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}\" y=\"{(y + 4).ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}\" class=\"scatter-label\" font-size=\"11\">{System.Net.WebUtility.HtmlEncode(Truncate(label, 20))}</text>")
+            }
+        </svg>
+    }
+</div>
+
+@code {
+    /// <summary>Title displayed above the scatter plot.</summary>
+    [Parameter]
+    public string Title { get; set; } = "Embedding Visualisation";
+
+    /// <summary>Display labels — one per embedding.</summary>
+    [Parameter]
+    public IReadOnlyList<string>? Labels { get; set; }
+
+    /// <summary>Pre-computed embedding vectors (must match Labels in count).</summary>
+    [Parameter]
+    public IReadOnlyList<float[]>? Embeddings { get; set; }
+
+    /// <summary>SVG canvas side length in pixels. Default 400.</summary>
+    [Parameter]
+    public int CanvasSize { get; set; } = 400;
+
+    private static readonly string[] _palette =
+        ["#4e79a7","#f28e2b","#e15759","#76b7b2","#59a14f","#edc948","#b07aa1","#ff9da7","#9c755f","#bab0ac"];
+
+    private List<(double x, double y, string label, string color)>? _points;
+    private int _canvasPx;
+    private int _margin;
+
+    protected override void OnParametersSet()
+    {
+        _canvasPx = CanvasSize;
+        _margin   = _canvasPx / 10;
+
+        if (Embeddings is null || Labels is null || Embeddings.Count == 0 ||
+            Embeddings.Count != Labels.Count)
+        {
+            _points = null;
+            return;
+        }
+
+        // Simple 2-D PCA projection (power iteration, 2 components)
+        var vecs = Embeddings.Select(v => v.Select(f => (double)f).ToArray()).ToArray();
+        var (pc1, pc2) = SimplePca2D(vecs);
+
+        // Project
+        double[] proj1 = vecs.Select(v => Dot(v, pc1)).ToArray();
+        double[] proj2 = vecs.Select(v => Dot(v, pc2)).ToArray();
+
+        // Scale to canvas
+        double inner = _canvasPx - 2.0 * _margin;
+        double min1 = proj1.Min(), max1 = proj1.Max(), range1 = max1 - min1;
+        double min2 = proj2.Min(), max2 = proj2.Max(), range2 = max2 - min2;
+        if (range1 == 0) range1 = 1;
+        if (range2 == 0) range2 = 1;
+
+        _points = [];
+        for (int i = 0; i < vecs.Length; i++)
+        {
+            double px = _margin + (proj1[i] - min1) / range1 * inner;
+            double py = _margin + (1.0 - (proj2[i] - min2) / range2) * inner; // flip Y
+            _points.Add((px, py, Labels[i], _palette[i % _palette.Length]));
+        }
+    }
+
+    private static double Dot(double[] a, double[] b)
+    {
+        double s = 0;
+        for (int i = 0; i < a.Length; i++) s += a[i] * b[i];
+        return s;
+    }
+
+    private static (double[] pc1, double[] pc2) SimplePca2D(double[][] vecs)
+    {
+        int n = vecs.Length, d = vecs[0].Length;
+        // Mean-centre
+        double[] mean = new double[d];
+        foreach (var v in vecs)
+            for (int j = 0; j < d; j++) mean[j] += v[j] / n;
+        double[][] centred = vecs.Select(v => v.Select((x, j) => x - mean[j]).ToArray()).ToArray();
+
+        // First principal component via power iteration
+        double[] pc1 = PowerIterate(centred, d, iterations: 20);
+        // Deflate
+        double[][] deflated = centred.Select(v =>
+        {
+            double proj = Dot(v, pc1);
+            return v.Select((x, j) => x - proj * pc1[j]).ToArray();
+        }).ToArray();
+        double[] pc2 = PowerIterate(deflated, d, iterations: 20);
+        return (pc1, pc2);
+    }
+
+    private static double[] PowerIterate(double[][] data, int d, int iterations)
+    {
+        // Start with the column of highest variance
+        double[] vec = new double[d];
+        vec[0] = 1.0;
+        for (int iter = 0; iter < iterations; iter++)
+        {
+            double[] next = new double[d];
+            foreach (var v in data)
+            {
+                double dot = Dot(v, vec);
+                for (int j = 0; j < d; j++) next[j] += dot * v[j];
+            }
+            double norm = Math.Sqrt(Dot(next, next));
+            if (norm == 0) break;
+            for (int j = 0; j < d; j++) vec[j] = next[j] / norm;
+        }
+        return vec;
+    }
+
+    private static string Truncate(string s, int max) =>
+        s.Length <= max ? s : s[..max] + "…";
+}

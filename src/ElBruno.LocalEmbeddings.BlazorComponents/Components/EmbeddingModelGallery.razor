@@ -1,0 +1,68 @@
+@* EmbeddingModelGallery — filterable grid of known embedding models *@
+
+<div class="embedding-model-gallery">
+    <div class="gallery-filters">
+        <input class="filter-input" type="search" placeholder="Filter models…"
+               @bind="SearchText" @bind:event="oninput" />
+
+        <select class="filter-select" @bind="LanguageFilter">
+            <option value="">All Languages</option>
+            @foreach (var lang in AllLanguages)
+            {
+                <option value="@lang">@lang</option>
+            }
+        </select>
+
+        <select class="filter-select" @bind="DimensionFilter">
+            <option value="0">All Dimensions</option>
+            <option value="384">384</option>
+            <option value="768">768</option>
+            <option value="1024">1024</option>
+        </select>
+    </div>
+
+    <div class="gallery-grid">
+        @foreach (var model in FilteredModels)
+        {
+            <EmbeddingModelStatusCard Model="@model"
+                                      OnDownload="@OnDownload"
+                                      OnCancel="@OnCancel"
+                                      OnDelete="@OnDelete"
+                                      OnOpenFolder="@OnOpenFolder" />
+        }
+        @if (!FilteredModels.Any())
+        {
+            <p class="gallery-empty">No models match the current filters.</p>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>Models to display.</summary>
+    [Parameter]
+    public IReadOnlyList<EmbeddingModelInfo> Models { get; set; } = [];
+
+    [Parameter] public EventCallback<EmbeddingModelInfo> OnDownload   { get; set; }
+    [Parameter] public EventCallback<EmbeddingModelInfo> OnCancel     { get; set; }
+    [Parameter] public EventCallback<EmbeddingModelInfo> OnDelete     { get; set; }
+    [Parameter] public EventCallback<EmbeddingModelInfo> OnOpenFolder { get; set; }
+
+    private string SearchText      { get; set; } = string.Empty;
+    private string LanguageFilter  { get; set; } = string.Empty;
+    private int    DimensionFilter { get; set; }
+
+    private IEnumerable<string> AllLanguages =>
+        Models
+            .Select(m => m.Language)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(l => l);
+
+    private IEnumerable<EmbeddingModelInfo> FilteredModels =>
+        Models.Where(m =>
+            (string.IsNullOrWhiteSpace(SearchText) ||
+             m.DisplayName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+             m.Description.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(LanguageFilter) ||
+             m.Language.Equals(LanguageFilter, StringComparison.OrdinalIgnoreCase)) &&
+            (DimensionFilter == 0 || m.Dimensions == DimensionFilter));
+}

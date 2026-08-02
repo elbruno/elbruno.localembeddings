@@ -1,0 +1,42 @@
+@* EmbeddingModelSelector — two-way-bindable dropdown for selecting an active model *@
+
+<select class="embedding-model-selector @CssClass"
+        value="@Value"
+        @onchange="OnSelectionChanged"
+        disabled="@Disabled">
+    <option value="">-- Select model --</option>
+    @foreach (var model in Models)
+    {
+        <option value="@model.ModelId">@model.DisplayName (@model.Dimensions dim)</option>
+    }
+</select>
+
+@code {
+    /// <summary>Available models to list.</summary>
+    [Parameter]
+    public IReadOnlyList<EmbeddingModelInfo> Models { get; set; } = [];
+
+    /// <summary>Currently selected model ID.</summary>
+    [Parameter]
+    public string? Value { get; set; }
+
+    /// <summary>Raised when the user changes the selection.</summary>
+    [Parameter]
+    public EventCallback<string?> ValueChanged { get; set; }
+
+    /// <summary>Optional extra CSS class for the select element.</summary>
+    [Parameter]
+    public string CssClass { get; set; } = string.Empty;
+
+    /// <summary>Disables the dropdown when true.</summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    private Task OnSelectionChanged(ChangeEventArgs e)
+    {
+        string? selected = e.Value?.ToString();
+        if (string.IsNullOrEmpty(selected))
+            selected = null;
+        return ValueChanged.InvokeAsync(selected);
+    }
+}

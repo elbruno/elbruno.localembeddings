@@ -1,0 +1,115 @@
+@* SemanticSearchBox — query input + ranked results list backed by IEmbeddingGenerator *@
+@using Microsoft.Extensions.AI
+
+<div class="semantic-search-box">
+    <div class="search-input-row">
+        <input class="search-input"
+               type="search"
+               placeholder="@Placeholder"
+               @bind="QueryText"
+               @bind:event="oninput"
+               @onkeydown="OnKeyDown" />
+        <button class="btn btn-primary search-btn"
+                @onclick="SearchAsync"
+                disabled="@(_isSearching || Generator is null || string.IsNullOrWhiteSpace(QueryText))">
+            @(_isSearching ? "Searching…" : "Search")
+        </button>
+    </div>
+
+    @if (_errorMessage is not null)
+    {
+        <p class="search-error">@_errorMessage</p>
+    }
+
+    @if (_results.Count > 0)
+    {
+        <ol class="search-results">
+            @foreach (var result in _results)
+            {
+                <li class="search-result-item">
+                    <div class="result-text">@result.Text</div>
+                    <div class="result-score">
+                        <span class="score-label">Similarity</span>
+                        <span class="score-value">@result.Score.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)</span>
+                        <div class="score-bar">
+                            <div class="score-fill" style="width: @((result.Score * 100).ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"></div>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ol>
+    }
+    else if (_searched)
+    {
+        <p class="search-empty">No results found.</p>
+    }
+</div>
+
+@code {
+    /// <summary>Embedding generator used for query and corpus embeddings.</summary>
+    [Parameter]
+    public IEmbeddingGenerator<string, Embedding<float>>? Generator { get; set; }
+
+    /// <summary>Text corpus to search against.</summary>
+    [Parameter]
+    public IReadOnlyList<string> Corpus { get; set; } = [];
+
+    /// <summary>Maximum number of results to show. Default 5.</summary>
+    [Parameter]
+    public int MaxResults { get; set; } = 5;
+
+    /// <summary>Minimum similarity threshold [0,1]. Default 0.0.</summary>
+    [Parameter]
+    public float MinScore { get; set; }
+
+    /// <summary>Placeholder text for the search input.</summary>
+    [Parameter]
+    public string Placeholder { get; set; } = "Search…";
+
+    private string QueryText { get; set; } = string.Empty;
+    private readonly List<(string Text, float Score)> _results = [];
+    private bool _isSearching;
+    private bool _searched;
+    private string? _errorMessage;
+
+    private Task OnKeyDown(KeyboardEventArgs e) =>
+        e.Key == "Enter" ? SearchAsync() : Task.CompletedTask;
+
+    private async Task SearchAsync()
+    {
+        _errorMessage = null;
+        if (Generator is null || string.IsNullOrWhiteSpace(QueryText) || Corpus.Count == 0)
+            return;
+
+        _isSearching = true;
+        _searched = false;
+        StateHasChanged();
+        try
+        {
+            var allTexts = Corpus.Prepend(QueryText).ToList();
+            var embeddings = await EmbeddingStateService.GenerateEmbeddingsAsync(Generator, allTexts).ConfigureAwait(false);
+            float[] queryVec = embeddings[0];
+
+            _results.Clear();
+            for (int i = 1; i < embeddings.Length; i++)
+            {
+                float score = EmbeddingStateService.CosineSimilarity(queryVec, embeddings[i]);
+                if (score >= MinScore)
+                    _results.Add((Corpus[i - 1], score));
+            }
+            _results.Sort((a, b) => b.Score.CompareTo(a.Score));
+            if (_results.Count > MaxResults)
+                _results.RemoveRange(MaxResults, _results.Count - MaxResults);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Search error: {ex.Message}";
+        }
+        finally
+        {
+            _isSearching = false;
+            _searched = true;
+            StateHasChanged();
+        }
+    }
+}

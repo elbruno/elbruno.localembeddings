@@ -11,6 +11,7 @@
     <Project Path="src/ElBruno.LocalEmbeddings.Azure/ElBruno.LocalEmbeddings.Azure.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.OpenTelemetry/ElBruno.LocalEmbeddings.OpenTelemetry.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.Harrier/ElBruno.LocalEmbeddings.Harrier.csproj" />
+    <Project Path="src/ElBruno.LocalEmbeddings.BlazorComponents/ElBruno.LocalEmbeddings.BlazorComponents.csproj" />
     <Project Path="src/ElBruno.LocalEmbeddings.Benchmarks/ElBruno.LocalEmbeddings.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -47,6 +48,7 @@
     <Project Path="src/Samples/DirectMLNpuWorker/DirectMLNpuWorker.csproj" />
     <Project Path="src/Samples/VisionMemoryAgentSample/VisionMemoryAgentSample.csproj" />
     <Project Path="src/Samples/ZeroCloudRag/ZeroCloudRag.csproj" />
+    <Project Path="src/Samples/BlazorDemo/BlazorDemo.csproj" />
     <Project Path="src/Samples/AotColdStartMeasurement/AotColdStartMeasurement.csproj" />
   </Folder>
 </Solution>

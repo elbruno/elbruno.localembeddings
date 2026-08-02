@@ -1,0 +1,137 @@
+@* EmbeddingExplorer — enter 2-10 sentences, generate embeddings, display cosine-similarity heatmap *@
+@using Microsoft.Extensions.AI
+
+<div class="embedding-explorer">
+    <h3 class="explorer-title">Embedding Explorer</h3>
+    <p class="explorer-hint">Enter 2–10 sentences to visualise their cosine-similarity matrix.</p>
+
+    <div class="sentence-inputs">
+        @for (int i = 0; i < _sentences.Count; i++)
+        {
+            int idx = i;
+            <div class="sentence-row">
+                <span class="sentence-index">@(idx + 1)</span>
+                <input class="sentence-input" type="text" placeholder="Enter sentence…"
+                       value="@_sentences[idx]"
+                       @oninput="e => _sentences[idx] = e.Value?.ToString() ?? string.Empty" />
+                @if (_sentences.Count > 2)
+                {
+                    <button class="btn-remove" @onclick="() => RemoveSentence(idx)" title="Remove">×</button>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="explorer-actions">
+        @if (_sentences.Count < 10)
+        {
+            <button class="btn btn-outline-secondary btn-sm" @onclick="AddSentence">+ Add sentence</button>
+        }
+        <button class="btn btn-primary btn-sm"
+                @onclick="ComputeAsync"
+                disabled="@(_isComputing || Generator is null || _sentences.Count(s => !string.IsNullOrWhiteSpace(s)) < 2)">
+            @(_isComputing ? "Computing…" : "Compute Similarities")
+        </button>
+    </div>
+
+    @if (_errorMessage is not null)
+    {
+        <p class="explorer-error">@_errorMessage</p>
+    }
+
+    @if (_matrix is not null && _labels is not null)
+    {
+        <div class="similarity-heatmap" role="table" aria-label="Similarity heatmap">
+            <div class="heatmap-row heatmap-header" role="row">
+                <span class="heatmap-cell corner" role="columnheader"></span>
+                @foreach (var label in _labels)
+                {
+                    <span class="heatmap-cell header-cell" role="columnheader" title="@label">@Truncate(label, 18)</span>
+                }
+            </div>
+            @for (int r = 0; r < _labels.Length; r++)
+            {
+                int row = r;
+                <div class="heatmap-row" role="row">
+                    <span class="heatmap-cell row-label" role="rowheader" title="@_labels[row]">@Truncate(_labels[row], 18)</span>
+                    @for (int c = 0; c < _labels.Length; c++)
+                    {
+                        int col = c;
+                        float val = _matrix[row][col];
+                        <span class="heatmap-cell value-cell"
+                              style="background-color: @SimilarityColor(val)"
+                              role="cell"
+                              title="@($"{_labels[row]} ↔ {_labels[col]}: {val:F3}")">
+                            @val.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Embedding generator used to compute embeddings. Injected by consumer.</summary>
+    [Parameter]
+    public IEmbeddingGenerator<string, Embedding<float>>? Generator { get; set; }
+
+    private readonly List<string> _sentences = ["", ""];
+    private float[][]? _matrix;
+    private string[]? _labels;
+    private bool _isComputing;
+    private string? _errorMessage;
+
+    private void AddSentence() => _sentences.Add(string.Empty);
+
+    private void RemoveSentence(int idx)
+    {
+        if (_sentences.Count > 2)
+            _sentences.RemoveAt(idx);
+    }
+
+    private async Task ComputeAsync()
+    {
+        _errorMessage = null;
+        var valid = _sentences.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+        if (valid.Count < 2 || Generator is null)
+            return;
+
+        _isComputing = true;
+        StateHasChanged();
+        try
+        {
+            var embeddings = await EmbeddingStateService.GenerateEmbeddingsAsync(Generator, valid).ConfigureAwait(false);
+            _labels = [.. valid.Select((s, i) => $"S{i + 1}: {Truncate(s, 30)}")];
+            _matrix = new float[valid.Count][];
+            for (int i = 0; i < valid.Count; i++)
+            {
+                _matrix[i] = new float[valid.Count];
+                for (int j = 0; j < valid.Count; j++)
+                    _matrix[i][j] = EmbeddingStateService.CosineSimilarity(embeddings[i], embeddings[j]);
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _isComputing = false;
+            StateHasChanged();
+        }
+    }
+
+    private static string Truncate(string s, int maxLen) =>
+        s.Length <= maxLen ? s : s[..maxLen] + "…";
+
+    // Maps similarity [-1, 1] to a CSS rgb colour (red → white → green).
+    private static string SimilarityColor(float v)
+    {
+        float t = (v + 1f) / 2f; // normalise to [0,1]
+        int r = (int)(255 * (1f - t));
+        int g = (int)(255 * t);
+        int b = (int)(255 * (1f - Math.Abs(t - 0.5f) * 2));
+        return $"rgb({r},{g},{b})";
+    }
+}

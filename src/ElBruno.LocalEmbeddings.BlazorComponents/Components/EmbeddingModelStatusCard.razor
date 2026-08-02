@@ -1,0 +1,74 @@
+@* EmbeddingModelStatusCard — shows download state for an embedding model *@
+
+<div class="embedding-model-status-card @(IsCompact ? "compact" : "")">
+    <div class="card-header">
+        <span class="model-name">@Model.DisplayName</span>
+        <span class="model-meta">@Model.Dimensions dim · @Model.SizeMb MB · @Model.Language</span>
+    </div>
+
+    <div class="card-body">
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <p class="model-description">@Model.Description</p>
+        }
+
+        <div class="state-row">
+            <span class="state-badge state-@Model.State.ToString().ToLowerInvariant()">
+                @StateLabel
+            </span>
+
+            @if (Model.State == EmbeddingModelState.Downloading)
+            {
+                <div class="progress-bar-container" role="progressbar"
+                     aria-valuenow="@Model.DownloadProgressPercent" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar-fill" style="width: @Model.DownloadProgressPercent%"></div>
+                    <span class="progress-label">@Model.DownloadProgressPercent%</span>
+                </div>
+            }
+        </div>
+
+        <div class="action-buttons">
+            @if (Model.State == EmbeddingModelState.NotDownloaded)
+            {
+                <button class="btn btn-primary btn-sm" @onclick="OnDownloadClicked">Download</button>
+            }
+            else if (Model.State == EmbeddingModelState.Downloading)
+            {
+                <button class="btn btn-secondary btn-sm" @onclick="OnCancelClicked">Cancel</button>
+            }
+            else
+            {
+                <button class="btn btn-danger btn-sm" @onclick="OnDeleteClicked">Delete</button>
+                <button class="btn btn-outline-secondary btn-sm" @onclick="OnOpenFolderClicked">Open Folder</button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    /// <summary>The embedding model this card represents.</summary>
+    [Parameter, EditorRequired]
+    public required EmbeddingModelInfo Model { get; set; }
+
+    /// <summary>Render in compact (narrow) mode.</summary>
+    [Parameter]
+    public bool IsCompact { get; set; }
+
+    [Parameter] public EventCallback<EmbeddingModelInfo> OnDownload   { get; set; }
+    [Parameter] public EventCallback<EmbeddingModelInfo> OnCancel     { get; set; }
+    [Parameter] public EventCallback<EmbeddingModelInfo> OnDelete     { get; set; }
+    [Parameter] public EventCallback<EmbeddingModelInfo> OnOpenFolder { get; set; }
+
+    private string StateLabel => Model.State switch
+    {
+        EmbeddingModelState.NotDownloaded => "Not Downloaded",
+        EmbeddingModelState.Downloading   => "Downloading…",
+        EmbeddingModelState.Downloaded    => "Ready",
+        _                                 => "Unknown"
+    };
+
+    private Task OnDownloadClicked()   => OnDownload.InvokeAsync(Model);
+    private Task OnCancelClicked()     => OnCancel.InvokeAsync(Model);
+    private Task OnDeleteClicked()     => OnDelete.InvokeAsync(Model);
+    private Task OnOpenFolderClicked() => OnOpenFolder.InvokeAsync(Model);
+}

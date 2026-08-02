@@ -1,0 +1,33 @@
+@* EmbeddingHealthBadge — compact nav-bar status dot showing whether the embedding model is ready *@
+
+<span class="embedding-health-badge @BadgeCssClass" title="@TooltipText" role="status" aria-label="@TooltipText">
+    <span class="badge-dot"></span>
+    @if (!HideLabel)
+    {
+        <span class="badge-label">@LabelText</span>
+    }
+</span>
+
+@code {
+    /// <summary>Whether the embedding model/service is loaded and ready.</summary>
+    [Parameter]
+    public bool IsReady { get; set; }
+
+    /// <summary>Optional model display name shown next to the dot.</summary>
+    [Parameter]
+    public string? ModelName { get; set; }
+
+    /// <summary>Hide the text label — show only the coloured dot.</summary>
+    [Parameter]
+    public bool HideLabel { get; set; }
+
+    private string BadgeCssClass => IsReady ? "badge-ready" : "badge-not-ready";
+
+    private string LabelText =>
+        IsReady
+            ? (ModelName is null ? "Ready" : $"{ModelName} — Ready")
+            : (ModelName is null ? "Not Ready" : $"{ModelName} — Not Ready");
+
+    private string TooltipText =>
+        IsReady ? "Embedding model is loaded and ready" : "Embedding model is not loaded";
+}

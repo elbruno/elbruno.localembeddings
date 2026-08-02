@@ -25,6 +25,7 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 - **🦅 Harrier model support** — Microsoft Harrier-OSS-v1 (270M, 640-dim, 94+ languages, instruction-tuned) via `ElBruno.LocalEmbeddings.Harrier`
 - **Kernel Memory Integration** — Companion package `ElBruno.LocalEmbeddings.KernelMemory` provides a native `ITextEmbeddingGenerator` adapter for [Microsoft Kernel Memory](https://github.com/microsoft/kernel-memory)
 - **VectorData Integration** — Companion package `ElBruno.LocalEmbeddings.VectorData` adds DI helpers for `Microsoft.Extensions.VectorData` (`VectorStore` and typed collections)
+- **Blazor Components** — Companion package `ElBruno.LocalEmbeddings.BlazorComponents` provides 9 ready-to-use Razor components: model gallery, similarity meter, semantic search box, embedding explorer, dimension viewer, health badge, and metrics panel
 - **Built-in In-Memory Vector Store** — `ElBruno.LocalEmbeddings.VectorData` includes `InMemoryVectorStore` (no Semantic Kernel connector dependency required)
 - **HuggingFace Model Support** — Use popular sentence transformer models from HuggingFace Hub
 - **Automatic Model Caching** — Models are downloaded once and cached locally
@@ -46,6 +47,7 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 | [ElBruno.LocalEmbeddings.Npu](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu) | [![NuGet](https://img.shields.io/nuget/v/ElBruno.LocalEmbeddings.Npu.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu) | [![Downloads](https://img.shields.io/nuget/dt/ElBruno.LocalEmbeddings.Npu.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu) | NPU-accelerated embeddings via DirectML |
 | [ElBruno.LocalEmbeddings.Npu.Intel](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Intel) | [![NuGet](https://img.shields.io/nuget/v/ElBruno.LocalEmbeddings.Npu.Intel.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Intel) | [![Downloads](https://img.shields.io/nuget/dt/ElBruno.LocalEmbeddings.Npu.Intel.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Intel) | Intel Core Ultra NPU via OpenVINO |
 | [ElBruno.LocalEmbeddings.Npu.Qualcomm](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Qualcomm) | [![NuGet](https://img.shields.io/nuget/v/ElBruno.LocalEmbeddings.Npu.Qualcomm.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Qualcomm) | [![Downloads](https://img.shields.io/nuget/dt/ElBruno.LocalEmbeddings.Npu.Qualcomm.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Qualcomm) | Qualcomm Snapdragon X NPU via QNN |
+| [ElBruno.LocalEmbeddings.BlazorComponents](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.BlazorComponents) | [![NuGet](https://img.shields.io/nuget/v/ElBruno.LocalEmbeddings.BlazorComponents.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.BlazorComponents) | [![Downloads](https://img.shields.io/nuget/dt/ElBruno.LocalEmbeddings.BlazorComponents.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.BlazorComponents) | Blazor UI components — model gallery, similarity meter, semantic search, embedding explorer |
 
 ## Installation
 
@@ -194,6 +196,7 @@ Estimated download sizes below are approximate and can vary by ONNX variant (fp3
 | [Harrier Integration](docs/harrier-integration.md) | Microsoft Harrier-OSS-v1 local embedding model |
 | [Kernel Memory Integration](docs/kernel-memory-integration.md) | Using local embeddings with Microsoft Kernel Memory |
 | [VectorData Integration](docs/vector-data-integration.md) | Using local embeddings with Microsoft.Extensions.VectorData abstractions |
+| [Blazor Components](docs/blazor-components.md) | 9 ready-to-use Blazor components for embedding-powered web apps |
 | [Contributing](docs/contributing.md) | Build from source, repo structure, guidelines |
 | [Roadmap](docs/plans/roadmap_260213_0803.md) | Planned and completed features/samples with priorities |
 | [Publishing](docs/publishing.md) | NuGet publishing with GitHub Actions + Trusted Publishing |

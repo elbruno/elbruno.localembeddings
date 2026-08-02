@@ -1,0 +1,87 @@
+@page "/"
+@inject IEmbeddingGenerator<string, Embedding<float>> Generator
+@inject EmbeddingStateService EmbeddingState
+
+<PageTitle>LocalEmbeddings — BlazorDemo</PageTitle>
+
+<h1>ElBruno.LocalEmbeddings — Blazor Components Demo</h1>
+<p>Explore all 9 UI components for working with local embeddings.</p>
+
+<hr />
+
+<section class="demo-section">
+    <h2>1. Similarity Meter</h2>
+    <p>Enter two texts to measure their cosine similarity.</p>
+    <SimilarityMeter Generator="@Generator" />
+</section>
+
+<section class="demo-section">
+    <h2>2. Embedding Explorer</h2>
+    <p>Enter 2–10 sentences to visualise a cosine-similarity heatmap.</p>
+    <EmbeddingExplorer Generator="@Generator" />
+</section>
+
+<section class="demo-section">
+    <h2>3. Semantic Search Box</h2>
+    <p>Type a query; results are ranked by embedding similarity.</p>
+    <SemanticSearchBox Generator="@Generator" Corpus="@_corpus" MaxResults="5" />
+</section>
+
+<section class="demo-section">
+    <h2>4. Model Selector</h2>
+    <EmbeddingModelSelector Models="@EmbeddingState.Models"
+                            @bind-Value="_selectedModel" />
+    <p style="margin-top:8px; font-size:.85rem; color:#6c757d;">
+        Selected: @(_selectedModel ?? "(none)")
+    </p>
+</section>
+
+<section class="demo-section">
+    <h2>5. Model Gallery</h2>
+    <EmbeddingModelGallery Models="@EmbeddingState.Models"
+                           OnDownload="@OnDownload" />
+</section>
+
+<section class="demo-section">
+    <h2>6. Health Badge</h2>
+    <EmbeddingHealthBadge IsReady="true"  ModelName="all-MiniLM-L6-v2" />
+    <br /><br />
+    <EmbeddingHealthBadge IsReady="false" ModelName="bge-m3" />
+</section>
+
+<section class="demo-section">
+    <h2>7. Metrics Panel</h2>
+    <EmbeddingMetricsPanel TokensPerSecond="1250"
+                           EmbeddingDimension="384"
+                           BatchSize="32"
+                           MemoryUsageMb="58.4" />
+</section>
+
+@code {
+    private string? _selectedModel;
+
+    private static readonly IReadOnlyList<string> _corpus =
+    [
+        "The quick brown fox jumps over the lazy dog.",
+        "Blazor lets you build interactive web UIs using C# instead of JavaScript.",
+        "Embedding models convert text into high-dimensional vectors.",
+        "ONNX Runtime enables cross-platform machine learning inference.",
+        "Cosine similarity measures the angle between two vectors.",
+        "Semantic search retrieves results based on meaning, not keywords.",
+        "C# is a strongly-typed, object-oriented programming language.",
+        "Retrieval-Augmented Generation combines LLMs with document search.",
+    ];
+
+    private Task OnDownload(EmbeddingModelInfo model)
+    {
+        model.State = EmbeddingModelState.Downloading;
+        model.DownloadProgressPercent = 42;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}
+
+<style>
+    .demo-section { margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid #dee2e6; }
+    .demo-section h2 { font-size: 1.15rem; font-weight: 600; margin-bottom: 8px; }
+</style>

@@ -1,0 +1,53 @@
+@* EmbeddingMetricsPanel — live stats: tokens/sec, dimension, batch size, memory usage *@
+
+<div class="embedding-metrics-panel">
+    <h4 class="metrics-title">@Title</h4>
+    <dl class="metrics-list">
+        <dt>Tokens / sec</dt>
+        <dd>@(TokensPerSecond.HasValue ? TokensPerSecond.Value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) : "—")</dd>
+
+        <dt>Embedding dim</dt>
+        <dd>@(EmbeddingDimension.HasValue ? EmbeddingDimension.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "—")</dd>
+
+        <dt>Batch size</dt>
+        <dd>@(BatchSize.HasValue ? BatchSize.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "—")</dd>
+
+        <dt>Memory (MB)</dt>
+        <dd>@(MemoryUsageMb.HasValue ? MemoryUsageMb.Value.ToString("N1", System.Globalization.CultureInfo.InvariantCulture) : "—")</dd>
+
+        @if (AdditionalMetrics is not null)
+        {
+            @foreach (var (name, value) in AdditionalMetrics)
+            {
+                <dt>@name</dt>
+                <dd>@value</dd>
+            }
+        }
+    </dl>
+</div>
+
+@code {
+    /// <summary>Panel header text.</summary>
+    [Parameter]
+    public string Title { get; set; } = "Embedding Metrics";
+
+    /// <summary>Tokens processed per second.</summary>
+    [Parameter]
+    public double? TokensPerSecond { get; set; }
+
+    /// <summary>Embedding output dimension.</summary>
+    [Parameter]
+    public int? EmbeddingDimension { get; set; }
+
+    /// <summary>Current batch size used by the model.</summary>
+    [Parameter]
+    public int? BatchSize { get; set; }
+
+    /// <summary>Approximate memory used by the model in megabytes.</summary>
+    [Parameter]
+    public double? MemoryUsageMb { get; set; }
+
+    /// <summary>Optional extra name/value pairs to display.</summary>
+    [Parameter]
+    public IReadOnlyList<(string Name, string Value)>? AdditionalMetrics { get; set; }
+}

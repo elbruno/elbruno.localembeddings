@@ -1,0 +1,101 @@
+@* SimilarityMeter — paste two texts, see cosine similarity as a colour gauge *@
+@using Microsoft.Extensions.AI
+
+<div class="similarity-meter">
+    <h3 class="meter-title">Similarity Meter</h3>
+
+    <div class="text-pair">
+        <div class="text-panel">
+            <label class="panel-label">Text A</label>
+            <textarea class="text-area" rows="3" placeholder="Enter first text…"
+                      @bind="TextA" @bind:event="oninput"></textarea>
+        </div>
+        <div class="text-panel">
+            <label class="panel-label">Text B</label>
+            <textarea class="text-area" rows="3" placeholder="Enter second text…"
+                      @bind="TextB" @bind:event="oninput"></textarea>
+        </div>
+    </div>
+
+    <div class="meter-actions">
+        <button class="btn btn-primary btn-sm"
+                @onclick="ComputeAsync"
+                disabled="@(_isComputing || Generator is null ||
+                             string.IsNullOrWhiteSpace(TextA) || string.IsNullOrWhiteSpace(TextB))">
+            @(_isComputing ? "Computing…" : "Compare")
+        </button>
+    </div>
+
+    @if (_errorMessage is not null)
+    {
+        <p class="meter-error">@_errorMessage</p>
+    }
+
+    @if (_similarity.HasValue)
+    {
+        float pct = (_similarity.Value + 1f) / 2f * 100f;
+        string color = GaugeColor(_similarity.Value);
+
+        <div class="gauge-container" role="meter" aria-valuenow="@_similarity.Value"
+             aria-valuemin="-1" aria-valuemax="1" aria-label="Cosine similarity">
+            <div class="gauge-label">Cosine similarity</div>
+            <div class="gauge-track">
+                <div class="gauge-fill" style="width: @pct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%; background: @color;"></div>
+            </div>
+            <div class="gauge-value" style="color: @color;">
+                @_similarity.Value.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)
+            </div>
+            <div class="gauge-scale">
+                <span>-1 (opposite)</span>
+                <span>0 (unrelated)</span>
+                <span>+1 (identical)</span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Embedding generator used to compute vectors.</summary>
+    [Parameter]
+    public IEmbeddingGenerator<string, Embedding<float>>? Generator { get; set; }
+
+    private string TextA { get; set; } = string.Empty;
+    private string TextB { get; set; } = string.Empty;
+    private float? _similarity;
+    private bool _isComputing;
+    private string? _errorMessage;
+
+    private async Task ComputeAsync()
+    {
+        _errorMessage = null;
+        if (Generator is null) return;
+
+        _isComputing = true;
+        StateHasChanged();
+        try
+        {
+            var embeddings = await EmbeddingStateService
+                .GenerateEmbeddingsAsync(Generator, [TextA, TextB])
+                .ConfigureAwait(false);
+            _similarity = EmbeddingStateService.CosineSimilarity(embeddings[0], embeddings[1]);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _isComputing = false;
+            StateHasChanged();
+        }
+    }
+
+    // Red (-1) → orange (0) → green (+1)
+    private static string GaugeColor(float v)
+    {
+        float t = (v + 1f) / 2f;
+        int r = (int)(255 * (1f - t));
+        int g = (int)(200 * t);
+        return $"rgb({r},{g},60)";
+    }
+}

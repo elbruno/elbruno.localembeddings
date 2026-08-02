@@ -1,0 +1,100 @@
+/* ===================================================
+   ElBruno.LocalEmbeddings.BlazorComponents styles
+   =================================================== */
+
+/* ---- Shared ---- */
+.btn { cursor: pointer; border: 1px solid transparent; border-radius: 4px; padding: 4px 10px; font-size: .875rem; }
+.btn-primary   { background: #0d6efd; color: #fff; border-color: #0d6efd; }
+.btn-secondary { background: #6c757d; color: #fff; border-color: #6c757d; }
+.btn-danger    { background: #dc3545; color: #fff; border-color: #dc3545; }
+.btn-outline-secondary { background: transparent; color: #6c757d; border-color: #6c757d; }
+.btn-sm { padding: 2px 8px; font-size: .8rem; }
+.btn:disabled { opacity: .55; cursor: default; }
+
+/* ---- EmbeddingModelStatusCard ---- */
+.embedding-model-status-card { border: 1px solid #dee2e6; border-radius: 8px; padding: 14px; max-width: 360px; }
+.embedding-model-status-card.compact { max-width: 260px; padding: 8px; }
+.model-name  { font-weight: 600; font-size: 1rem; }
+.model-meta  { font-size: .75rem; color: #6c757d; }
+.model-description { font-size: .85rem; color: #495057; margin: 4px 0 10px; }
+.state-badge { font-size: .75rem; border-radius: 4px; padding: 2px 6px; font-weight: 600; }
+.state-notdownloaded { background: #f8d7da; color: #842029; }
+.state-downloading   { background: #fff3cd; color: #664d03; }
+.state-downloaded    { background: #d1e7dd; color: #0a3622; }
+.state-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.progress-bar-container { flex: 1; height: 8px; background: #e9ecef; border-radius: 4px; position: relative; }
+.progress-bar-fill { height: 100%; background: #0d6efd; border-radius: 4px; transition: width .3s; }
+.progress-label { position: absolute; right: -30px; top: -4px; font-size: .7rem; }
+.action-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ---- EmbeddingModelGallery ---- */
+.embedding-model-gallery .gallery-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.filter-input  { border: 1px solid #ced4da; border-radius: 4px; padding: 4px 8px; font-size: .875rem; flex: 1; min-width: 160px; }
+.filter-select { border: 1px solid #ced4da; border-radius: 4px; padding: 4px 6px; font-size: .875rem; }
+.gallery-grid  { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 16px; }
+.gallery-empty { color: #6c757d; font-style: italic; }
+
+/* ---- EmbeddingModelSelector ---- */
+.embedding-model-selector { border: 1px solid #ced4da; border-radius: 4px; padding: 6px 8px; font-size: .875rem; }
+
+/* ---- EmbeddingExplorer ---- */
+.embedding-explorer { max-width: 720px; }
+.explorer-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+.explorer-hint  { font-size: .85rem; color: #6c757d; margin-bottom: 12px; }
+.sentence-inputs { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.sentence-row    { display: flex; align-items: center; gap: 6px; }
+.sentence-index  { width: 18px; font-size: .8rem; color: #6c757d; flex-shrink: 0; }
+.sentence-input  { flex: 1; border: 1px solid #ced4da; border-radius: 4px; padding: 4px 8px; font-size: .875rem; }
+.btn-remove      { background: transparent; border: none; color: #dc3545; cursor: pointer; font-size: 1.1rem; line-height: 1; padding: 0 4px; }
+.explorer-actions { display: flex; gap: 8px; margin-bottom: 14px; }
+.explorer-error   { color: #842029; font-size: .85rem; }
+.similarity-heatmap { overflow-x: auto; }
+.heatmap-row        { display: flex; }
+.heatmap-cell       { width: 80px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: .75rem; border: 1px solid #dee2e6; overflow: hidden; }
+.heatmap-header .heatmap-cell { background: #f8f9fa; font-weight: 600; }
+.row-label   { background: #f8f9fa; font-weight: 600; }
+
+/* ---- SemanticSearchBox ---- */
+.semantic-search-box { max-width: 600px; }
+.search-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.search-input     { flex: 1; border: 1px solid #ced4da; border-radius: 4px; padding: 6px 10px; font-size: .9rem; }
+.search-error     { color: #842029; font-size: .85rem; }
+.search-results   { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.search-result-item { border: 1px solid #dee2e6; border-radius: 6px; padding: 10px; }
+.result-text  { font-size: .9rem; margin-bottom: 6px; }
+.result-score { display: flex; align-items: center; gap: 8px; font-size: .78rem; color: #495057; }
+.score-bar    { flex: 1; height: 6px; background: #e9ecef; border-radius: 3px; }
+.score-fill   { height: 100%; background: #198754; border-radius: 3px; }
+.search-empty { color: #6c757d; font-style: italic; }
+
+/* ---- EmbeddingDimensionViewer ---- */
+.viewer-title { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+.viewer-empty { color: #6c757d; font-style: italic; }
+.scatter-plot { width: 100%; max-width: 480px; border: 1px solid #dee2e6; border-radius: 6px; background: #fafafa; }
+.scatter-label { fill: #343a40; pointer-events: none; }
+
+/* ---- SimilarityMeter ---- */
+.similarity-meter { max-width: 640px; }
+.meter-title  { font-size: 1.1rem; font-weight: 600; margin-bottom: 10px; }
+.text-pair    { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.panel-label  { font-size: .8rem; font-weight: 600; color: #495057; }
+.text-area    { border: 1px solid #ced4da; border-radius: 4px; padding: 6px 8px; font-size: .875rem; resize: vertical; }
+.meter-actions { margin-bottom: 14px; }
+.meter-error  { color: #842029; font-size: .85rem; }
+.gauge-track  { height: 18px; background: #e9ecef; border-radius: 9px; overflow: hidden; }
+.gauge-fill   { height: 100%; border-radius: 9px; transition: width .4s, background .4s; }
+.gauge-value  { font-size: 1.4rem; font-weight: 700; margin: 6px 0 2px; }
+.gauge-scale  { display: flex; justify-content: space-between; font-size: .7rem; color: #6c757d; }
+
+/* ---- EmbeddingHealthBadge ---- */
+.embedding-health-badge { display: inline-flex; align-items: center; gap: 5px; font-size: .8rem; }
+.badge-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.badge-ready .badge-dot     { background: #198754; }
+.badge-not-ready .badge-dot { background: #dc3545; }
+
+/* ---- EmbeddingMetricsPanel ---- */
+.embedding-metrics-panel { max-width: 320px; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; }
+.metrics-title { font-size: .95rem; font-weight: 600; margin-bottom: 8px; }
+.metrics-list  { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin: 0; }
+.metrics-list dt { font-size: .78rem; color: #6c757d; }
+.metrics-list dd { font-size: .88rem; font-weight: 600; margin: 0; }
