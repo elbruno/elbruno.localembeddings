@@ -40,8 +40,8 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 
 | Version | Date | Highlight |
 |---------|------|-----------|
-| **v1.5.8** | 2026-08-02 | **BlazorComponents — full test coverage** · 77 xUnit + bUnit tests for all 9 components; `EmbeddingDimensionViewer` PCA demo added to `BlazorDemo`; sample app README |
-| **v1.5.7** | 2026-08-02 | **`ElBruno.LocalEmbeddings.BlazorComponents`** — new package with 9 ready-to-use Razor components: `EmbeddingModelGallery`, `SimilarityMeter`, `SemanticSearchBox`, `EmbeddingExplorer`, `EmbeddingDimensionViewer` (PCA 2-D), `EmbeddingModelSelector`, `EmbeddingHealthBadge`, `EmbeddingMetricsPanel`, `EmbeddingModelStatusCard` |
+| **v1.5.9** | 2026-08-02 | **`ElBruno.LocalEmbeddings.BlazorComponents`** — full test coverage (77 xUnit + bUnit tests for all 9 components), `EmbeddingDimensionViewer` PCA demo added to `BlazorDemo`, sample README, fixed auto-release → NuGet publish pipeline |
+| **v1.5.7** | 2026-08-02 | **New package: `ElBruno.LocalEmbeddings.BlazorComponents`** — 9 ready-to-use Razor components: `EmbeddingModelGallery`, `SimilarityMeter`, `SemanticSearchBox`, `EmbeddingExplorer`, `EmbeddingDimensionViewer` (PCA 2-D), `EmbeddingModelSelector`, `EmbeddingHealthBadge`, `EmbeddingMetricsPanel`, `EmbeddingModelStatusCard` |
 | **v1.5.3** | 2026-08-02 | **`ElBruno.LocalEmbeddings.OpenTelemetry`** — OpenTelemetry instrumentation with Activity tracing, metrics (tokens/sec, latency), and configurable exporters for embedding pipelines |
 | **v1.4.x** | 2026 | **NPU hardware acceleration** — `ElBruno.LocalEmbeddings.Npu.Intel` (Intel Core Ultra via OpenVINO) and `ElBruno.LocalEmbeddings.Npu.Qualcomm` (Snapdragon X via QNN) for on-device NPU inference |
 | **v1.3.x** | 2026 | **🦅 Microsoft Harrier-OSS-v1** via `ElBruno.LocalEmbeddings.Harrier` — 270M parameter model, 640-dim embeddings, 94+ languages, instruction-tuned for high-quality multilingual retrieval |

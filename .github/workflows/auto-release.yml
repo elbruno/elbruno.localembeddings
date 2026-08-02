@@ -69,4 +69,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run publish.yml -f version="${{ steps.next_version.outputs.next }}"
+          # Strip leading 'v' so publish.yml version validation passes (expects MAJOR.MINOR.PATCH)
+          VERSION_NO_V="${{ steps.next_version.outputs.next }}"
+          VERSION_NO_V="${VERSION_NO_V#v}"
+          gh workflow run publish.yml -f version="$VERSION_NO_V"
