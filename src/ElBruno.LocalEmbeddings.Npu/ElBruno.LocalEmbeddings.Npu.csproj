@@ -14,7 +14,7 @@
     <PackageIcon>icon_03.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>embeddings;onnx;ai;local;npu;directml;gpu;hardware-acceleration;microsoft-extensions-ai;sentence-transformers;nlp;machine-learning</PackageTags>
-    <Version>1.5.6</Version>
+    <Version>1.5.8</Version>
   </PropertyGroup>
 
   <ItemGroup>
