@@ -129,7 +129,7 @@ jobs:
               `- [ ] Test suite is green`,
               `- [ ] NuGet release is published`,
               `- [ ] README "What's New" entry was evaluated and updated when needed`
-            ].join('\\n');
+            ].join('\n');
 
             let assignedMember = null;
             let triageReason = '';
