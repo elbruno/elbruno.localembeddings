@@ -60,6 +60,28 @@ jobs:
       - name: Test
         run: dotnet test -c Release --no-build --verbosity normal
 
+      - name: Validate README What's New policy
+        run: |
+          SECTION=$(awk '/^## .*What'"'"'s New/{flag=1;next}/^## /{flag=0}flag{print}' README.md)
+          if [[ -z "$SECTION" ]]; then
+            echo "❌ README.md must contain a What's New section."
+            exit 1
+          fi
+
+          BULLET_COUNT=$(printf "%s\n" "$SECTION" | grep -E '^- ' | wc -l | xargs)
+          TABLE_COUNT=$(printf "%s\n" "$SECTION" | grep -E '^\| \*\*v' | wc -l | xargs)
+          ITEM_COUNT="$BULLET_COUNT"
+          if [[ "$TABLE_COUNT" -gt "$ITEM_COUNT" ]]; then
+            ITEM_COUNT="$TABLE_COUNT"
+          fi
+
+          if [[ "$ITEM_COUNT" -ne 5 ]]; then
+            echo "❌ What's New must keep exactly the last 5 notable entries. Found: $ITEM_COUNT"
+            exit 1
+          fi
+
+          echo "✅ README What's New policy passed (5 entries)."
+
       - name: Pack
         run: |
           dotnet pack src/ElBruno.LocalEmbeddings/ElBruno.LocalEmbeddings.csproj -c Release --no-build -p:Version=${{ steps.version.outputs.version }} -o artifacts

@@ -23,6 +23,28 @@ jobs:
             const fs = require('fs');
             const issue = context.payload.issue;
             const label = context.payload.label.name;
+            const issueText = `${issue.title}\n${issue.body || ''}`.toLowerCase();
+            const isBlazorComponentsIssue =
+              issueText.includes('blazorcomponents') ||
+              issueText.includes('blazor components') ||
+              issueText.includes('razor component') ||
+              (issueText.includes('blazor') && issueText.includes('component'));
+            const hasImplementationLabel = issue.labels.some(l => l.name === 'implementation:blazor-components');
+            const needsBlazorChecklist = hasImplementationLabel || isBlazorComponentsIssue;
+
+            const blazorChecklist = [
+              `### ✅ Blazor Components Implementation Requirements`,
+              ``,
+              `This issue is considered complete only when all of the following are delivered:`,
+              `- [ ] New or updated Blazor component code`,
+              `- [ ] New or updated automated tests`,
+              `- [ ] New or updated sample application changes`,
+              `- [ ] New or updated main documentation`,
+              `- [ ] New or updated sample-application documentation`,
+              `- [ ] Test suite is green`,
+              `- [ ] NuGet release is published`,
+              `- [ ] README "What's New" entry was evaluated and updated when needed`
+            ].join('\n');
 
             // Extract member name from label (e.g., "squad:ripley" → "ripley")
             const memberName = label.replace('squad:', '').toLowerCase();
@@ -85,6 +107,8 @@ jobs:
                 '',
                 `> The coding agent will create a \`copilot/*\` branch and open a draft PR.`,
                 `> Review the PR as you would any team member's work.`,
+                needsBlazorChecklist ? `` : '',
+                needsBlazorChecklist ? blazorChecklist : '',
               ].join('\n');
             } else {
               comment = [
@@ -97,6 +121,8 @@ jobs:
                 `> **For Copilot coding agent:** If enabled, this issue will be worked automatically.`,
                 `> Otherwise, start a Copilot session and say:`,
                 `> \`${assignedMember.name}, work on issue #${issue.number}\``,
+                needsBlazorChecklist ? `` : '',
+                needsBlazorChecklist ? blazorChecklist : '',
               ].join('\n');
             }
 

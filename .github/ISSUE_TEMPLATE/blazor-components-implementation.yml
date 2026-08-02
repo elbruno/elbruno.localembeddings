@@ -1,0 +1,53 @@
+name: Blazor components implementation
+description: Request a Blazor components implementation change with full delivery requirements
+title: "feat: [Blazor] "
+labels:
+  - squad
+  - type:feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issues created with this template are considered complete only when implementation, validation, documentation, and release tasks are all done.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Feature summary
+      description: Describe the requested Blazor component capability and expected user value.
+      placeholder: Add a new component or update an existing one...
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Implementation scope
+      description: List target components, API contracts, and sample app touchpoints.
+      placeholder: Components, public parameters/events, sample updates...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: required-deliverables
+    attributes:
+      label: Required implementation deliverables
+      description: All items are mandatory for completion.
+      options:
+        - label: New or updated Blazor component code will be implemented
+          required: true
+        - label: New or updated automated tests will be added
+          required: true
+        - label: New or updated sample application changes will be included
+          required: true
+        - label: New or updated main documentation will be included
+          required: true
+        - label: New or updated sample-application documentation will be included
+          required: true
+        - label: All relevant tests must be green before closing
+          required: true
+        - label: A NuGet release is required for completion
+          required: true
+        - label: README "What's New" will be evaluated and updated when needed for the release
+          required: true
+
