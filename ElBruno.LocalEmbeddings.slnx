@@ -24,6 +24,7 @@
     <Project Path="src/Tests/ElBruno.LocalEmbeddings.VectorData.Tests/ElBruno.LocalEmbeddings.VectorData.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.Azure.Tests/ElBruno.LocalEmbeddings.Azure.Tests.csproj" />
     <Project Path="tests/ElBruno.LocalEmbeddings.OpenTelemetry.Tests/ElBruno.LocalEmbeddings.OpenTelemetry.Tests.csproj" />
+    <Project Path="tests/ElBruno.LocalEmbeddings.BlazorComponents.Tests/ElBruno.LocalEmbeddings.BlazorComponents.Tests.csproj" />
     <Project Path="src/Tests/ElBruno.LocalEmbeddings.Harrier.Tests/ElBruno.LocalEmbeddings.Harrier.Tests.csproj" />
     <Project Path="src/Tests/ElBruno.LocalEmbeddings.SharedModelTests/ElBruno.LocalEmbeddings.SharedModelTests.csproj" />
   </Folder>

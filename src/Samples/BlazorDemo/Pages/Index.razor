@@ -5,7 +5,8 @@
 <PageTitle>LocalEmbeddings — BlazorDemo</PageTitle>
 
 <h1>ElBruno.LocalEmbeddings — Blazor Components Demo</h1>
-<p>Explore all 9 UI components for working with local embeddings.</p>
+<p>Explore all 9 UI components for working with local embeddings. Sections 1–2 and 8 generate
+   embeddings on the fly; the model is downloaded automatically on first run.</p>
 
 <hr />
 
@@ -57,6 +58,35 @@
                            MemoryUsageMb="58.4" />
 </section>
 
+<section class="demo-section">
+    <h2>8. Embedding Dimension Viewer</h2>
+    <p>Click <strong>Compute embeddings</strong> to generate vectors for the sample sentences and
+       display them projected to 2-D via PCA — similar sentences cluster together.</p>
+
+    @if (_dimEmbeddings is null)
+    {
+        <button class="btn btn-primary btn-sm" @onclick="ComputeDimViewerAsync"
+                disabled="@_dimComputing">
+            @(_dimComputing ? "Computing…" : "Compute embeddings")
+        </button>
+        @if (_dimError is not null)
+        {
+            <p class="text-danger" style="margin-top:8px">@_dimError</p>
+        }
+    }
+    else
+    {
+        <EmbeddingDimensionViewer Labels="@_dimLabels"
+                                  Embeddings="@_dimEmbeddings"
+                                  Title="Sentence clusters (PCA 2-D)"
+                                  CanvasSize="420" />
+        <button class="btn btn-outline-secondary btn-sm" style="margin-top:8px"
+                @onclick="() => { _dimEmbeddings = null; _dimLabels = null; }">
+            Reset
+        </button>
+    }
+</section>
+
 @code {
     private string? _selectedModel;
 
@@ -71,6 +101,37 @@
         "C# is a strongly-typed, object-oriented programming language.",
         "Retrieval-Augmented Generation combines LLMs with document search.",
     ];
+
+    // ── EmbeddingDimensionViewer demo state ────────────────────────────────
+    private IReadOnlyList<float[]>? _dimEmbeddings;
+    private IReadOnlyList<string>? _dimLabels;
+    private bool _dimComputing;
+    private string? _dimError;
+
+    private async Task ComputeDimViewerAsync()
+    {
+        _dimError = null;
+        _dimComputing = true;
+        StateHasChanged();
+        try
+        {
+            var vecs = await EmbeddingStateService.GenerateEmbeddingsAsync(Generator, _corpus);
+            _dimEmbeddings = vecs;
+            _dimLabels = _corpus.Select((s, i) => $"S{i + 1}: {Truncate(s, 28)}").ToList();
+        }
+        catch (Exception ex)
+        {
+            _dimError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _dimComputing = false;
+            StateHasChanged();
+        }
+    }
+
+    private static string Truncate(string s, int max) =>
+        s.Length <= max ? s : s[..max] + "…";
 
     private Task OnDownload(EmbeddingModelInfo model)
     {
