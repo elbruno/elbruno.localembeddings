@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
@@ -16,7 +16,7 @@
     <PackageIcon>icon_03.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>embeddings;onnx;ai;local;microsoft-extensions-ai;sentence-transformers;nlp;machine-learning</PackageTags>
-    <Version>1.5.2</Version>
+    <Version>1.5.5</Version>
   </PropertyGroup>
 
   <ItemGroup>
