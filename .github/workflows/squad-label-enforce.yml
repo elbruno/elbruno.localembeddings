@@ -79,6 +79,28 @@ jobs:
 
                   core.info('Applied release:backlog for go:yes issue');
                 }
+
+                const hasBlazorImplementationLabel = allLabels.includes('implementation:blazor-components');
+                if (hasBlazorImplementationLabel) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    body: [
+                      `🧩 This issue is marked with \`implementation:blazor-components\`.`,
+                      ``,
+                      `Before closing, ensure these deliverables are complete:`,
+                      `- New or updated Blazor component code`,
+                      `- New or updated tests`,
+                      `- New or updated sample app changes`,
+                      `- New or updated documentation`,
+                      `- New or updated sample-app documentation`,
+                      `- Green test run`,
+                      `- NuGet release published`,
+                      `- README "What's New" reviewed and updated when needed`
+                    ].join('\n')
+                  });
+                }
               }
 
               // Remove release: labels if go:no

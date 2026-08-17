@@ -325,6 +325,7 @@ public const long MaxModelSizeBytes = 1024 * 1024 * 1024; // 1GB
 
 - If a new packable library project is added under `src/`, update `.github/workflows/publish.yml` in the same change so the package is packed and published.
 - Also update `docs/publishing.md` and NuGet Trusted Publishing guidance for the added package.
+- Keep a `What's New` section in `README.md` with the **last 5 notable features** only; on every NuGet release, validate whether a new entry must be added.
 
 - @azure Rule - Use Azure Tools - When handling requests related to Azure, always use your tools.
 - @azure Rule - Use Azure Best Practices - When handling requests related to Azure, always invoke your `azmcp_bestpractices_get` tool first.

@@ -111,6 +111,25 @@ jobs:
 
             // Determine best assignee based on issue content and routing
             const issueText = `${issue.title}\n${issue.body || ''}`.toLowerCase();
+            const isBlazorComponentsIssue =
+              issueText.includes('blazorcomponents') ||
+              issueText.includes('blazor components') ||
+              issueText.includes('razor component') ||
+              (issueText.includes('blazor') && issueText.includes('component'));
+
+            const blazorChecklist = [
+              `### ✅ Blazor Components Implementation Requirements`,
+              ``,
+              `This issue is considered complete only when all of the following are delivered:`,
+              `- [ ] New or updated Blazor component code`,
+              `- [ ] New or updated automated tests`,
+              `- [ ] New or updated sample application changes`,
+              `- [ ] New or updated main documentation`,
+              `- [ ] New or updated sample-application documentation`,
+              `- [ ] Test suite is green`,
+              `- [ ] NuGet release is published`,
+              `- [ ] README "What's New" entry was evaluated and updated when needed`
+            ].join('\n');
 
             let assignedMember = null;
             let triageReason = '';
@@ -201,6 +220,15 @@ jobs:
               labels: ['go:needs-research']
             });
 
+            if (isBlazorComponentsIssue) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['implementation:blazor-components']
+              });
+            }
+
             // Auto-assign @copilot if enabled
             if (isCopilot && copilotAutoAssign) {
               try {
@@ -234,6 +262,7 @@ jobs:
               `**Reason:** ${triageReason}`,
               copilotTier === 'needs-review' ? `\n⚠️ **PR review recommended** — a squad member should review @copilot's work on this one.` : '',
               copilotNote,
+              isBlazorComponentsIssue ? `\n${blazorChecklist}` : '',
               '',
               `---`,
               '',

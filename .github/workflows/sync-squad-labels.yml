@@ -98,6 +98,10 @@ jobs:
               { name: 'priority:p2', color: 'FBCA04', description: 'Next sprint' }
             ];
 
+            const IMPLEMENTATION_LABELS = [
+              { name: 'implementation:blazor-components', color: '6A5ACD', description: 'Requires full Blazor components implementation checklist (code, tests, samples, docs, release)' }
+            ];
+
             function slugify(t) { return t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
 
             // Ensure the base "squad" triage label exists
@@ -127,6 +131,7 @@ jobs:
             labels.push(...RELEASE_LABELS);
             labels.push(...TYPE_LABELS);
             labels.push(...PRIORITY_LABELS);
+            labels.push(...IMPLEMENTATION_LABELS);
             labels.push(...SIGNAL_LABELS);
 
             // Sync labels (create or update)
