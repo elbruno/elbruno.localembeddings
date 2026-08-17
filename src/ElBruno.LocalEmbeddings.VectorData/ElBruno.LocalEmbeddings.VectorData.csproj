@@ -14,7 +14,7 @@
     <PackageIcon>icon_03.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>embeddings;onnx;ai;local;microsoft-extensions-ai;vectordata;semantic-search</PackageTags>
-    <Version>1.5.8</Version>
+    <Version>1.6.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
