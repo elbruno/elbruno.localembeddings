@@ -44,7 +44,7 @@ internal sealed class IntelTokenizer
         _maxLength = maxLength;
 
         using var stream = File.OpenRead(actualPath);
-        _tokenizer = BertTokenizer.Create(stream);
+        _tokenizer = BertTokenizer.Create(stream, new BertOptions { RemoveNonSpacingMarks = true });
     }
 
     public (long[] InputIds, long[] AttentionMask) Tokenize(string text, int? maxLength = null)
