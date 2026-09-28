@@ -74,7 +74,7 @@ public sealed class Tokenizer
 
         // Load using the vocab.txt file (BertTokenizer format)
         using var stream = File.OpenRead(actualPath);
-        _tokenizer = BertTokenizer.Create(stream);
+        _tokenizer = BertTokenizer.Create(stream, new BertOptions { RemoveNonSpacingMarks = true });
     }
 
     /// <summary>
