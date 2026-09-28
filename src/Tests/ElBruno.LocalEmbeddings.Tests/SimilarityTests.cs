@@ -122,7 +122,7 @@ public class SimilarityTests
         var simdResult = a.CosineSimilarity(b);
         var manualResult = ManualCosineSimilarity(a.Span, b.Span);
 
-        Assert.Equal(manualResult, simdResult, precision: 5);
+        Assert.InRange(MathF.Abs(manualResult - simdResult), 0f, 1e-6f);
     }
 
     [Fact]
