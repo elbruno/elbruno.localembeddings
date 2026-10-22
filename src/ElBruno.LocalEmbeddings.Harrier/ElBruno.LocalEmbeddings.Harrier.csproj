@@ -40,4 +40,8 @@
     <InternalsVisibleTo Include="ElBruno.LocalEmbeddings.Harrier.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Shared\ModelDownloadLock.cs" Link="Shared\ModelDownloadLock.cs" />
+  </ItemGroup>
+
 </Project>

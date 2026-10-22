@@ -43,4 +43,8 @@
     <None Include="..\..\nuget_images\icon_03.png" Pack="true" PackagePath="\" Link="icon_03.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Shared\ModelDownloadLock.cs" Link="Shared\ModelDownloadLock.cs" />
+  </ItemGroup>
+
 </Project>
