@@ -1,14 +1,12 @@
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 using System.Numerics.Tensors;
 
 namespace ElBruno.LocalEmbeddings.ImageEmbeddings;
 
 /// <summary>
-/// CLIP image encoder using ONNX Runtime and ImageSharp.
+/// CLIP image encoder using ONNX Runtime and SkiaSharp.
 /// </summary>
 /// <remarks>
 /// Loads a CLIP vision encoder ONNX model and encodes images into
@@ -57,7 +55,12 @@ public sealed class ClipImageEncoder : IDisposable
     /// <returns>An L2-normalized float array representing the image embedding.</returns>
     public float[] Encode(string imagePath)
     {
-        using var image = Image.Load<Rgb24>(imagePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(imagePath);
+        if (!File.Exists(imagePath))
+            throw new FileNotFoundException($"Image file not found: {imagePath}", imagePath);
+
+        using var image = SKBitmap.Decode(imagePath)
+            ?? throw new InvalidDataException($"Unable to decode image: {imagePath}");
         return EncodeImage(image);
     }
 
@@ -68,31 +71,15 @@ public sealed class ClipImageEncoder : IDisposable
     /// <returns>An L2-normalized float array representing the image embedding.</returns>
     public float[] Encode(Stream imageStream)
     {
-        using var image = Image.Load<Rgb24>(imageStream);
+        ArgumentNullException.ThrowIfNull(imageStream);
+        using var image = SKBitmap.Decode(imageStream)
+            ?? throw new InvalidDataException("Unable to decode image stream.");
         return EncodeImage(image);
     }
 
-    private float[] EncodeImage(Image<Rgb24> image)
+    private float[] EncodeImage(SKBitmap image)
     {
-        image.Mutate(x => x.Resize(ImageSize, ImageSize));
-
-        var tensor = new DenseTensor<float>(new[] { 1, 3, ImageSize, ImageSize });
-
-        image.ProcessPixelRows(accessor =>
-        {
-            for (int y = 0; y < ImageSize; y++)
-            {
-                var pixelRow = accessor.GetRowSpan(y);
-                for (int x = 0; x < ImageSize; x++)
-                {
-                    var pixel = pixelRow[x];
-
-                    tensor[0, 0, y, x] = (pixel.R / 255.0f - Mean[0]) / Std[0];
-                    tensor[0, 1, y, x] = (pixel.G / 255.0f - Mean[1]) / Std[1];
-                    tensor[0, 2, y, x] = (pixel.B / 255.0f - Mean[2]) / Std[2];
-                }
-            }
-        });
+        var tensor = CreateImageTensor(image);
 
         var inputs = new List<NamedOnnxValue>
         {
@@ -105,6 +92,33 @@ public sealed class ClipImageEncoder : IDisposable
         Normalize(output);
 
         return output;
+    }
+
+    internal static DenseTensor<float> CreateImageTensor(SKBitmap image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        using var resizedImage = image.Resize(
+            new SKImageInfo(ImageSize, ImageSize),
+            new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None))
+            ?? throw new InvalidOperationException("Unable to resize image for CLIP preprocessing.");
+
+        var pixels = resizedImage.Pixels;
+        var tensor = new DenseTensor<float>(new[] { 1, 3, ImageSize, ImageSize });
+        for (int y = 0; y < ImageSize; y++)
+        {
+            int rowOffset = y * ImageSize;
+            for (int x = 0; x < ImageSize; x++)
+            {
+                var pixel = pixels[rowOffset + x];
+
+                tensor[0, 0, y, x] = (pixel.Red / 255.0f - Mean[0]) / Std[0];
+                tensor[0, 1, y, x] = (pixel.Green / 255.0f - Mean[1]) / Std[1];
+                tensor[0, 2, y, x] = (pixel.Blue / 255.0f - Mean[2]) / Std[2];
+            }
+        }
+
+        return tensor;
     }
 
     private static void Normalize(float[] vector)
