@@ -41,7 +41,7 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 
 | Version | Date | Highlight |
 |---------|------|-----------|
-| **v1.6.5** | 2026-10-25 | **Cross-process model downloads** — serialize shared-cache downloads and reuse verified model files safely across processes |
+| **v1.6.6** | 2026-10-25 | **Cross-process model downloads:** serialize shared-cache downloads safely; replace ImageSharp with SkiaSharp and update Pkcs |
 | **v1.6.4** | 2026-10-07 | **Google EmbeddingGemma 2** — new text-only ONNX companion package with task-aware prompts, multilingual embeddings, and 128/256/512/768 dimensions |
 | **v1.6.3** | 2026-09-28 | **Uncased BERT/MiniLM tokenization** — normalizes accents so accented words map to their expected tokens |
 | **v1.5.9** | 2026-08-02 | **`ElBruno.LocalEmbeddings.BlazorComponents`** — full test coverage (77 xUnit + bUnit tests for all 9 components), `EmbeddingDimensionViewer` PCA demo added to `BlazorDemo`, sample README, fixed auto-release → NuGet publish pipeline |
