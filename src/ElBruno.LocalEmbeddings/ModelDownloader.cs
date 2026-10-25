@@ -35,6 +35,9 @@ public sealed class ModelDownloader : IModelDownloader
     private const string DefaultModel = "sentence-transformers/all-MiniLM-L6-v2";
     private static readonly string[] QuantizedModelFiles = ["model_quantized.onnx", "model_int8.onnx"];
     private static readonly string[] TokenizerFiles = ["tokenizer.json", "tokenizer_config.json", "vocab.txt"];
+
+    // The tokenizer reads only vocab.txt: a cached model with it is complete, also without the other tokenizer files, which are optional.
+    private static readonly string[] UsedTokenizerFiles = ["vocab.txt"];
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> _downloadLocks = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly HuggingFaceDownloader _downloader;
@@ -96,12 +99,43 @@ public sealed class ModelDownloader : IModelDownloader
                 nameof(modelName));
         }
 
+        // A call that is already cancelled ends here, also when the model is complete, with the TaskCanceledException of a cancelled wait.
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return await Task.FromCanceled<string>(cancellationToken).ConfigureAwait(false);
+        }
+
+        // As when the downloader finds every file, the caller gets the end of the progress of a model that is already there, posted to
+        // the context of the caller, and so does the progress of a download. A Progress<T> captures that context, so both are created
+        // here, before any await.
+        IProgress<double>? completeProgress = progress is null ? null : new Progress<double>(progress.Report);
+        IProgress<DownloadProgress>? downloadProgress = progress is null
+            ? null
+            : new Progress<DownloadProgress>(p => progress.Report(p.PercentComplete / 100.0));
+
+        // A complete and verified model returns at once: no lock, and nothing written to the cache.
+        if (ModelDownloadLock.IsCompleteAndVerified(modelDirectory, UsedTokenizerFiles, QuantizedModelFiles, preferQuantized, expectedHash))
+        {
+            completeProgress?.Report(1.0);
+            return modelDirectory;
+        }
+
         // Serialize concurrent downloads for the same model directory to avoid .tmp file conflicts.
         var sem = _downloadLocks.GetOrAdd(modelDirectory, _ => new SemaphoreSlim(1, 1));
         await sem.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            return await EnsureModelCoreAsync(modelDirectory, modelName, preferQuantized, progress, expectedHash, cancellationToken).ConfigureAwait(false);
+            // The semaphore covers this process; the lock file in the model directory covers other processes that use the same cache.
+            using var processLock = await ModelDownloadLock.AcquireAsync(modelDirectory, cancellationToken).ConfigureAwait(false);
+
+            // Another process may have finished the download while this one waited.
+            if (ModelDownloadLock.IsCompleteAndVerified(modelDirectory, UsedTokenizerFiles, QuantizedModelFiles, preferQuantized, expectedHash))
+            {
+                completeProgress?.Report(1.0);
+                return modelDirectory;
+            }
+
+            return await EnsureModelCoreAsync(modelDirectory, modelName, preferQuantized, downloadProgress, expectedHash, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -109,7 +143,7 @@ public sealed class ModelDownloader : IModelDownloader
         }
     }
 
-    private async Task<string> EnsureModelCoreAsync(string modelDirectory, string modelName, bool preferQuantized, IProgress<double>? progress, string? expectedHash, CancellationToken cancellationToken)
+    private async Task<string> EnsureModelCoreAsync(string modelDirectory, string modelName, bool preferQuantized, IProgress<DownloadProgress>? downloadProgress, string? expectedHash, CancellationToken cancellationToken)
     {
         var requiredFiles = new List<string>();
         var optionalFiles = new List<string>(TokenizerFiles.Select(f => f));
@@ -159,16 +193,6 @@ public sealed class ModelDownloader : IModelDownloader
                 // Just download the default model
                 requiredFiles.Add("onnx/model.onnx");
             }
-        }
-
-        // Map progress from DownloadProgress to double
-        IProgress<DownloadProgress>? downloadProgress = null;
-        if (progress != null)
-        {
-            downloadProgress = new Progress<DownloadProgress>(p =>
-            {
-                progress.Report(p.PercentComplete / 100.0);
-            });
         }
 
         // Download files if needed
@@ -254,7 +278,7 @@ public sealed class ModelDownloader : IModelDownloader
 
     private static string ComputeSha256(string filePath)
     {
-        using var stream = File.OpenRead(filePath);
+        using var stream = ModelDownloadLock.OpenRead(filePath);
         var hash = SHA256.HashData(stream);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
@@ -274,7 +298,7 @@ public sealed class ModelDownloader : IModelDownloader
             return true; // no sidecar — legacy cached file, treat as valid
         }
 
-        var expected = File.ReadAllText(sidecarPath).Trim();
+        var expected = ModelDownloadLock.ReadAllText(sidecarPath).Trim();
         var actual = ComputeSha256(filePath);
         return string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase);
     }

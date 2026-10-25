@@ -54,18 +54,34 @@ public sealed class EmbeddingGemmaModelDownloader
             throw new InvalidOperationException("EmbeddingGemma model cache path resolves outside the configured cache directory.");
         }
 
+        // A call that is already cancelled ends here, also when the model is complete, with the TaskCanceledException of a cancelled wait.
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return await Task.FromCanceled<string>(cancellationToken).ConfigureAwait(false);
+        }
+
+        // A complete model returns at once, without the lock file.
+        if (ModelDownloadLock.IsComplete(() => FilesAreValid(modelDirectory)))
+        {
+            return modelDirectory;
+        }
+
+        // The progress of a download is posted to the context of the caller, which the Progress<T> captures here, before any await.
+        var downloadProgress = progress is null
+            ? null
+            : new Progress<DownloadProgress>(p => progress.Report(p.PercentComplete / 100.0));
+
         var downloadLock = DownloadLocks.GetOrAdd(modelDirectory, static _ => new SemaphoreSlim(1, 1));
         await downloadLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            // The semaphore covers this process; the lock file in the model directory covers other processes that use the same cache.
+            // Another process may have finished the download while this one waited, so the files are checked again.
+            using var processLock = await ModelDownloadLock.AcquireAsync(modelDirectory, cancellationToken).ConfigureAwait(false);
             if (FilesAreValid(modelDirectory))
             {
                 return modelDirectory;
             }
-
-            var downloadProgress = progress is null
-                ? null
-                : new Progress<DownloadProgress>(p => progress.Report(p.PercentComplete / 100.0));
 
             await _downloader.DownloadFilesAsync(new DownloadRequest
             {
@@ -141,7 +157,7 @@ public sealed class EmbeddingGemmaModelDownloader
 
     private static string ComputeSha256(string path)
     {
-        using var stream = File.OpenRead(path);
+        using var stream = ModelDownloadLock.OpenRead(path);
         return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
     }
 }

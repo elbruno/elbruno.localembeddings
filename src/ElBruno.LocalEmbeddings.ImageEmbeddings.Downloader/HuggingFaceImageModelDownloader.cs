@@ -58,6 +58,25 @@ public class HuggingFaceImageModelDownloader : IImageModelDownloader
 
         try
         {
+            // A call that is already cancelled ends here, also when the model is complete.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // A complete model returns at once, without the lock file.
+            if (ModelDownloadLock.IsComplete(() => IsComplete(outputDirectory)))
+            {
+                _logger.LogInformation("CLIP model files are already present in {Directory}", outputDirectory);
+                return;
+            }
+
+            // The lock file in the model directory serializes the calls of this and other processes that use the same directory.
+            // Another call may have finished the download while this one waited, so the files are checked again.
+            using var processLock = await ModelDownloadLock.AcquireAsync(outputDirectory, cancellationToken).ConfigureAwait(false);
+            if (ModelDownloadLock.IsComplete(() => IsComplete(outputDirectory)))
+            {
+                _logger.LogInformation("CLIP model files are already present in {Directory}", outputDirectory);
+                return;
+            }
+
             // SEC-001: verify sidecar hash integrity for any cached ONNX files; delete if corrupted
             foreach (var onnxFile in OnnxModelFileNames)
             {
@@ -110,9 +129,16 @@ public class HuggingFaceImageModelDownloader : IImageModelDownloader
         }
     }
 
+    // True when the downloader has nothing to download and the ONNX files have a sidecar hash that matches them.
+    private static bool IsComplete(string outputDirectory)
+        => RequiredFiles.All(f => File.Exists(Path.Combine(outputDirectory, f.Replace('/', Path.DirectorySeparatorChar))))
+            && OnnxModelFileNames.All(f => File.Exists(Path.Combine(outputDirectory, f))
+                && File.Exists(Path.Combine(outputDirectory, f + ".sha256"))
+                && SidecarHashValid(Path.Combine(outputDirectory, f)));
+
     private static string ComputeSha256(string filePath)
     {
-        using var stream = File.OpenRead(filePath);
+        using var stream = ModelDownloadLock.OpenRead(filePath);
         var hash = SHA256.HashData(stream);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
@@ -132,7 +158,7 @@ public class HuggingFaceImageModelDownloader : IImageModelDownloader
             return true; // no sidecar — legacy cached file, treat as valid
         }
 
-        var expected = File.ReadAllText(sidecarPath).Trim();
+        var expected = ModelDownloadLock.ReadAllText(sidecarPath).Trim();
         var actual = ComputeSha256(filePath);
         return string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase);
     }

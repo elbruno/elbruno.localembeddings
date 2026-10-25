@@ -104,3 +104,16 @@ var options = new LocalEmbeddingsOptions
     CacheDirectory = "/custom/cache/path"
 };
 ```
+
+Downloads sharing a model directory are serialized across processes using a
+`.download.lock` file. Waiting honors cancellation and fails with a
+`TimeoutException` after 30 minutes. If the lock file cannot be created or opened,
+the operation fails rather than downloading without synchronization. The image
+downloader wraps these errors in its usual `InvalidOperationException`.
+Complete, verified cached models are read without rewriting their hash sidecars
+or acquiring the download lock.
+
+Cross-process coordination requires working file locks. Do not disable .NET file
+locking when sharing a cache. On NFS, use a writable lock file and verify that the
+file system supports exclusive locks; a read-only lock handle may not exclude
+other clients.

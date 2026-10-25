@@ -75,14 +75,36 @@ public sealed class HarrierModelDownloader
         var onnxFileName = GetOnnxFileName(_options.ModelVariant);
         var onnxDataFileName = onnxFileName + "_data";
 
+        var modelPath = Path.Combine(modelDirectory, onnxFileName);
+        var tokenizerPath = Path.Combine(modelDirectory, "tokenizer.json");
+        var onnxDataPath = Path.Combine(modelDirectory, onnxDataFileName);
+
+        // A call that is already cancelled ends here, also when the model is complete, with the TaskCanceledException of a cancelled wait.
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return await Task.FromCanceled<string>(cancellationToken).ConfigureAwait(false);
+        }
+
+        // A complete model returns at once, without the semaphore and the lock file.
+        if (ModelDownloadLock.IsComplete(() => File.Exists(tokenizerPath) && IsCachedFile(modelPath) && IsCachedFile(onnxDataPath)))
+        {
+            return modelDirectory;
+        }
+
+        // The progress of a download is posted to the context of the caller, which the Progress<T> captures here, before any await.
+        IProgress<DownloadProgress>? downloadProgress = progress is null
+            ? null
+            : new Progress<DownloadProgress>(p => progress.Report(p.PercentComplete / 100.0));
+
         var downloadLock = _downloadLocks.GetOrAdd(modelDirectory, _ => new SemaphoreSlim(1, 1));
         await downloadLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            // The semaphore covers this process; the lock file in the model directory covers other processes that use the same cache.
+            // Another process may have finished the download while this one waited, so the files are checked again.
+            using var processLock = await ModelDownloadLock.AcquireAsync(modelDirectory, cancellationToken).ConfigureAwait(false);
+
             // Check if model already exists
-            var modelPath = Path.Combine(modelDirectory, onnxFileName);
-            var tokenizerPath = Path.Combine(modelDirectory, "tokenizer.json");
-            var onnxDataPath = Path.Combine(modelDirectory, onnxDataFileName);
             if (File.Exists(modelPath) && File.Exists(tokenizerPath) && File.Exists(onnxDataPath))
             {
                 if (SidecarHashValid(modelPath) && SidecarHashValid(onnxDataPath))
@@ -103,16 +125,6 @@ public sealed class HarrierModelDownloader
                 $"onnx/{onnxDataFileName}"
             };
             var optionalFiles = new List<string>(TokenizerFiles);
-
-            // Map progress
-            IProgress<DownloadProgress>? downloadProgress = null;
-            if (progress != null)
-            {
-                downloadProgress = new Progress<DownloadProgress>(p =>
-                {
-                    progress.Report(p.PercentComplete / 100.0);
-                });
-            }
 
             await _downloader.DownloadFilesAsync(new DownloadRequest
             {
@@ -220,7 +232,7 @@ public sealed class HarrierModelDownloader
 
     private static string ComputeSha256(string filePath)
     {
-        using var stream = File.OpenRead(filePath);
+        using var stream = ModelDownloadLock.OpenRead(filePath);
         var hash = SHA256.HashData(stream);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
@@ -231,6 +243,19 @@ public sealed class HarrierModelDownloader
         File.WriteAllText(filePath + ".sha256", hash);
     }
 
+    // Reads only. A file with a sidecar hash must match it; a file without one is accepted, as on the locked path. A file or sidecar that
+    // another process deletes before it is read gives an IOException, so the caller takes the locked path.
+    private static bool IsCachedFile(string filePath)
+    {
+        var sidecarPath = filePath + ".sha256";
+        if (!File.Exists(sidecarPath))
+        {
+            return File.Exists(filePath);
+        }
+
+        return string.Equals(ModelDownloadLock.ReadAllText(sidecarPath).Trim(), ComputeSha256(filePath), StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool SidecarHashValid(string filePath)
     {
         var sidecarPath = filePath + ".sha256";
@@ -239,7 +264,7 @@ public sealed class HarrierModelDownloader
             return true;
         }
 
-        var expectedHash = File.ReadAllText(sidecarPath).Trim();
+        var expectedHash = ModelDownloadLock.ReadAllText(sidecarPath).Trim();
         var actualHash = ComputeSha256(filePath);
         return string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase);
     }
