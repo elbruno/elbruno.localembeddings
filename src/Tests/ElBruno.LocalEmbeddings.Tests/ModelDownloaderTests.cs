@@ -708,7 +708,7 @@ public class ModelDownloaderTests
     }
 
     [Fact]
-    public async Task EnsureModelAsync_WithReadOnlyCacheWithoutTheModel_FailsWithTheErrorOfTheDownload()
+    public async Task EnsureModelAsync_WithReadOnlyCacheWithoutTheModel_FailsBeforeDownloading()
     {
         var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");
         var modelDir = Path.Combine(cacheDir, "test_model");
@@ -736,9 +736,11 @@ public class ModelDownloaderTests
 
             var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(() => downloader.EnsureModelAsync("test/model"));
 
-            // As without the lock, the error is the one of the first write of the download, not one of the lock file.
-            Assert.DoesNotContain(".download.lock", exception.Message);
+            Assert.Contains(".download.lock", exception.Message);
             Assert.False(File.Exists(Path.Combine(modelDir, ".download.lock")));
+            mockHandler.Protected().Verify(
+                "SendAsync", Times.Never(),
+                ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
         }
         finally
         {
@@ -838,7 +840,7 @@ public class ModelDownloaderTests
     }
 
     [Fact]
-    public async Task EnsureModelAsync_WithLockFileThatCannotBeOpened_DownloadsTheModel()
+    public async Task EnsureModelAsync_WithLockFileThatCannotBeOpened_FailsBeforeDownloading()
     {
         var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");
         var modelDir = Path.Combine(cacheDir, "test_model");
@@ -866,11 +868,14 @@ public class ModelDownloaderTests
 
             var downloader = new ModelDownloader(new HttpClient(mockHandler.Object), cacheDir);
 
-            var resultPath = await downloader.EnsureModelAsync("test/model");
+            var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(
+                () => downloader.EnsureModelAsync("test/model"));
 
-            // As without the lock, the model is downloaded.
-            Assert.Equal(modelDir, resultPath);
-            Assert.True(File.Exists(Path.Combine(modelDir, "model.onnx")));
+            Assert.Contains(lockPath, exception.Message);
+            Assert.False(File.Exists(Path.Combine(modelDir, "model.onnx")));
+            mockHandler.Protected().Verify(
+                "SendAsync", Times.Never(),
+                ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
         }
         finally
         {

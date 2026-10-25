@@ -28,20 +28,20 @@ internal static class ModelDownloadLock
     /// It is opened for writing when possible, because on NFS v4.1 an exclusive flock on a descriptor open only for reading fails, and
     /// .NET ignores the failure. It is opened for reading only when it cannot be opened for writing, for example when another user created
     /// it in a shared cache or the cache is on a read-only file system. On NFS v4.1 a lock opened for reading does not exclude other clients.
-    /// It returns null, and the download goes on without the lock, when the lock file cannot be created in an existing model directory,
-    /// for example in a read-only cache, or exists and cannot be opened, for example when another user created it with mode 0600.
+    /// If the lock file cannot be created or opened, the error is propagated rather than downloading without synchronization.
     /// </summary>
-    internal static Task<FileStream?> AcquireAsync(string modelDirectory, CancellationToken cancellationToken)
+    internal static Task<FileStream> AcquireAsync(string modelDirectory, CancellationToken cancellationToken)
         => AcquireAsync(modelDirectory, WaitTimeout, cancellationToken);
 
     // The tests pass a shorter time limit.
-    internal static async Task<FileStream?> AcquireAsync(string modelDirectory, TimeSpan timeout, CancellationToken cancellationToken)
+    internal static async Task<FileStream> AcquireAsync(string modelDirectory, TimeSpan timeout, CancellationToken cancellationToken)
     {
         Directory.CreateDirectory(modelDirectory);
         var lockPath = Path.Combine(modelDirectory, ".download.lock");
         var waited = Stopwatch.StartNew();
         while (true)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
                 try
@@ -63,12 +63,6 @@ internal static class ModelDownloadLock
                 }
 
                 await Task.Delay(RetryDelay, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex) when (CannotWrite(ex) && !Directory.Exists(lockPath))
-            {
-                // The lock file cannot be created or opened: the download goes on without it, so that what it writes fails, if it does,
-                // with its own error. A directory where the lock file should be is still an error.
-                return null;
             }
         }
     }
@@ -178,23 +172,6 @@ internal static class ModelDownloadLock
     {
         using var stream = OpenRead(path);
         return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
-    }
-
-    // Access denied, a read-only file system (EROFS on Unix, whose HResult is the errno: 30 on Linux and macOS) or a write-protected
-    // medium (ERROR_WRITE_PROTECT on Windows).
-    private static bool CannotWrite(Exception exception)
-    {
-        if (exception is UnauthorizedAccessException)
-        {
-            return true;
-        }
-
-        if (exception is not IOException)
-        {
-            return false;
-        }
-
-        return OperatingSystem.IsWindows() ? (exception.HResult & 0xFFFF) == 19 : exception.HResult == 30;
     }
 
     // The file is open with FileShare.None elsewhere: ERROR_SHARING_VIOLATION or ERROR_LOCK_VIOLATION on Windows, EWOULDBLOCK from flock
