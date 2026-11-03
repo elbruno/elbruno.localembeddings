@@ -52,7 +52,11 @@ public sealed class ModelDownloader : IModelDownloader
     /// (via DI / <c>AddModelDownloader()</c>) to benefit from connection pooling and lifecycle management.
     /// </remarks>
     public ModelDownloader() : this(
+#if NETSTANDARD2_0
+        new HttpClient(),
+#else
         new HttpClient(new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(2) }),
+#endif
         null)
     {
     }

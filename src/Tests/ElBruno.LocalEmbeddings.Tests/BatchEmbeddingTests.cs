@@ -11,20 +11,12 @@ public class BatchEmbeddingTests
         var mockGenerator = CreateMockGenerator();
         var texts = Enumerable.Range(1, 50).Select(i => $"text{i}").ToList();
         var progressReports = new List<EmbeddingProgress>();
-        var progress = new Progress<EmbeddingProgress>(p =>
-        {
-            lock (progressReports)
-            {
-                progressReports.Add(p);
-            }
-        });
+        var progress = new ListProgress(progressReports);
 
         var result = await mockGenerator.Object.GenerateAsync(
             texts,
             progress,
             batchSize: 10);
-
-        await Task.Delay(100);
 
         Assert.Equal(50, result.Count);
         Assert.True(progressReports.Count >= 5, $"Expected at least 5 progress reports, got {progressReports.Count}");
@@ -89,20 +81,12 @@ public class BatchEmbeddingTests
     {
         var mockGenerator = CreateMockGenerator();
         var progressReports = new List<EmbeddingProgress>();
-        var progress = new Progress<EmbeddingProgress>(p =>
-        {
-            lock (progressReports)
-            {
-                progressReports.Add(p);
-            }
-        });
+        var progress = new ListProgress(progressReports);
 
         var result = await mockGenerator.Object.GenerateAsync(
             new[] { "single" },
             progress,
             batchSize: 10);
-
-        await Task.Delay(100);
 
         Assert.Single(result);
         Assert.True(progressReports.Count >= 1, $"Expected at least 1 progress report, got {progressReports.Count}");
@@ -121,20 +105,12 @@ public class BatchEmbeddingTests
         var mockGenerator = CreateMockGenerator();
         var texts = Enumerable.Range(1, 150).Select(i => $"text{i}").ToList();
         var progressReports = new List<EmbeddingProgress>();
-        var progress = new Progress<EmbeddingProgress>(p =>
-        {
-            lock (progressReports)
-            {
-                progressReports.Add(p);
-            }
-        });
+        var progress = new ListProgress(progressReports);
 
         var result = await mockGenerator.Object.GenerateAsync(
             texts,
             progress,
             batchSize: 25);
-
-        await Task.Delay(100);
 
         Assert.Equal(150, result.Count);
         Assert.True(progressReports.Count >= 6, $"Expected at least 6 progress reports, got {progressReports.Count}");
@@ -153,14 +129,12 @@ public class BatchEmbeddingTests
         var mockGenerator = CreateMockGenerator();
         var texts = Enumerable.Range(1, 20).Select(i => $"text{i}").ToList();
         var progressReports = new List<EmbeddingProgress>();
-        var progress = new Progress<EmbeddingProgress>(p => progressReports.Add(p));
+        var progress = new ListProgress(progressReports);
 
         var result = await mockGenerator.Object.GenerateAsync(
             texts,
             progress,
             batchSize: batchSize);
-
-        await Task.Delay(100);
 
         Assert.Equal(20, result.Count);
         Assert.True(progressReports.Count > 0);
@@ -221,5 +195,15 @@ public class BatchEmbeddingTests
                 return new GeneratedEmbeddings<Embedding<float>>(embeddings);
             });
         return mock;
+    }
+
+    // Progress<T> calls back on the thread pool, where the reports can arrive late and out of order, as they do on .NET Framework.
+    private sealed class ListProgress : IProgress<EmbeddingProgress>
+    {
+        private readonly List<EmbeddingProgress> _reports;
+
+        public ListProgress(List<EmbeddingProgress> reports) => _reports = reports;
+
+        public void Report(EmbeddingProgress value) => _reports.Add(value);
     }
 }

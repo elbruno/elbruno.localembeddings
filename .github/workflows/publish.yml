@@ -11,7 +11,23 @@ on:
         type: string
 
 jobs:
+  test-netframework:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Test on .NET Framework
+        run: dotnet test src/Tests/ElBruno.LocalEmbeddings.Tests/ElBruno.LocalEmbeddings.Tests.csproj -c Release --framework net48 --verbosity normal
+
   publish:
+    needs: test-netframework
     runs-on: ubuntu-latest
     environment: release
     permissions:

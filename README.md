@@ -20,7 +20,7 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 ## Features
 
 - **Local Embedding Generation** — Run inference entirely on your machine using ONNX Runtime
-- **Multi-Framework** — Targets **.NET 8.0 (LTS)** and **.NET 10.0**
+- **Multi-Framework** — Targets **.NET 8.0 (LTS)**, **.NET 10.0** and **netstandard2.0** (.NET Framework 4.6.2+, core package only)
 - **Microsoft.Extensions.AI Integration** — Implements `IEmbeddingGenerator<string, Embedding<float>>`
 - **🦅 Harrier model support** — Microsoft Harrier-OSS-v1 (270M, 640-dim, 94+ languages, instruction-tuned) via `ElBruno.LocalEmbeddings.Harrier`
 - **Google EmbeddingGemma 2** — text-only local ONNX embeddings (768/512/256/128 dimensions) via `ElBruno.LocalEmbeddings.EmbeddingGemma`
@@ -253,6 +253,8 @@ dotnet test
 ## Requirements
 
 - .NET 8.0 SDK (LTS) or .NET 10.0 SDK
+- On .NET Framework, a 64-bit process: ONNX Runtime has no 32-bit library, and the build of a 32-bit application fails with a message. The package copies `onnxruntime.dll` next to the application.
+- On Windows, the Visual C++ Redistributable: ONNX Runtime needs it, on every target, and does not load on a machine without it.
 - ONNX Runtime compatible platform (Windows, Linux, macOS)
 
 ## 👋 About the Author

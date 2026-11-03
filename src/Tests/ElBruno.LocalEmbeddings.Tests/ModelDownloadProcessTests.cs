@@ -42,10 +42,27 @@ public class ModelDownloadProcessTests
                     RedirectStandardOutput = true,
                     RedirectStandardError = true
                 };
-                startInfo.ArgumentList.Add("vstest");
-                startInfo.ArgumentList.Add(typeof(ModelDownloadProcessTests).Assembly.Location);
-                startInfo.ArgumentList.Add($"/TestCaseFilter:FullyQualifiedName={typeof(ModelDownloadProcessTests).FullName}.{nameof(DownloadWorker)}");
-                startInfo.ArgumentList.Add("/logger:console;verbosity=minimal");
+#if NETFRAMEWORK
+                // xUnit runs a shadow copy of the test assembly, without the test adapter next to it.
+                string testAssembly = Path.Combine(AppContext.BaseDirectory, Path.GetFileName(typeof(ModelDownloadProcessTests).Assembly.Location));
+#else
+                string testAssembly = typeof(ModelDownloadProcessTests).Assembly.Location;
+#endif
+                string[] arguments =
+                [
+                    "vstest",
+                    testAssembly,
+                    $"/TestCaseFilter:FullyQualifiedName={typeof(ModelDownloadProcessTests).FullName}.{nameof(DownloadWorker)}",
+                    "/logger:console;verbosity=minimal",
+                ];
+#if NETFRAMEWORK
+                startInfo.Arguments = string.Join(" ", arguments.Select(argument => $"\"{argument}\""));
+#else
+                foreach (var argument in arguments)
+                {
+                    startInfo.ArgumentList.Add(argument);
+                }
+#endif
                 startInfo.Environment[WorkerDirectoryVariable] = directory;
                 startInfo.Environment[WorkerIdVariable] = i.ToString(CultureInfo.InvariantCulture);
                 var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start download test worker.");

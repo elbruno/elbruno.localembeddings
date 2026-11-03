@@ -18,7 +18,8 @@ public class TestDataFixture : IAsyncLifetime
 
     public TestDataFixture()
     {
-        _testDataDirectory = Path.Combine(Path.GetTempPath(), "elbruno-test-data");
+        // One directory for each instance: DisposeAsync deletes it, and on Windows another instance fails while it is being deleted.
+        _testDataDirectory = Path.Combine(Path.GetTempPath(), $"elbruno-test-data-{Guid.NewGuid():N}");
     }
 
     public async Task InitializeAsync()

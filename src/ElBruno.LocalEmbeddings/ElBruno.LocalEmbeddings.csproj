@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net10.0;netstandard2.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -44,6 +44,25 @@
   <ItemGroup>
     <Compile Include="..\Shared\ModelDownloadLock.cs" Link="Shared\ModelDownloadLock.cs" />
     <Compile Include="..\Shared\ModelFileDownload.cs" Link="Shared\ModelFileDownload.cs" />
+  </ItemGroup>
+
+  <!-- .NET Framework 4.6.2+ and other netstandard2.0 runtimes: Polyfill supplies the newer BCL APIs at compile time. -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PolyArgumentExceptions>true</PolyArgumentExceptions>
+    <!-- The netstandard2.0 BCL has no nullable annotations: the same code is checked by the net8.0 and net10.0 builds. -->
+    <Nullable>annotations</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Polyfill" Version="11.4.5" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Include="System.Text.Json" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- .NET Framework does not load native libraries from runtimes/: this copies those of ONNX Runtime next to the application. -->
+    <None Include="buildTransitive\ElBruno.LocalEmbeddings.targets" Pack="true" PackagePath="buildTransitive\net462\" />
   </ItemGroup>
 
 </Project>

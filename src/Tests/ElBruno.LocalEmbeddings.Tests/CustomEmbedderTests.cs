@@ -63,7 +63,7 @@ public class CustomEmbedderTests
             }
 
             var embedding = new float[DimensionSize];
-            Array.Fill(embedding, text.Length / (float)MaxTextLength);
+            embedding.AsSpan().Fill(text.Length / (float)MaxTextLength);
             return Task.FromResult(embedding);
         }
 
@@ -79,7 +79,7 @@ public class CustomEmbedderTests
             {
                 ArgumentException.ThrowIfNullOrWhiteSpace(t);
                 var embedding = new float[DimensionSize];
-                Array.Fill(embedding, t.Length / (float)MaxTextLength);
+                embedding.AsSpan().Fill(t.Length / (float)MaxTextLength);
                 return embedding;
             }).ToList();
 
@@ -431,7 +431,8 @@ public class CustomEmbedderTests
     [Fact]
     public async Task GenerateAsync_CancellationDuringExecution_ThrowsOperationCanceledException()
     {
-        var embedder = new ErrorProneEmbedder(delayMs: 5000);
+        // Far beyond the 100 ms of the token: on a busy machine the thread pool can run both timers late and together, and the delay must not win.
+        var embedder = new ErrorProneEmbedder(delayMs: 60000);
         var generator = CustomEmbedder.CreateAdapter(embedder);
         using var cts = new CancellationTokenSource(100);
 

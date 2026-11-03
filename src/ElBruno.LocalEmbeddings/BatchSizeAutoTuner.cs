@@ -91,7 +91,11 @@ internal sealed class BatchSizeAutoTuner
             totalTime += runBatch(batchSize);
         }
 
+#if NETSTANDARD2_0
+        var avgTime = TimeSpan.FromTicks(totalTime.Ticks / MeasurementRuns);
+#else
         var avgTime = totalTime / MeasurementRuns;
+#endif
         
         // Throughput = items per second
         return batchSize / avgTime.TotalSeconds;

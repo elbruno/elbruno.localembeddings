@@ -28,6 +28,9 @@ public class TargetFrameworkCompatibilityTests
             framework.Contains(".NET 8", StringComparison.OrdinalIgnoreCase) ||
             framework.Contains(".NET 9", StringComparison.OrdinalIgnoreCase) ||
             framework.Contains(".NET 10", StringComparison.OrdinalIgnoreCase);
+#if NETFRAMEWORK
+        isNet8Plus = framework.Contains(".NET Framework 4.8", StringComparison.OrdinalIgnoreCase);
+#endif
         Assert.True(isNet8Plus, $"Unexpected runtime: {framework}");
     }
 
