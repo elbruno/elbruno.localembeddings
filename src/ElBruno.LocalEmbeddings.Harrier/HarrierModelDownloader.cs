@@ -126,7 +126,7 @@ public sealed class HarrierModelDownloader
             };
             var optionalFiles = new List<string>(TokenizerFiles);
 
-            await _downloader.DownloadFilesAsync(new DownloadRequest
+            await _downloader.DownloadMissingFilesAsync(new DownloadRequest
             {
                 RepoId = _options.ModelName,
                 LocalDirectory = modelDirectory,

@@ -807,6 +807,102 @@ public class ModelDownloaderTests
     }
 
     [Fact]
+    public async Task EnsureModelAsync_WhenTheRepositoryHasANewCommit_DownloadsTheMissingFile()
+    {
+        var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");
+        var modelDir = Path.Combine(cacheDir, "test_model");
+
+        try
+        {
+            Directory.CreateDirectory(modelDir);
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "model.onnx"), "fake model");
+            var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData("fake model"u8.ToArray())).ToLowerInvariant();
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "model.onnx.sha256"), hash);
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "tokenizer.json"), "{}");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "tokenizer_config.json"), "{}");
+            // The metadata that the downloader left at the previous download names a commit that is not the last one of the repository.
+            await File.WriteAllTextAsync(
+                Path.Combine(modelDir, ".hf.download.resolved.json"),
+                """{"repoId":"test/model","requestedRevision":"main","resolvedCommitSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","generatedAtUtc":"2026-01-01T00:00:00+00:00"}""");
+
+            var mockHandler = new Mock<HttpMessageHandler>();
+            mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(() =>
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("fake") };
+                    response.Headers.TryAddWithoutValidation("X-Repo-Commit", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+                    return response;
+                });
+
+            var downloader = new ModelDownloader(new HttpClient(mockHandler.Object), cacheDir);
+
+            await downloader.EnsureModelAsync("test/model");
+
+            Assert.True(File.Exists(Path.Combine(modelDir, "vocab.txt")));
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task EnsureModelAsync_WithEveryFileAndNoSidecarHash_ReportsCompleteProgressWithoutRequests()
+    {
+        var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");
+        var modelDir = Path.Combine(cacheDir, "test_model");
+
+        try
+        {
+            // Every file is there and the model has no sidecar hash, so the call does not take the way of a verified model.
+            Directory.CreateDirectory(modelDir);
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "model.onnx"), "fake model");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "tokenizer.json"), "{}");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "tokenizer_config.json"), "{}");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "vocab.txt"), "test");
+
+            var requested = false;
+            var mockHandler = new Mock<HttpMessageHandler>();
+            mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(() =>
+                {
+                    requested = true;
+                    return new HttpResponseMessage(HttpStatusCode.NotFound);
+                });
+
+            var downloader = new ModelDownloader(new HttpClient(mockHandler.Object), cacheDir);
+            var progress = new RecordingProgress();
+            var callerContext = new CallerContext();
+
+            await callerContext.Run(() => downloader.EnsureModelAsync("test/model", progress: progress));
+
+            Assert.False(requested, "HTTP should not be called when every file is there");
+            callerContext.RunPosted();
+            Assert.Same(callerContext, await progress.Completed);
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task EnsureModelAsync_WithVerifiedModelAndCancelledToken_ThrowsTaskCanceledException()
     {
         var cacheDir = Path.Combine(Path.GetTempPath(), $"EmbeddingsTest_{Guid.NewGuid()}");

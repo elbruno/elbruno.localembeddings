@@ -42,6 +42,7 @@
 
   <ItemGroup>
     <Compile Include="..\Shared\ModelDownloadLock.cs" Link="Shared\ModelDownloadLock.cs" />
+    <Compile Include="..\Shared\ModelFileDownload.cs" Link="Shared\ModelFileDownload.cs" />
   </ItemGroup>
 
 </Project>

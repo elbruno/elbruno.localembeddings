@@ -83,7 +83,7 @@ public sealed class EmbeddingGemmaModelDownloader
                 return modelDirectory;
             }
 
-            await _downloader.DownloadFilesAsync(new DownloadRequest
+            await _downloader.DownloadMissingFilesAsync(new DownloadRequest
             {
                 RepoId = OnnxRepository,
                 Revision = OnnxRevision,
@@ -93,7 +93,7 @@ public sealed class EmbeddingGemmaModelDownloader
                 UseAtomicWrites = true
             }, cancellationToken).ConfigureAwait(false);
 
-            await _downloader.DownloadFilesAsync(new DownloadRequest
+            await _downloader.DownloadMissingFilesAsync(new DownloadRequest
             {
                 RepoId = TokenizerRepository,
                 Revision = TokenizerRevision,

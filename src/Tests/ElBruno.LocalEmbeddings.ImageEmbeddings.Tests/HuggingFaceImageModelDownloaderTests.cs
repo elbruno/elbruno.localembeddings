@@ -173,6 +173,52 @@ public class HuggingFaceImageModelDownloaderTests
     }
 
     [Fact]
+    public async Task EnsureModelDownloadedAsync_WhenTheRepositoryHasANewCommit_DownloadsTheMissingFile()
+    {
+        var cacheDir = Path.Combine(Path.GetTempPath(), $"ImageEmbeddingsTest_{Guid.NewGuid()}");
+        var modelDir = cacheDir;
+
+        try
+        {
+            Directory.CreateDirectory(modelDir);
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "text_model.onnx"), "fake model");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "vision_model.onnx"), "fake model");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "merges.txt"), "fake");
+            // The metadata that the downloader left at the previous download names a commit that is not the last one of the repository.
+            await File.WriteAllTextAsync(
+                Path.Combine(modelDir, ".hf.download.resolved.json"),
+                """{"repoId":"Xenova/clip-vit-base-patch32","requestedRevision":"main","resolvedCommitSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","generatedAtUtc":"2026-01-01T00:00:00+00:00"}""");
+
+            var mockHandler = new Mock<HttpMessageHandler>();
+            mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(() =>
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("fake") };
+                    response.Headers.TryAddWithoutValidation("X-Repo-Commit", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+                    return response;
+                });
+
+            var downloader = new HuggingFaceImageModelDownloader(new HttpClient(mockHandler.Object));
+
+            await downloader.EnsureModelDownloadedAsync(modelDir);
+
+            Assert.True(File.Exists(Path.Combine(modelDir, "vocab.json")));
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task EnsureModelDownloadedAsync_WithCompleteModelAndCancelledToken_ThrowsInvalidOperationException()
     {
         var modelDir = Path.Combine(Path.GetTempPath(), $"ImageEmbeddingsTest_{Guid.NewGuid()}");

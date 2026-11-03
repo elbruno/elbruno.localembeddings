@@ -23,13 +23,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ElBruno.HuggingFace.Downloader" Version="0.6.0" />
+    <PackageReference Include="ElBruno.HuggingFace.Downloader" Version="1.6.1" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\Shared\ModelDownloadLock.cs" Link="Shared\ModelDownloadLock.cs" />
+    <Compile Include="..\Shared\ModelFileDownload.cs" Link="Shared\ModelFileDownload.cs" />
   </ItemGroup>
 
 </Project>

@@ -154,6 +154,52 @@ public class HarrierModelDownloaderTests
     }
 
     [Fact]
+    public async Task EnsureModelAsync_WhenTheRepositoryHasANewCommit_DownloadsTheMissingFile()
+    {
+        var cacheDir = Path.Combine(Path.GetTempPath(), $"HarrierTest_{Guid.NewGuid()}");
+        var options = new HarrierEmbeddingsOptions { ModelName = "test/model", CacheDirectory = cacheDir };
+        var modelDir = Path.Combine(cacheDir, "test_model");
+
+        try
+        {
+            Directory.CreateDirectory(modelDir);
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "model_quantized.onnx"), "fake model");
+            await File.WriteAllTextAsync(Path.Combine(modelDir, "model_quantized.onnx_data"), "fake data");
+            // The metadata that the downloader left at the previous download names a commit that is not the last one of the repository.
+            await File.WriteAllTextAsync(
+                Path.Combine(modelDir, ".hf.download.resolved.json"),
+                """{"repoId":"test/model","requestedRevision":"main","resolvedCommitSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","generatedAtUtc":"2026-01-01T00:00:00+00:00"}""");
+
+            var mockHandler = new Mock<HttpMessageHandler>();
+            mockHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(() =>
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("fake") };
+                    response.Headers.TryAddWithoutValidation("X-Repo-Commit", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+                    return response;
+                });
+
+            var downloader = new HarrierModelDownloader(new HttpClient(mockHandler.Object), options);
+
+            await downloader.EnsureModelAsync();
+
+            Assert.True(File.Exists(Path.Combine(modelDir, "tokenizer.json")));
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task EnsureModelAsync_WithCachedModelAndCancelledToken_ThrowsTaskCanceledException()
     {
         var cacheDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());

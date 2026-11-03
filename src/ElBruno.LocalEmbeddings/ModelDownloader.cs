@@ -196,7 +196,7 @@ public sealed class ModelDownloader : IModelDownloader
         }
 
         // Download files if needed
-        await _downloader.DownloadFilesAsync(new DownloadRequest
+        await _downloader.DownloadMissingFilesAsync(new DownloadRequest
         {
             RepoId = modelName,
             LocalDirectory = modelDirectory,

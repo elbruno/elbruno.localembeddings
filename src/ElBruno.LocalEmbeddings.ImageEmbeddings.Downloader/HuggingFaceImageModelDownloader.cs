@@ -88,7 +88,7 @@ public class HuggingFaceImageModelDownloader : IImageModelDownloader
                 }
             }
 
-            await _downloader.DownloadFilesAsync(new DownloadRequest
+            await _downloader.DownloadMissingFilesAsync(new DownloadRequest
             {
                 RepoId = DefaultRepoId,
                 LocalDirectory = outputDirectory,
