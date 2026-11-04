@@ -2,30 +2,45 @@
   <!-- ElBruno.LocalEmbeddings on .NET Framework. .NET Framework does not load native libraries from runtimes/<rid>/native, and the props
        of Microsoft.ML.OnnxRuntime that copy onnxruntime.dll reach only the projects that reference it directly. This copies the native
        libraries of ONNX Runtime next to the application, for x64, AnyCPU without Prefer32Bit, and ARM64. ONNX Runtime 1.24 has no win-x86
-       library: a 32-bit application cannot run the model. The version is the one of the managed assembly NuGet resolved, as an application
-       can raise it above the one this package asks for. All in a target, so that PlatformTarget and Prefer32Bit have their final values. -->
+       library: a 32-bit application cannot run the model. The folder of Microsoft.ML.OnnxRuntime is the one NuGet resolved, as an
+       application can raise its version or restore it from a fallback folder. All in a target, so that PlatformTarget and Prefer32Bit have
+       their final values. -->
   <Target Name="ElBrunoLocalEmbeddingsNativeLibraries" AfterTargets="ResolveAssemblyReferences" Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
+    <ResolvePackageDependencies Condition="'$(UsingMicrosoftNETSdk)' == 'true' And Exists('$(ProjectAssetsFile)')"
+                                ProjectPath="$(MSBuildProjectFullPath)" ProjectAssetsFile="$(ProjectAssetsFile)" ProjectLanguage="$(Language)" TargetFramework="$(TargetFramework)">
+      <Output TaskParameter="PackageDefinitions" ItemName="_ElBrunoEmbeddingsPackages" />
+    </ResolvePackageDependencies>
     <ItemGroup>
+      <_ElBrunoEmbeddingsOnnxRuntimePackage Include="@(_ElBrunoEmbeddingsPackages->WithMetadataValue('Name', 'Microsoft.ML.OnnxRuntime'))" />
+      <!-- Without an assets file, the version of the managed assembly, which is the one of Microsoft.ML.OnnxRuntime unless the application
+           raises Microsoft.ML.OnnxRuntime.Managed alone. -->
       <_ElBrunoEmbeddingsManaged Include="@(ReferencePath)" Condition="'%(Filename)' == 'Microsoft.ML.OnnxRuntime'" />
     </ItemGroup>
     <PropertyGroup>
-      <_ElBrunoEmbeddingsOnnxRuntimeVersion>@(_ElBrunoEmbeddingsManaged->'%(NuGetPackageVersion)')</_ElBrunoEmbeddingsOnnxRuntimeVersion>
+      <_ElBrunoEmbeddingsOnnxRuntimeFolder>@(_ElBrunoEmbeddingsOnnxRuntimePackage->'%(ResolvedPath)')</_ElBrunoEmbeddingsOnnxRuntimeFolder>
+      <_ElBrunoEmbeddingsOnnxRuntimeFolder Condition="'$(_ElBrunoEmbeddingsOnnxRuntimeFolder)' == ''">$([MSBuild]::EnsureTrailingSlash('$(NuGetPackageRoot)'))microsoft.ml.onnxruntime\@(_ElBrunoEmbeddingsManaged->'%(NuGetPackageVersion)')</_ElBrunoEmbeddingsOnnxRuntimeFolder>
       <_ElBrunoEmbeddingsPlatform>$(PlatformTarget)</_ElBrunoEmbeddingsPlatform>
       <_ElBrunoEmbeddingsPlatform Condition="'$(_ElBrunoEmbeddingsPlatform)' == ''">$(Platform)</_ElBrunoEmbeddingsPlatform>
       <_ElBrunoEmbeddingsRid Condition="'$(_ElBrunoEmbeddingsPlatform)' == 'x64' Or (('$(_ElBrunoEmbeddingsPlatform)' == 'AnyCPU' Or '$(_ElBrunoEmbeddingsPlatform)' == 'Any CPU' Or '$(_ElBrunoEmbeddingsPlatform)' == '') And '$(Prefer32Bit)' != 'true')">win-x64</_ElBrunoEmbeddingsRid>
       <_ElBrunoEmbeddingsRid Condition="'$(_ElBrunoEmbeddingsPlatform)' == 'ARM64'">win-arm64</_ElBrunoEmbeddingsRid>
-      <_ElBrunoEmbeddingsOnnxRuntime>$([MSBuild]::EnsureTrailingSlash('$(NuGetPackageRoot)'))microsoft.ml.onnxruntime\$(_ElBrunoEmbeddingsOnnxRuntimeVersion)\runtimes\$(_ElBrunoEmbeddingsRid)\native\</_ElBrunoEmbeddingsOnnxRuntime>
+      <_ElBrunoEmbeddingsOnnxRuntime>$([MSBuild]::EnsureTrailingSlash('$(_ElBrunoEmbeddingsOnnxRuntimeFolder)'))runtimes\$(_ElBrunoEmbeddingsRid)\native\</_ElBrunoEmbeddingsOnnxRuntime>
+      <!-- An application that excludes the native assets of Microsoft.ML.OnnxRuntime, or that already copies a file with the same name, as
+           onnxruntime.dll of Microsoft.ML.OnnxRuntime.DirectML, keeps its own. -->
+      <_ElBrunoEmbeddingsExcludeAssets>@(PackageReference->WithMetadataValue('Identity', 'Microsoft.ML.OnnxRuntime')->'%(ExcludeAssets)')</_ElBrunoEmbeddingsExcludeAssets>
+      <_ElBrunoEmbeddingsExcludeAssets>$(_ElBrunoEmbeddingsExcludeAssets.ToLowerInvariant())</_ElBrunoEmbeddingsExcludeAssets>
+      <_ElBrunoEmbeddingsInOutput>;@(None->'%(Link)');@(Content->'%(Link)');@(None->'%(TargetPath)');@(Content->'%(TargetPath)');@(ReferenceCopyLocalPaths->'%(DestinationSubDirectory)%(Filename)%(Extension)');</_ElBrunoEmbeddingsInOutput>
+      <_ElBrunoEmbeddingsInOutput>$(_ElBrunoEmbeddingsInOutput.ToLowerInvariant())</_ElBrunoEmbeddingsInOutput>
     </PropertyGroup>
     <Error Condition="'$(_ElBrunoEmbeddingsRid)' == '' And ('$(OutputType)' == 'Exe' Or '$(OutputType)' == 'WinExe')"
            Text="ElBruno.LocalEmbeddings on .NET Framework needs a 64-bit process: ONNX Runtime 1.24 has no win-x86 library. Set PlatformTarget to x64 or ARM64, or AnyCPU with Prefer32Bit false." />
-    <Warning Condition="'$(_ElBrunoEmbeddingsRid)' != '' And !Exists('$(_ElBrunoEmbeddingsOnnxRuntime)onnxruntime.dll')"
-             Text="ElBruno.LocalEmbeddings did not find onnxruntime.dll of $(_ElBrunoEmbeddingsRid) in the packages folder: copy it next to the application." />
-    <ItemGroup Condition="'$(_ElBrunoEmbeddingsRid)' != ''">
-      <_ElBrunoEmbeddingsNative Include="$(_ElBrunoEmbeddingsOnnxRuntime)onnxruntime.dll;$(_ElBrunoEmbeddingsOnnxRuntime)onnxruntime_providers_shared.dll"
-                                Condition="Exists('$(_ElBrunoEmbeddingsOnnxRuntime)onnxruntime.dll')" />
-      <!-- Not a file that is already copied, as onnxruntime.dll by the props of Microsoft.ML.OnnxRuntime for a direct reference. -->
-      <_ElBrunoEmbeddingsNative Remove="@(None->WithMetadataValue('Link', 'onnxruntime.dll')->'%(FullPath)')" />
-      <_ElBrunoEmbeddingsNative Remove="@(None->WithMetadataValue('Link', 'onnxruntime_providers_shared.dll')->'%(FullPath)')" />
+    <ItemGroup Condition="'$(_ElBrunoEmbeddingsRid)' != '' And !$(_ElBrunoEmbeddingsExcludeAssets.Contains('native')) And !$(_ElBrunoEmbeddingsExcludeAssets.Contains('all'))">
+      <_ElBrunoEmbeddingsNative Include="$(_ElBrunoEmbeddingsOnnxRuntime)onnxruntime.dll" Condition="!$(_ElBrunoEmbeddingsInOutput.Contains(';onnxruntime.dll;'))" />
+      <_ElBrunoEmbeddingsNative Include="$(_ElBrunoEmbeddingsOnnxRuntime)onnxruntime_providers_shared.dll" Condition="!$(_ElBrunoEmbeddingsInOutput.Contains(';onnxruntime_providers_shared.dll;'))" />
+    </ItemGroup>
+    <Warning Condition="'@(_ElBrunoEmbeddingsNative)' != '' And !Exists('$(_ElBrunoEmbeddingsOnnxRuntime)onnxruntime.dll')"
+             Text="ElBruno.LocalEmbeddings did not find onnxruntime.dll of $(_ElBrunoEmbeddingsRid) in $(_ElBrunoEmbeddingsOnnxRuntime): copy it next to the application." />
+    <ItemGroup>
+      <_ElBrunoEmbeddingsNative Remove="@(_ElBrunoEmbeddingsNative)" Condition="!Exists('%(FullPath)')" />
       <ReferenceCopyLocalPaths Include="@(_ElBrunoEmbeddingsNative)" DestinationSubDirectory="" />
     </ItemGroup>
   </Target>

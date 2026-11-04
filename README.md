@@ -253,7 +253,7 @@ dotnet test
 ## Requirements
 
 - .NET 8.0 SDK (LTS) or .NET 10.0 SDK
-- On .NET Framework, a 64-bit process: ONNX Runtime has no 32-bit library, and the build of a 32-bit application fails with a message. The package copies `onnxruntime.dll` next to the application.
+- On .NET Framework, a 64-bit process: ONNX Runtime has no 32-bit library, and the build of a 32-bit application fails with a message. The package copies `onnxruntime.dll` next to the application: the x64 one for AnyCPU, so an application for Windows on ARM64 sets `PlatformTarget` to `ARM64`.
 - On Windows, the Visual C++ Redistributable: ONNX Runtime needs it, on every target, and does not load on a machine without it.
 - ONNX Runtime compatible platform (Windows, Linux, macOS)
 
