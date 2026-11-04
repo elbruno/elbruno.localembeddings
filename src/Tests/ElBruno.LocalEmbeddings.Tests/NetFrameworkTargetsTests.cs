@@ -93,6 +93,7 @@ public class NetFrameworkTargetsTests
                 """);
             Directory.CreateDirectory(Path.Combine(directory, "app"));
             File.WriteAllText(Path.Combine(directory, "app", "Program.cs"), "class Program { static void Main() { } }");
+            File.WriteAllText(Path.Combine(directory, "app", "late.txt"), "");
             var project = Path.Combine(directory, "app", "app.csproj");
             File.WriteAllText(project, $"""
                 <Project Sdk="Microsoft.NET.Sdk">
@@ -106,15 +107,22 @@ public class NetFrameworkTargetsTests
                     {items}
                   </ItemGroup>
                   <Import Project="{Path.Combine(AppContext.BaseDirectory, "ElBruno.LocalEmbeddings.targets")}" />
-                  <Target Name="Print" DependsOnTargets="ResolveReferences">
+                  <!-- A file to copy to the output that a target adds after the compilation. -->
+                  <Target Name="AddLate" AfterTargets="CoreCompile">
+                    <ItemGroup>
+                      <ContentWithTargetPath Include="late.txt" TargetPath="late.txt" CopyToOutputDirectory="PreserveNewest" />
+                    </ItemGroup>
+                  </Target>
+                  <Target Name="Print" AfterTargets="Build">
                     <Message Importance="high" Text="COPIED:@(ReferenceCopyLocalPaths)" />
                   </Target>
                 </Project>
                 """);
 
             MSBuild($"\"{project}\" -t:Restore");
-            var output = MSBuild($"\"{project}\" -t:Print -p:TargetFramework=net48");
+            var output = MSBuild($"\"{project}\" -t:Build -p:TargetFramework=net48");
 
+            Assert.True(File.Exists(Path.Combine(directory, "app", "bin", "Debug", "net48", "late.txt")), output);
             var line = output.Split('\n').Single(l => l.Contains("COPIED:")).Replace('\\', '/');
             if (version is null)
             {
@@ -162,7 +170,7 @@ public class NetFrameworkTargetsTests
                     {runtimeTargets}
                     {items}
                   </ItemGroup>
-                  <Target Name="ResolveAssemblyReferences" />
+                  <Target Name="_CopyFilesMarkedCopyLocal" />
                   <Target Name="GetCopyToOutputDirectoryItems">
                     <ItemGroup>
                       <AllItemsFullPathWithTargetPath Include="@(None)" TargetPath="%(None.Link)" Condition="'%(None.Link)' != ''" />
@@ -170,7 +178,7 @@ public class NetFrameworkTargetsTests
                     </ItemGroup>
                   </Target>
                   <Import Project="{Path.Combine(AppContext.BaseDirectory, "ElBruno.LocalEmbeddings.targets")}" />
-                  <Target Name="Print" DependsOnTargets="ResolveAssemblyReferences">
+                  <Target Name="Print" DependsOnTargets="_CopyFilesMarkedCopyLocal">
                     <Message Importance="high" Text="COPIED:@(ReferenceCopyLocalPaths)" />
                   </Target>
                 </Project>

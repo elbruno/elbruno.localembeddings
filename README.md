@@ -65,6 +65,8 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 | [ElBruno.LocalEmbeddings.Npu.Qualcomm](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Qualcomm) | [![NuGet](https://img.shields.io/nuget/v/ElBruno.LocalEmbeddings.Npu.Qualcomm.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Qualcomm) | [![Downloads](https://img.shields.io/nuget/dt/ElBruno.LocalEmbeddings.Npu.Qualcomm.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Qualcomm) | Qualcomm Snapdragon X NPU via QNN |
 | [ElBruno.LocalEmbeddings.BlazorComponents](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.BlazorComponents) | [![NuGet](https://img.shields.io/nuget/v/ElBruno.LocalEmbeddings.BlazorComponents.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.BlazorComponents) | [![Downloads](https://img.shields.io/nuget/dt/ElBruno.LocalEmbeddings.BlazorComponents.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.BlazorComponents) | Blazor UI components — model gallery, similarity meter, semantic search, embedding explorer |
 
+Keep all the `ElBruno.LocalEmbeddings.*` packages on the same version: they share ElBruno.HuggingFace.Downloader, and an older companion package may not work with the version a newer core package brings.
+
 ## Installation
 
 ```bash

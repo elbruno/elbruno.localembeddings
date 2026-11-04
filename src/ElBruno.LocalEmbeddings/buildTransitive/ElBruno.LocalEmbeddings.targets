@@ -5,8 +5,9 @@
        library: a 32-bit application cannot run the model. The files are the ones NuGet resolved for the target framework, when it resolved
        them for every runtime, so they follow the version the application resolved, its fallback folders and its IncludeAssets and
        ExcludeAssets. All in a target, so that
-       PlatformTarget and Prefer32Bit have their final values. -->
-  <Target Name="ElBrunoLocalEmbeddingsNativeLibraries" AfterTargets="ResolveAssemblyReferences" DependsOnTargets="GetCopyToOutputDirectoryItems"
+       PlatformTarget and Prefer32Bit have their final values, just before the copy of the references, so that the items to copy to the
+       output include the ones other targets add after the compilation. -->
+  <Target Name="ElBrunoLocalEmbeddingsNativeLibraries" BeforeTargets="_CopyFilesMarkedCopyLocal" DependsOnTargets="GetCopyToOutputDirectoryItems"
           Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
     <PropertyGroup>
       <_ElBrunoEmbeddingsPlatform>$(PlatformTarget)</_ElBrunoEmbeddingsPlatform>
