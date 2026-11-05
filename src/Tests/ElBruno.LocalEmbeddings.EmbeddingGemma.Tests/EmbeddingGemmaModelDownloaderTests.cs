@@ -116,6 +116,44 @@ public class EmbeddingGemmaModelDownloaderTests
         }
     }
 
+    [Fact]
+    public async Task EnsureModelAsync_WithEmptyCache_DownloadsFromBothRepositories()
+    {
+        var cacheDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+        try
+        {
+            var repositories = new System.Collections.Concurrent.ConcurrentDictionary<string, bool>();
+            var handler = new HeaderHandler(request => repositories[request.RequestUri!.AbsolutePath.Split("/resolve/")[0]] = true);
+            var downloader = new EmbeddingGemmaModelDownloader(new HttpClient(handler), cacheDir);
+
+            // The fake content fails the pinned hashes, after the files of both repositories have been downloaded.
+            await Assert.ThrowsAsync<InvalidDataException>(() => downloader.EnsureModelAsync());
+
+            Assert.Contains($"/{EmbeddingGemmaModelDownloader.OnnxRepository}", repositories.Keys);
+            Assert.Contains($"/{EmbeddingGemmaModelDownloader.TokenizerRepository}", repositories.Keys);
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    // Answers like Hugging Face: every response names the commit of the revision that the URL asks for.
+    private sealed class HeaderHandler(Action<HttpRequestMessage> onRequest) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            onRequest(request);
+            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("fake model") };
+            response.Headers.TryAddWithoutValidation("X-Repo-Commit", request.RequestUri!.AbsolutePath.Split("/resolve/")[1].Split('/')[0]);
+            return Task.FromResult(response);
+        }
+    }
+
     private sealed class RecordingHandler : HttpMessageHandler
     {
         public bool Requested { get; private set; }

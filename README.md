@@ -20,7 +20,7 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 ## Features
 
 - **Local Embedding Generation** — Run inference entirely on your machine using ONNX Runtime
-- **Multi-Framework** — Targets **.NET 8.0 (LTS)** and **.NET 10.0**
+- **Multi-Framework** — Targets **.NET 8.0 (LTS)**, **.NET 10.0** and **netstandard2.0** (.NET Framework 4.6.2+, core package only)
 - **Microsoft.Extensions.AI Integration** — Implements `IEmbeddingGenerator<string, Embedding<float>>`
 - **🦅 Harrier model support** — Microsoft Harrier-OSS-v1 (270M, 640-dim, 94+ languages, instruction-tuned) via `ElBruno.LocalEmbeddings.Harrier`
 - **Google EmbeddingGemma 2** — text-only local ONNX embeddings (768/512/256/128 dimensions) via `ElBruno.LocalEmbeddings.EmbeddingGemma`
@@ -64,6 +64,8 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 | [ElBruno.LocalEmbeddings.Npu.Intel](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Intel) | [![NuGet](https://img.shields.io/nuget/v/ElBruno.LocalEmbeddings.Npu.Intel.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Intel) | [![Downloads](https://img.shields.io/nuget/dt/ElBruno.LocalEmbeddings.Npu.Intel.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Intel) | Intel Core Ultra NPU via OpenVINO |
 | [ElBruno.LocalEmbeddings.Npu.Qualcomm](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Qualcomm) | [![NuGet](https://img.shields.io/nuget/v/ElBruno.LocalEmbeddings.Npu.Qualcomm.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Qualcomm) | [![Downloads](https://img.shields.io/nuget/dt/ElBruno.LocalEmbeddings.Npu.Qualcomm.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.Npu.Qualcomm) | Qualcomm Snapdragon X NPU via QNN |
 | [ElBruno.LocalEmbeddings.BlazorComponents](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.BlazorComponents) | [![NuGet](https://img.shields.io/nuget/v/ElBruno.LocalEmbeddings.BlazorComponents.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.BlazorComponents) | [![Downloads](https://img.shields.io/nuget/dt/ElBruno.LocalEmbeddings.BlazorComponents.svg?style=flat-square)](https://www.nuget.org/packages/ElBruno.LocalEmbeddings.BlazorComponents) | Blazor UI components — model gallery, similarity meter, semantic search, embedding explorer |
+
+Keep all the `ElBruno.LocalEmbeddings.*` packages on the same version: they share ElBruno.HuggingFace.Downloader, and an older companion package may not work with the version a newer core package brings.
 
 ## Installation
 
@@ -253,6 +255,8 @@ dotnet test
 ## Requirements
 
 - .NET 8.0 SDK (LTS) or .NET 10.0 SDK
+- On .NET Framework, a 64-bit process: ONNX Runtime has no 32-bit library, and the build of a 32-bit application fails with a message. The package copies `onnxruntime.dll` next to the application: the x64 one for AnyCPU, so an application for Windows on ARM64 sets `PlatformTarget` to `ARM64`.
+- On Windows, the Visual C++ Redistributable: ONNX Runtime needs it, on every target, and does not load on a machine without it.
 - ONNX Runtime compatible platform (Windows, Linux, macOS)
 
 ## 👋 About the Author

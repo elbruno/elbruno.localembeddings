@@ -147,7 +147,7 @@ internal sealed class IntelModelDownloader
             }
         }
 
-        await _downloader.DownloadFilesAsync(new DownloadRequest
+        await _downloader.DownloadMissingFilesAsync(new DownloadRequest
         {
             RepoId = modelName,
             LocalDirectory = modelDirectory,

@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <!-- .NET Framework runs only on Windows. -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net48</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -23,7 +25,23 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ElBruno.LocalEmbeddings\ElBruno.LocalEmbeddings.csproj" />
-    <ProjectReference Include="..\..\ElBruno.LocalEmbeddings.Benchmarks\ElBruno.LocalEmbeddings.Benchmarks.csproj" />
+    <ProjectReference Include="..\..\ElBruno.LocalEmbeddings.Benchmarks\ElBruno.LocalEmbeddings.Benchmarks.csproj" Condition="'$(TargetFramework)' != 'net48'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\ElBruno.LocalEmbeddings\buildTransitive\ElBruno.LocalEmbeddings.targets" Link="ElBruno.LocalEmbeddings.targets" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
+    <!-- ONNX Runtime has no 32-bit library. -->
+    <PlatformTarget>x64</PlatformTarget>
+    <Nullable>annotations</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Net.Http" />
+    <Using Include="System.Net.Http" />
+    <Using Include="Polyfills" />
   </ItemGroup>
 
 </Project>
