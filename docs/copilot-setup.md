@@ -39,9 +39,9 @@ Defines a custom agent for Squad-specific workflows.
 ## What's Included
 
 ### 1. Project Context
-- .NET 10.0 library for local text embeddings
+- .NET 11.0 library for local text embeddings
 - Uses ONNX Runtime and Microsoft.Extensions.AI
-- Multi-targeting net8.0 and net10.0
+- Multi-targeting net8.0, net10.0, and net11.0
 
 ### 2. Development Workflows
 - Build command: `dotnet build`

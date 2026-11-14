@@ -83,7 +83,6 @@
 
         _isSearching = true;
         _searched = false;
-        StateHasChanged();
         try
         {
             var allTexts = Corpus.Prepend(QueryText).ToList();
@@ -109,7 +108,6 @@
         {
             _isSearching = false;
             _searched = true;
-            StateHasChanged();
         }
     }
 }

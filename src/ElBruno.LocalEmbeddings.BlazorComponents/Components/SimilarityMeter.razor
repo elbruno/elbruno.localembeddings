@@ -71,7 +71,6 @@
         if (Generator is null) return;
 
         _isComputing = true;
-        StateHasChanged();
         try
         {
             var embeddings = await EmbeddingStateService
@@ -86,7 +85,6 @@
         finally
         {
             _isComputing = false;
-            StateHasChanged();
         }
     }
 

@@ -25,7 +25,7 @@ All commands should be run from the repository root.
 
 ### Build Configuration
 
-- Multi-targets .NET 8.0 and .NET 10.0 (`net8.0;net10.0`) for libraries and test projects
+- Multi-targets .NET 8.0, .NET 10.0, and .NET 11.0 for libraries and test projects
 - Nullable reference types enabled (`<Nullable>enable</Nullable>`)
 - Implicit usings enabled
 - Warnings treated as errors (`<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`)

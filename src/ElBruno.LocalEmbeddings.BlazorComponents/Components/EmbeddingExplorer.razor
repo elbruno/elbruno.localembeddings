@@ -98,7 +98,6 @@
             return;
 
         _isComputing = true;
-        StateHasChanged();
         try
         {
             var embeddings = await EmbeddingStateService.GenerateEmbeddingsAsync(Generator, valid).ConfigureAwait(false);
@@ -118,7 +117,6 @@
         finally
         {
             _isComputing = false;
-            StateHasChanged();
         }
     }
 

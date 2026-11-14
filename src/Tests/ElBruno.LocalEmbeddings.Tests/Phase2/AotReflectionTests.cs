@@ -14,7 +14,7 @@ namespace ElBruno.LocalEmbeddings.Tests.Phase2;
 /// with .NET AOT compilation - critical for serverless, containers, and cold-start scenarios.
 /// 
 /// Requirements:
-/// - All 5 tests MUST pass on .NET 8.0 and 10.0
+/// - All 5 tests MUST pass on .NET 8.0, 10.0, and 11.0
 /// - Tests verify no reflection usage that would prevent AOT compilation
 /// - Delegate-based configuration API must work correctly
 /// - Dependency injection tree must be AOT-safe
