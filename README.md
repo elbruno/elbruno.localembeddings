@@ -20,7 +20,7 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 ## Features
 
 - **Local Embedding Generation** — Run inference entirely on your machine using ONNX Runtime
-- **Multi-Framework** — Targets **.NET 8.0 (LTS)**, **.NET 10.0** and **netstandard2.0** (.NET Framework 4.6.2+, core package only)
+- **Multi-Framework** — Targets **.NET 8.0 (LTS)**, **.NET 10.0**, **.NET 11.0** and **netstandard2.0** (.NET Framework 4.6.2+, core package only)
 - **Microsoft.Extensions.AI Integration** — Implements `IEmbeddingGenerator<string, Embedding<float>>`
 - **🦅 Harrier model support** — Microsoft Harrier-OSS-v1 (270M, 640-dim, 94+ languages, instruction-tuned) via `ElBruno.LocalEmbeddings.Harrier`
 - **Google EmbeddingGemma 2** — text-only local ONNX embeddings (768/512/256/128 dimensions) via `ElBruno.LocalEmbeddings.EmbeddingGemma`
@@ -41,11 +41,11 @@ Interested in **image embeddings**? Check out the **[YouTube video](https://www.
 
 | Version | Date | Highlight |
 |---------|------|-----------|
+| **v1.6.8** | 2026-11-14 | **.NET 11 support** — all 13 packages target .NET 11 while retaining their existing target frameworks |
 | **v1.6.6** | 2026-10-25 | **Cross-process model downloads:** serialize shared-cache downloads safely; replace ImageSharp with SkiaSharp and update Pkcs |
 | **v1.6.4** | 2026-10-07 | **Google EmbeddingGemma 2** — new text-only ONNX companion package with task-aware prompts, multilingual embeddings, and 128/256/512/768 dimensions |
 | **v1.6.3** | 2026-09-28 | **Uncased BERT/MiniLM tokenization** — normalizes accents so accented words map to their expected tokens |
 | **v1.5.9** | 2026-08-02 | **`ElBruno.LocalEmbeddings.BlazorComponents`** — full test coverage (77 xUnit + bUnit tests for all 9 components), `EmbeddingDimensionViewer` PCA demo added to `BlazorDemo`, sample README, fixed auto-release → NuGet publish pipeline |
-| **v1.5.7** | 2026-08-02 | **New package: `ElBruno.LocalEmbeddings.BlazorComponents`** — 9 ready-to-use Razor components: `EmbeddingModelGallery`, `SimilarityMeter`, `SemanticSearchBox`, `EmbeddingExplorer`, `EmbeddingDimensionViewer` (PCA 2-D), `EmbeddingModelSelector`, `EmbeddingHealthBadge`, `EmbeddingMetricsPanel`, `EmbeddingModelStatusCard` |
 
 ---
 

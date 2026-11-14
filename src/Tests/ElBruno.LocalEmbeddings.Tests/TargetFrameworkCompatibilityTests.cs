@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 namespace ElBruno.LocalEmbeddings.Tests;
 
 /// <summary>
-/// Verifies that the public API surface works correctly on both net8.0 and net10.0.
+/// Verifies that the public API surface works correctly on net8.0, net10.0, and net11.0.
 /// All tests are model-free (no ONNX file required) so they run reliably on CI.
 /// </summary>
 public class TargetFrameworkCompatibilityTests
@@ -23,11 +23,12 @@ public class TargetFrameworkCompatibilityTests
         string framework = RuntimeInformation.FrameworkDescription;
         Assert.False(string.IsNullOrEmpty(framework));
 
-        // Must be .NET 8+ (net8.0 or net10.0)
+        // Must be .NET 8+ (net8.0, net10.0, or net11.0)
         bool isNet8Plus =
             framework.Contains(".NET 8", StringComparison.OrdinalIgnoreCase) ||
             framework.Contains(".NET 9", StringComparison.OrdinalIgnoreCase) ||
-            framework.Contains(".NET 10", StringComparison.OrdinalIgnoreCase);
+            framework.Contains(".NET 10", StringComparison.OrdinalIgnoreCase) ||
+            framework.Contains(".NET 11", StringComparison.OrdinalIgnoreCase);
 #if NETFRAMEWORK
         isNet8Plus = framework.Contains(".NET Framework 4.8", StringComparison.OrdinalIgnoreCase);
 #endif
