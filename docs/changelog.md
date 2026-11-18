@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.6.9] - 2026-11-17
+
+### Changed
+
+- Updated Microsoft.Extensions.AI and VectorData abstractions to 11.0.0, Microsoft.ML.Tokenizers to 3.0.0, and SkiaSharp to 4.156.1.
+- Retained ONNX Runtime 1.24.4 to remain compatible with the DirectML and QNN native provider packages.
+
 ## [1.6.4] - 2026-10-07
 
 ### Added

@@ -14,7 +14,7 @@
     <PackageIcon>icon_03.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>embeddings;opentelemetry;observability;tracing;metrics;jaeger;datadog;azure-monitor;distributed-tracing</PackageTags>
-    <Version>1.6.8</Version>
+    <Version>1.6.9</Version>
     <NoWarn>$(NoWarn);NU1902</NoWarn>
   </PropertyGroup>
 
@@ -25,7 +25,7 @@
   <ItemGroup>
     <PackageReference Include="OpenTelemetry.Api" Version="1.10.0" />
     <PackageReference Include="OpenTelemetry" Version="1.10.0" />
-    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.4.1" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="11.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.5" />

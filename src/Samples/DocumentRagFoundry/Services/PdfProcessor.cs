@@ -159,6 +159,7 @@ public class PdfProcessor
             $"PDF Page Placeholder\n{Path.GetFileName(page.Owner.FullPath)}",
             x: 50,
             y: 100,
+            textAlign: SKTextAlign.Left,
             font,
             paint
         );

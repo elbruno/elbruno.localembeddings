@@ -64,8 +64,8 @@ dotnet publish -c Release -f net8.0 \
 | Package | Version | AOT Status | Notes |
 |---------|---------|-----------|-------|
 | Microsoft.ML.OnnxRuntime | 1.24.4 | ⚠️ Partial | Managed API is AOT-safe; native dll required at runtime |
-| Microsoft.ML.Tokenizers | 2.0.0 | ✅ Full | Pure managed code, no reflection |
-| Microsoft.Extensions.AI.Abstractions | 10.4.1 | ✅ Full | Interfaces only, no reflection |
+| Microsoft.ML.Tokenizers | 3.0.0 | ✅ Full | Pure managed code, no reflection |
+| Microsoft.Extensions.AI.Abstractions | 11.0.0 | ✅ Full | Interfaces only, no reflection |
 | Microsoft.Extensions.DependencyInjection.Abstractions | 10.0.5 | ✅ Full | Interfaces only |
 | Microsoft.Extensions.Options | 10.0.5 | ⚠️ Partial | Binding uses reflection (documented) |
 | System.Numerics.Tensors | 10.0.5 | ✅ Full | Hardware-accelerated, no reflection |
